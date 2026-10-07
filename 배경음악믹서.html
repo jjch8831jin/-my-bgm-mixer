@@ -195,7 +195,7 @@
   .cg-time{ grid-template-columns:auto !important; }
   .strip{ display:flex; flex-direction:column; align-items:center; gap:4px; width:84px; }
   .strip .sl,.knob .kl,.sw .kl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
-  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:96px; height:28px; padding:0; margin:34px -34px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
+  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:140px; height:28px; padding:0; margin:56px -56px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
   .sn{ font-size:14pt; color:#f4f8fc; white-space:nowrap; }
   .console input[type="number"]{ width:64px; padding:3px 4px; font-size:14pt; background:#f4f8fc; color:#131f2c; border:1px solid #8fa9c2; border-radius:6px; text-align:center; }
   .cg-time{ display:grid; grid-template-columns:repeat(2,auto); gap:8px 14px; align-content:center; }
@@ -223,8 +223,8 @@
   .cg-meter{ display:flex; gap:4px; }
   .mt{ display:flex; flex-direction:column; align-items:center; gap:4px; width:44px; }
   .mt .sl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
-  .mt .bar{ position:relative; width:18px; height:96px; margin:34px 0 0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
-  .mt .fill{ position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(to top,#2fbf5b 0,#2fbf5b 60%,#f2d33c 78%,#ef4a3a 100%); background-size:100% 96px; background-position:bottom; }
+  .mt .bar{ position:relative; width:18px; height:140px; margin:34px 0 0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
+  .mt .fill{ position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(to top,#2fbf5b 0,#2fbf5b 60%,#f2d33c 78%,#ef4a3a 100%); background-size:100% 140px; background-position:bottom; }
   .mt .pk{ position:absolute; left:0; right:0; height:2px; bottom:0; background:#fff; }
   .mt .db{ font-size:12pt; color:#f4f8fc; height:34px; line-height:34px; margin-top:0; white-space:nowrap; }
   .mix-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
@@ -2441,6 +2441,7 @@ function makePlayer(kind){
   function elapsedNow(){
     if(!st.playing) return st.pausedAt;
     const dur = st.processed ? durP() : st.pausedAt;
+    if(st.loopOn && dur > 0) return (st.pausedAt + (getCtx().currentTime - st.startCtxTime)) % dur;
     return Math.min(dur, st.pausedAt + (getCtx().currentTime - st.startCtxTime));
   }
 
@@ -2482,6 +2483,9 @@ function makePlayer(kind){
     const source = ctx.createBufferSource();
     source.buffer = processed;
     source.playbackRate.value = st.rate;
+    // 통합 재생에서 음악이 음성보다 짧고 '반복'이면 음성이 끝날 때까지 반복
+    st.loopOn = kind === 'music' && activeTrack === 'all' && loopMode === 'loop' && durationMode !== 'music' && voicePlayerCtl.getDuration() > durP() + 0.05;
+    source.loop = st.loopOn;
     const g = ctx.createGain();
     g.gain.value = volNow();
     source.connect(g);
@@ -2495,8 +2499,9 @@ function makePlayer(kind){
       if(st.raf){ cancelAnimationFrame(st.raf); st.raf = null; }
       setButtons();
       updateProgressDisplay();
+      if(api.onEnd) api.onEnd();
     };
-    source.start(0, st.pausedAt * st.rate);
+    source.start(0, (st.loopOn ? (st.pausedAt * st.rate) % processed.duration : st.pausedAt * st.rate));
     st.source = source;
     st.startCtxTime = ctx.currentTime;
     st.playing = true;
@@ -2608,7 +2613,8 @@ function makePlayer(kind){
     updateProgressDisplay();
   }
 
-  return { applyVolume, prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  return api;
 }
 
 function attachScrub(barId, durationFn, seekFn){
@@ -3533,6 +3539,7 @@ setActiveTrack('voice');
     else { voicePlayerCtl.play(); musicPlayerCtl.play(); }
     setTimeout(refresh, 50);
   });
+  voicePlayerCtl.onEnd = () => { if(musicPlayerCtl.isLooping()){ musicPlayerCtl.stop(); setTimeout(refresh, 50); } };
   document.getElementById('togetherStopBtn').addEventListener('click', () => { voicePlayerCtl.stop(); musicPlayerCtl.stop(); setTimeout(refresh, 50); });
   setInterval(refresh, 300);
 })();
