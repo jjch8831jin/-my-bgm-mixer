@@ -2363,7 +2363,6 @@ function makePlayer(kind){
   function trimRange(){ return kind === 'voice' ? getVoiceTrimRange() : getMusicTrimRange(); }
   function speedFactor(){ return kind === 'voice' ? voiceSpeed : musicSpeed; }
   function volNow(){
-    if(typeof activeTrack === 'undefined' || activeTrack !== 'all') return 1;
     const el = document.getElementById(kind === 'voice' ? 'voiceVolume' : 'musicVolume');
     return Math.max(0, Number(el.value) || 0) / 100;
   }
