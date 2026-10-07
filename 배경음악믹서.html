@@ -42,7 +42,7 @@
   h1{
     font-family: Georgia, "Nanum Myeongjo", serif;
     font-weight: 700;
-    font-size: 28px;
+    font-size: 30px;
     letter-spacing: -0.01em;
     margin: 0 0 6px;
     color: #1f1c16;
@@ -50,7 +50,7 @@
   header p{
     margin: 0;
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: 16px;
   }
 
   section{
@@ -61,7 +61,7 @@
     margin-bottom: 16px;
   }
   section h2{
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     margin: 0 0 14px;
     color: var(--text-dim);
@@ -92,16 +92,16 @@
   .drop.has-file{ border-style: solid; }
   .drop.voice.has-file{ border-color: var(--voice); background: rgba(111,174,141,0.2); }
   .drop.music.has-file{ border-color: var(--music); background: rgba(226,168,63,0.2); }
-  .drop .label{ font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .drop .label{ font-size: 16px; font-weight: 600; margin-bottom: 4px; }
   .drop.voice .label{ color: var(--voice); }
   .drop.music .label{ color: var(--music); }
-  .drop .filename{ font-size: 14px; color: var(--text-dim); word-break: break-all; margin-top: 6px; }
-  .drop .hint{ font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .drop .filename{ font-size: 16px; color: var(--text-dim); word-break: break-all; margin-top: 6px; }
+  .drop .hint{ font-size: 14px; color: var(--text-dim); margin-top: 2px; }
   .drop input{ display: none; }
 
   canvas{ display: block; width: 100%; height: 56px; border-radius: 6px; background: var(--panel-2); }
   .ruler{ position: relative; height: 20px; margin-top: 2px; }
-  .ruler-tick{ position: absolute; top: 0; font-size: 14px; color: var(--text-dim); white-space: nowrap; transform: translateX(-50%); }
+  .ruler-tick{ position: absolute; top: 0; font-size: 16px; color: var(--text-dim); white-space: nowrap; transform: translateX(-50%); }
   .ruler-tick.first{ transform: translateX(0); }
   .ruler-tick.last{ transform: translateX(-100%); }
 
@@ -120,42 +120,42 @@
     flex-wrap: wrap; margin-bottom: 12px; font-weight: 600;
   }
   .zoom-controls{ display: flex; align-items: center; gap: 8px; }
-  #zoomLevelLabel{ font-size: 14px; color: var(--text-dim); min-width: 28px; text-align: center; }
+  #zoomLevelLabel{ font-size: 16px; color: var(--text-dim); min-width: 28px; text-align: center; }
   .zoom-scroll{
     overflow-x: auto; overflow-y: hidden; border: 1px solid var(--border);
     border-radius: 6px; background: var(--panel-2);
   }
   .zoom-scroll canvas{ display: block; height: 160px; background: var(--panel-2); border-radius: 0; }
   .zoom-scroll .ruler{ width: max-content; min-width: 100%; }
-  .zoom-hint{ margin-top: 8px; font-size: 14px; color: var(--text-dim); }
+  .zoom-hint{ margin-top: 8px; font-size: 16px; color: var(--text-dim); }
   .wave-block{ margin-top: 12px; }
   .wave-block + .wave-block{ margin-top: 8px; }
-  .wave-label{ font-size: 12px; color: var(--text-dim); margin-bottom: 4px; display:flex; justify-content: space-between; }
+  .wave-label{ font-size: 14px; color: var(--text-dim); margin-bottom: 4px; display:flex; justify-content: space-between; }
 
   .file-list{ margin-bottom: 6px; }
   .file-item{
     display: flex; align-items: center; gap: 6px; padding: 6px 8px;
-    background: var(--panel-2); border-radius: 6px; margin-bottom: 4px; font-size: 14px;
+    background: var(--panel-2); border-radius: 6px; margin-bottom: 4px; font-size: 16px;
   }
   .file-item-name{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file-item-dur{ color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .file-item button{
     background: transparent; border: 1px solid var(--border); color: var(--text-dim);
-    border-radius: 4px; width: 22px; height: 22px; font-size: 14px; cursor: pointer; flex-shrink: 0;
+    border-radius: 4px; width: 22px; height: 22px; font-size: 16px; cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; padding: 0;
   }
   .file-item button:disabled{ opacity: 0.3; cursor: not-allowed; }
   .file-item button:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
   .seg-input{
     width: 54px; background: var(--panel); border: 1px solid var(--border); color: var(--text);
-    border-radius: 4px; padding: 3px 4px; font-size: 14px; text-align: center;
+    border-radius: 4px; padding: 3px 4px; font-size: 16px; text-align: center;
   }
 
   .field{ margin-bottom: 16px; }
   .field:last-child{ margin-bottom: 0; }
   .field-row{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-  .field-row label{ font-size: 14px; }
-  .field-row .val{ font-size: 14px; color: var(--music); font-variant-numeric: tabular-nums; }
+  .field-row label{ font-size: 16px; }
+  .field-row .val{ font-size: 16px; color: var(--music); font-variant-numeric: tabular-nums; }
 
   input[type="range"]{
     width: 100%; -webkit-appearance: none; appearance: none;
@@ -174,7 +174,7 @@
   .two-col .field{ flex: 1; }
   input[type="number"]{
     width: 100%; background: var(--panel-2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 6px; padding: 8px 10px; font-size: 14px;
+    color: var(--text); border-radius: 6px; padding: 8px 10px; font-size: 16px;
     font-variant-numeric: tabular-nums;
   }
   input[type="number"]:focus{ outline: none; border-color: var(--music); }
@@ -182,23 +182,23 @@
   .segmented{ display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
   .segmented button{
     flex: 1; background: transparent; border: none; color: var(--text-dim);
-    padding: 8px 6px; font-size: 14px; cursor: pointer; border-right: 1px solid var(--border);
+    padding: 8px 6px; font-size: 16px; cursor: pointer; border-right: 1px solid var(--border);
   }
   .segmented button:last-child{ border-right: none; }
   .segmented button.active{ background: var(--music-dim); color: #5a3c0e; }
 
-  .mix-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .mix-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 8px; }
   .mix-chip{ display: flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; margin: 0; }
-  .mix-chip .ic{ font-size: 18px; line-height: 1; }
-  .mix-chip .lb{ font-size: 12px; color: var(--text-dim); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mix-chip .ic{ font-size: 20px; line-height: 1; }
+  .mix-chip .lb{ font-size: 14px; color: var(--text-dim); flex: 1; min-width: 0; white-space: nowrap; }
   .mix-chip .segmented{ flex: none; }
-  .mix-chip .un{ font-size: 12px; color: var(--text-dim); }
-  .mix-chip input[type="number"]{ width: 58px; padding: 4px 6px; }
-  .mix-chip .segmented button{ padding: 3px 9px; font-size: 15px; }
+  .mix-chip .un{ font-size: 14px; color: var(--text-dim); }
+  .mix-chip input[type="number"]{ width: 52px; padding: 4px 4px; }
+  .mix-chip .segmented button{ padding: 3px 9px; font-size: 17px; }
   .transport{ display: flex; align-items: center; gap: 12px; }
   .play-btn{
     width: 44px; height: 44px; border-radius: 50%; border: none;
-    background: var(--voice); color: #f5fbf7; font-size: 15px; cursor: pointer;
+    background: var(--voice); color: #f5fbf7; font-size: 17px; cursor: pointer;
     flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   }
   .play-btn:disabled{ background: var(--border); color: var(--text-dim); cursor: not-allowed; }
@@ -209,7 +209,7 @@
   .scrub-tooltip{
     display: none; position: fixed;
     transform: translate(-50%, -100%); background: var(--text); color: var(--bg);
-    font-size: 12px; padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+    font-size: 14px; padding: 2px 6px; border-radius: 4px; white-space: nowrap;
     pointer-events: none; z-index: 1000;
   }
   .progress-fill{ height: 100%; background: var(--voice); width: 0%; transition: width .15s linear; }
@@ -217,63 +217,63 @@
   .progress-bar.mini{ display: none; margin-top: 8px; }
   .progress-bar.mini.active{ display: block; }
   #exportMp3Bar{ height: 10px; }
-  .time{ font-size: 14px; color: var(--text-dim); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .time{ font-size: 16px; color: var(--text-dim); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
   .export-row{ display: flex; gap: 10px; }
   .export-btn{
     flex: 1; padding: 14px; border: none; border-radius: var(--radius);
-    background: var(--music); color: #fff8ec; font-size: 15px; font-weight: 700;
+    background: var(--music); color: #fff8ec; font-size: 17px; font-weight: 700;
     cursor: pointer; margin-top: 4px;
   }
   .export-btn:disabled{ background: var(--border); color: var(--text-dim); cursor: not-allowed; }
-  .export-status{ text-align: center; font-size: 14px; color: var(--text-dim); margin-top: 10px; min-height: 16px; }
+  .export-status{ text-align: center; font-size: 16px; color: var(--text-dim); margin-top: 10px; min-height: 16px; }
 
-  .error{ color: var(--danger); font-size: 14px; margin-top: 8px; }
+  .error{ color: var(--danger); font-size: 16px; margin-top: 8px; }
 
   .record-box{ margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
   .record-row{ display: flex; align-items: center; gap: 10px; }
   .record-btn{
     background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-    border-radius: 8px; padding: 6px 11px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border-radius: 8px; padding: 6px 11px; font-size: 15px; font-weight: 600; cursor: pointer;
     white-space: nowrap; transition: border-color .12s ease, color .12s ease;
   }
   .record-btn:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
   .record-btn:disabled{ opacity: .45; cursor: not-allowed; }
   .tool-row{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .tool-row .record-btn{ flex: 1; min-width: 0; padding: 7px 6px; }
-  .chip-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+  .chip-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 8px; margin-top: 12px; }
   .seg-row{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-  .seg-row .seg-title{ font-size: 12px; color: var(--text-dim); margin-right: auto; }
+  .seg-row .seg-title{ font-size: 14px; color: var(--text-dim); margin-right: auto; }
   .head-tools{ display: flex; gap: 6px; }
-  .folder-line{ font-size: 12px; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .folder-line{ font-size: 14px; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
   .dl-row .record-btn{ flex: 1; background: var(--music); border-color: var(--music); color: #fff8ec; padding: 9px 10px; }
   .dl-row .record-btn:hover:not(:disabled){ filter: brightness(1.06); color: #fff8ec; }
   .dl-row .record-btn:disabled{ background: var(--border); border-color: var(--border); color: var(--text-dim); }
   .record-btn.recording{ background: var(--danger); border-color: var(--danger); color: #fff5f0; }
-  .record-time{ font-size: 14px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-  .record-hint{ font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+  .record-time{ font-size: 16px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .record-hint{ font-size: 14px; color: var(--text-dim); margin-top: 8px; }
   .file-actions{ display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .folder-row{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
   .player-row{ display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
   .player-btn{
     background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-    border-radius: 50%; width: 36px; height: 36px; font-size: 15px; cursor: pointer;
+    border-radius: 50%; width: 36px; height: 36px; font-size: 17px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; padding: 0;
   }
   .player-btn:disabled{ opacity: 0.4; cursor: not-allowed; }
-  .player-btn.primary{ width: 44px; height: 44px; background: var(--voice); color: #f5fbf7; border: none; font-size: 17px; }
+  .player-btn.primary{ width: 44px; height: 44px; background: var(--voice); color: #f5fbf7; border: none; font-size: 19px; }
   .player-btn.primary:disabled{ background: var(--border); color: var(--text-dim); }
   .file-actions .record-btn{ flex: 1; min-width: 100px; }
 
   .mix-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .mix-btn{
     background: var(--voice); border: none; color: #f5fbf7;
-    border-radius: 6px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer;
+    border-radius: 6px; padding: 10px 16px; font-size: 16px; font-weight: 700; cursor: pointer;
   }
   .mix-btn:disabled{ background: var(--border); color: var(--text-dim); cursor: not-allowed; }
-  .mix-status{ font-size: 14px; color: var(--text-dim); }
+  .mix-status{ font-size: 16px; color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -330,15 +330,15 @@
     </div>
 
     <div class="chip-grid">
-      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">삭제 시작</span><input type="number" id="voiceCutStart" min="0" step="0.5" value="0"><span class="un">초</span></label>
-      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">삭제 끝</span><input type="number" id="voiceEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
       <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
     </div>
 
     <div class="seg-row">
         <span class="seg-title">구간별 속도</span>
         <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
-        <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동 맞춤: 꺼짐</button>
+        <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동맞춤</button>
     </div>
     <div class="file-list" id="voiceSegmentList" style="margin-top:6px;"></div>
 
@@ -382,8 +382,8 @@
     </div>
 
     <div class="chip-grid">
-      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">삭제 시작</span><input type="number" id="musicOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
-      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">삭제 끝</span><input type="number" id="musicEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
       <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
     </div>
 
@@ -436,7 +436,7 @@
         <input type="number" id="musicOutroLevel" min="0" max="300" step="1" value="100" aria-label="연장 구간 음량 (%)"><span class="un">%</span>
       </label>
       <div class="mix-chip" title="믹스 길이 기준">
-        <span class="ic">📏</span><span class="lb">길이 기준</span>
+        <span class="ic">📏</span><span class="lb">길이</span>
         <div class="segmented" id="durationMode">
           <button data-mode="voice" class="active" title="음성 길이에 맞춤">🎙</button>
           <button data-mode="music" title="음악 길이에 맞춤">🎵</button>
@@ -790,6 +790,7 @@ function renderSegments(track){
 function addSegment(track){
   const buffer = getTrackBuffer(track);
   if(!buffer) return;
+  if(track === 'voice' && typeof voiceAutoSpeed !== 'undefined' && voiceAutoSpeed) setVoiceAuto(false);
   const defaultEnd = Math.min(5, buffer.duration);
   getSegmentsArray(track).push({ id: ++segmentIdCounter, start: 0, end: defaultEnd, speed: 1 });
   renderSegments(track);
@@ -886,18 +887,21 @@ function applyAutoVoice(){
 }
 function updateAutoVoiceUI(){
   const btn = document.getElementById('autoVoiceSpeedBtn');
-  btn.textContent = voiceAutoSpeed ? '⚖ 자동 맞춤: 켜짐' : '⚖ 자동 맞춤: 꺼짐';
-  btn.style.fontWeight = voiceAutoSpeed ? '700' : '';
+  btn.textContent = voiceAutoSpeed ? '⚖ 자동맞춤중' : '⚖ 자동맞춤';
+  btn.classList.toggle('recording', voiceAutoSpeed);
   document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
-  document.getElementById('addVoiceSegmentBtn').style.display = voiceAutoSpeed ? 'none' : '';
 }
-document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
-  if(!voiceAutoSpeed && voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
-  voiceAutoSpeed = !voiceAutoSpeed;
-  if(voiceAutoSpeed){ voiceSpeedSegments = []; _voiceAutoKey = null; try{ applyAutoVoice(); }catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; } }
+function setVoiceAuto(on){
+  if(on === voiceAutoSpeed) return;
+  voiceAutoSpeed = on;
+  if(on){ voiceSpeedSegments = []; _voiceAutoKey = null; try{ applyAutoVoice(); }catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; } }
   renderSegments('voice');
   updateAutoVoiceUI();
   voicePlayerCtl.markDirty();
+}
+document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
+  if(!voiceAutoSpeed && voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
+  setVoiceAuto(!voiceAutoSpeed);
 });
 
 document.addEventListener('input', e => {
