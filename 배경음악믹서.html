@@ -268,7 +268,10 @@
   #exportMp3Bar{ height: 10px; }
   body section .progress-bar.dlbar{ height: 30px !important; border-radius: 4px; overflow: hidden; }
   body section .progress-bar.dlbar .progress-fill{ border-radius: 0; }
-  .dlbar .bar-text{ position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 14pt; font-weight: 700; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 1px 2px #000; white-space: nowrap; pointer-events: none; }
+  .dlbar .bar-inner{ position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 10px; pointer-events: none; }
+  .dlbar .bar-text{ font-size: 14pt; font-weight: 700; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 1px 2px #000; white-space: nowrap; }
+  .dlbar .stop-in{ pointer-events: auto; cursor: pointer; font: inherit; font-size: 12pt; font-weight: 700; line-height: 1.2; padding: 1px 10px; border-radius: 4px; background: #1b2733; color: #ffd0ca; border: 1px solid #ff8a7c; }
+  .dlbar .stop-in:hover{ background: #ef4a3a; color: #fff; }
   body section .progress-bar.dlbar.err .progress-fill{ background: #ef4a3a !important; width: 100% !important; }
   .time{ font-size: 14pt; color: var(--text-dim); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
@@ -597,8 +600,7 @@
         <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ MP3</button>
         <button class="record-btn folder-btn" id="chooseFolderBtn_voice" data-folder="voice" type="button" title="음성 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
-      <div class="progress-bar mini dlbar" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div><span class="bar-text"></span></div>
-      <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
+      <div class="progress-bar mini dlbar" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="voiceMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div>
     </div>
     <div class="tool-panel" id="panel_music">
       <div class="player-line">
@@ -632,8 +634,7 @@
         <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ MP3</button>
         <button class="record-btn folder-btn" id="chooseFolderBtn_music" data-folder="music" type="button" title="배경음악 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
-      <div class="progress-bar mini dlbar" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div><span class="bar-text"></span></div>
-      <button class="record-btn" id="musicMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
+      <div class="progress-bar mini dlbar" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="musicMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div>
     </div>
   </section>
 
@@ -702,8 +703,7 @@
       <button class="record-btn folder-btn" id="chooseFolderBtn_mix" data-folder="mix" type="button" title="믹스결과 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
     </div>
     <div id="folderStatus_mix" style="display:none"></div>
-    <div class="progress-bar mini dlbar" id="exportMp3Bar"><div class="progress-fill music" id="exportMp3Fill"></div><span class="bar-text"></span></div>
-    <button class="record-btn" id="exportMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
+    <div class="progress-bar mini dlbar" id="exportMp3Bar"><div class="progress-fill music" id="exportMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="exportMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div>
   </section>
 
 
