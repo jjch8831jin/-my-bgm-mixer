@@ -42,7 +42,7 @@
   h1{
     font-family: Georgia, "Nanum Myeongjo", serif;
     font-weight: 700;
-    font-size: 30px;
+    font-size: 20pt;
     letter-spacing: -0.01em;
     margin: 0 0 6px;
     color: #1f1c16;
@@ -50,7 +50,7 @@
   header p{
     margin: 0;
     color: var(--text-dim);
-    font-size: 16px;
+    font-size: 14pt;
   }
 
   section{
@@ -61,7 +61,7 @@
     margin-bottom: 16px;
   }
   section h2{
-    font-size: 16px;
+    font-size: 14pt;
     font-weight: 600;
     margin: 0 0 14px;
     color: var(--text-dim);
@@ -92,16 +92,16 @@
   .drop.has-file{ border-style: solid; }
   .drop.voice.has-file{ border-color: var(--voice); background: rgba(111,174,141,0.2); }
   .drop.music.has-file{ border-color: var(--music); background: rgba(226,168,63,0.2); }
-  .drop .label{ font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .drop .label{ font-size: 14pt; font-weight: 600; margin-bottom: 4px; }
   .drop.voice .label{ color: var(--voice); }
   .drop.music .label{ color: var(--music); }
-  .drop .filename{ font-size: 16px; color: var(--text-dim); word-break: break-all; margin-top: 6px; }
-  .drop .hint{ font-size: 14px; color: var(--text-dim); margin-top: 2px; }
+  .drop .filename{ font-size: 14pt; color: var(--text-dim); word-break: break-all; margin-top: 6px; }
+  .drop .hint{ font-size: 12pt; color: var(--text-dim); margin-top: 2px; }
   .drop input{ display: none; }
 
   canvas{ display: block; width: 100%; height: 56px; border-radius: 6px; background: var(--panel-2); }
   .ruler{ position: relative; height: 20px; margin-top: 2px; }
-  .ruler-tick{ position: absolute; top: 0; font-size: 16px; color: var(--text-dim); white-space: nowrap; transform: translateX(-50%); }
+  .ruler-tick{ position: absolute; top: 0; font-size: 14pt; color: var(--text-dim); white-space: nowrap; transform: translateX(-50%); }
   .ruler-tick.first{ transform: translateX(0); }
   .ruler-tick.last{ transform: translateX(-100%); }
 
@@ -120,42 +120,42 @@
     flex-wrap: wrap; margin-bottom: 12px; font-weight: 600;
   }
   .zoom-controls{ display: flex; align-items: center; gap: 8px; }
-  #zoomLevelLabel{ font-size: 16px; color: var(--text-dim); min-width: 28px; text-align: center; }
+  #zoomLevelLabel{ font-size: 14pt; color: var(--text-dim); min-width: 28px; text-align: center; }
   .zoom-scroll{
     overflow-x: auto; overflow-y: hidden; border: 1px solid var(--border);
     border-radius: 6px; background: var(--panel-2);
   }
   .zoom-scroll canvas{ display: block; height: 160px; background: var(--panel-2); border-radius: 0; }
   .zoom-scroll .ruler{ width: max-content; min-width: 100%; }
-  .zoom-hint{ margin-top: 8px; font-size: 16px; color: var(--text-dim); }
+  .zoom-hint{ margin-top: 8px; font-size: 12pt; color: var(--text-dim); }
   .wave-block{ margin-top: 12px; }
   .wave-block + .wave-block{ margin-top: 8px; }
-  .wave-label{ font-size: 14px; color: var(--text-dim); margin-bottom: 4px; display:flex; justify-content: space-between; }
+  .wave-label{ font-size: 12pt; color: var(--text-dim); margin-bottom: 4px; display:flex; justify-content: space-between; }
 
   .file-list{ margin-bottom: 6px; }
   .file-item{
     display: flex; align-items: center; gap: 6px; padding: 6px 8px;
-    background: var(--panel-2); border-radius: 6px; margin-bottom: 4px; font-size: 16px;
+    background: var(--panel-2); border-radius: 6px; margin-bottom: 4px; font-size: 14pt;
   }
   .file-item-name{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file-item-dur{ color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .file-item button{
     background: transparent; border: 1px solid var(--border); color: var(--text-dim);
-    border-radius: 4px; width: 22px; height: 22px; font-size: 16px; cursor: pointer; flex-shrink: 0;
+    border-radius: 4px; width: 22px; height: 22px; font-size: 14pt; cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; padding: 0;
   }
   .file-item button:disabled{ opacity: 0.3; cursor: not-allowed; }
   .file-item button:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
   .seg-input{
     width: 54px; background: var(--panel); border: 1px solid var(--border); color: var(--text);
-    border-radius: 4px; padding: 3px 4px; font-size: 16px; text-align: center;
+    border-radius: 4px; padding: 3px 4px; font-size: 14pt; text-align: center;
   }
 
   .field{ margin-bottom: 16px; }
   .field:last-child{ margin-bottom: 0; }
   .field-row{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-  .field-row label{ font-size: 16px; }
-  .field-row .val{ font-size: 16px; color: var(--music); font-variant-numeric: tabular-nums; }
+  .field-row label{ font-size: 14pt; }
+  .field-row .val{ font-size: 14pt; color: var(--music); font-variant-numeric: tabular-nums; }
 
   input[type="range"]{
     width: 100%; -webkit-appearance: none; appearance: none;
@@ -174,7 +174,7 @@
   .two-col .field{ flex: 1; }
   input[type="number"]{
     width: 100%; background: var(--panel-2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 6px; padding: 8px 10px; font-size: 16px;
+    color: var(--text); border-radius: 6px; padding: 8px 10px; font-size: 14pt;
     font-variant-numeric: tabular-nums;
   }
   input[type="number"]:focus{ outline: none; border-color: var(--music); }
@@ -182,23 +182,23 @@
   .segmented{ display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
   .segmented button{
     flex: 1; background: transparent; border: none; color: var(--text-dim);
-    padding: 8px 6px; font-size: 16px; cursor: pointer; border-right: 1px solid var(--border);
+    padding: 8px 6px; font-size: 14pt; cursor: pointer; border-right: 1px solid var(--border);
   }
   .segmented button:last-child{ border-right: none; }
   .segmented button.active{ background: var(--music-dim); color: #5a3c0e; }
 
-  .mix-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 8px; }
+  .mix-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
   .mix-chip{ display: flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; margin: 0; }
-  .mix-chip .ic{ font-size: 20px; line-height: 1; }
-  .mix-chip .lb{ font-size: 14px; color: var(--text-dim); flex: 1; min-width: 0; white-space: nowrap; }
+  .mix-chip .ic{ font-size: 16pt; line-height: 1; }
+  .mix-chip .lb{ font-size: 14pt; color: var(--text-dim); flex: 1; min-width: 0; white-space: nowrap; }
   .mix-chip .segmented{ flex: none; }
-  .mix-chip .un{ font-size: 14px; color: var(--text-dim); }
-  .mix-chip input[type="number"]{ width: 52px; padding: 4px 4px; }
-  .mix-chip .segmented button{ padding: 3px 9px; font-size: 17px; }
+  .mix-chip .un{ font-size: 14pt; color: var(--text-dim); }
+  .mix-chip input[type="number"]{ width: 76px; padding: 4px 4px; }
+  .mix-chip .segmented button{ padding: 3px 9px; font-size: 14pt; }
   .transport{ display: flex; align-items: center; gap: 12px; }
   .play-btn{
     width: 44px; height: 44px; border-radius: 50%; border: none;
-    background: var(--voice); color: #f5fbf7; font-size: 17px; cursor: pointer;
+    background: var(--voice); color: #f5fbf7; font-size: 14pt; cursor: pointer;
     flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   }
   .play-btn:disabled{ background: var(--border); color: var(--text-dim); cursor: not-allowed; }
@@ -209,7 +209,7 @@
   .scrub-tooltip{
     display: none; position: fixed;
     transform: translate(-50%, -100%); background: var(--text); color: var(--bg);
-    font-size: 14px; padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+    font-size: 14pt; padding: 2px 6px; border-radius: 4px; white-space: nowrap;
     pointer-events: none; z-index: 1000;
   }
   .progress-fill{ height: 100%; background: var(--voice); width: 0%; transition: width .15s linear; }
@@ -217,63 +217,70 @@
   .progress-bar.mini{ display: none; margin-top: 8px; }
   .progress-bar.mini.active{ display: block; }
   #exportMp3Bar{ height: 10px; }
-  .time{ font-size: 16px; color: var(--text-dim); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .time{ font-size: 14pt; color: var(--text-dim); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
   .export-row{ display: flex; gap: 10px; }
   .export-btn{
     flex: 1; padding: 14px; border: none; border-radius: var(--radius);
-    background: var(--music); color: #fff8ec; font-size: 17px; font-weight: 700;
+    background: var(--music); color: #fff8ec; font-size: 14pt; font-weight: 700;
     cursor: pointer; margin-top: 4px;
   }
   .export-btn:disabled{ background: var(--border); color: var(--text-dim); cursor: not-allowed; }
-  .export-status{ text-align: center; font-size: 16px; color: var(--text-dim); margin-top: 10px; min-height: 16px; }
+  .export-status{ text-align: center; font-size: 14pt; color: var(--text-dim); margin-top: 10px; min-height: 16px; }
 
-  .error{ color: var(--danger); font-size: 16px; margin-top: 8px; }
+  .error{ color: var(--danger); font-size: 14pt; margin-top: 8px; }
 
   .record-box{ margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
   .record-row{ display: flex; align-items: center; gap: 10px; }
   .record-btn{
     background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-    border-radius: 8px; padding: 6px 11px; font-size: 15px; font-weight: 600; cursor: pointer;
+    border-radius: 8px; padding: 6px 11px; font-size: 14pt; font-weight: 600; cursor: pointer;
     white-space: nowrap; transition: border-color .12s ease, color .12s ease;
   }
   .record-btn:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
   .record-btn:disabled{ opacity: .45; cursor: not-allowed; }
   .tool-row{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .tool-row .record-btn{ flex: 1; min-width: 0; padding: 7px 6px; }
-  .chip-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 8px; margin-top: 12px; }
+  .chip-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; margin-top: 12px; }
   .seg-row{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-  .seg-row .seg-title{ font-size: 14px; color: var(--text-dim); margin-right: auto; }
+  .seg-row .seg-title{ font-size: 14pt; color: var(--text-dim); margin-right: auto; }
+  .auto-bar{ position: relative; flex: 1; min-width: 120px; height: 36px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); overflow: hidden; }
+  .auto-bar .progress-fill{ position: absolute; left: 0; top: 0; bottom: 0; height: auto; background: var(--danger); opacity: .35; }
+  .auto-bar span{ position: relative; display: flex; align-items: center; justify-content: center; height: 100%; font-size: 12pt; color: var(--text-dim); white-space: nowrap; }
+  .seg-form{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; }
+  .seg-form input{ width: 70px; background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 6px; font-size: 14pt; text-align: center; }
+  .seg-scroll{ max-height: 150px; overflow-y: auto; }
   .head-tools{ display: flex; gap: 6px; }
-  .folder-line{ font-size: 14px; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .folder-line{ font-size: 12pt; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
   .dl-row .record-btn{ flex: 1; background: var(--music); border-color: var(--music); color: #fff8ec; padding: 9px 10px; }
   .dl-row .record-btn:hover:not(:disabled){ filter: brightness(1.06); color: #fff8ec; }
   .dl-row .record-btn:disabled{ background: var(--border); border-color: var(--border); color: var(--text-dim); }
   .record-btn.recording{ background: var(--danger); border-color: var(--danger); color: #fff5f0; }
-  .record-time{ font-size: 16px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-  .record-hint{ font-size: 14px; color: var(--text-dim); margin-top: 8px; }
+  .record-btn.recording:hover:not(:disabled){ background: var(--danger); border-color: var(--danger); color: #fff5f0; }
+  .record-time{ font-size: 14pt; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .record-hint{ font-size: 12pt; color: var(--text-dim); margin-top: 8px; }
   .file-actions{ display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .folder-row{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
   .player-row{ display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
   .player-btn{
     background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-    border-radius: 50%; width: 36px; height: 36px; font-size: 17px; cursor: pointer;
+    border-radius: 50%; width: 36px; height: 36px; font-size: 14pt; cursor: pointer;
     display: flex; align-items: center; justify-content: center; padding: 0;
   }
   .player-btn:disabled{ opacity: 0.4; cursor: not-allowed; }
-  .player-btn.primary{ width: 44px; height: 44px; background: var(--voice); color: #f5fbf7; border: none; font-size: 19px; }
+  .player-btn.primary{ width: 44px; height: 44px; background: var(--voice); color: #f5fbf7; border: none; font-size: 14pt; }
   .player-btn.primary:disabled{ background: var(--border); color: var(--text-dim); }
   .file-actions .record-btn{ flex: 1; min-width: 100px; }
 
   .mix-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .mix-btn{
     background: var(--voice); border: none; color: #f5fbf7;
-    border-radius: 6px; padding: 10px 16px; font-size: 16px; font-weight: 700; cursor: pointer;
+    border-radius: 6px; padding: 10px 16px; font-size: 14pt; font-weight: 700; cursor: pointer;
   }
   .mix-btn:disabled{ background: var(--border); color: var(--text-dim); cursor: not-allowed; }
-  .mix-status{ font-size: 16px; color: var(--text-dim); }
+  .mix-status{ font-size: 14pt; color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -336,11 +343,18 @@
     </div>
 
     <div class="seg-row">
-        <span class="seg-title">구간별 속도</span>
+        <div class="auto-bar" id="voiceAutoBar" title="자동 맞춤 진행 상황"><div class="progress-fill" id="voiceAutoFill"></div><span id="voiceAutoText">자동 맞춤 대기</span></div>
         <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동맞춤</button>
     </div>
-    <div class="file-list" id="voiceSegmentList" style="margin-top:6px;"></div>
+    <div class="seg-form" id="segForm_voice" style="display:none;">
+      <input type="number" id="segStart_voice" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
+      <input type="number" id="segEnd_voice" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
+      <input type="number" id="segSpeed_voice" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
+      <button class="record-btn" type="button" id="segOk_voice">추가</button>
+      <button class="record-btn" type="button" id="segCancel_voice">취소</button>
+    </div>
+    <div class="file-list seg-scroll" id="voiceSegmentList" style="margin-top:6px;"></div>
 
     <div class="dl-row">
       <button class="record-btn" id="downloadVoiceWavBtn" disabled>⬇ WAV</button>
@@ -388,10 +402,17 @@
     </div>
 
     <div class="seg-row">
-        <span class="seg-title">구간별 속도</span>
+        
         <button class="record-btn" id="addMusicSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
     </div>
-    <div class="file-list" id="musicSegmentList" style="margin-top:6px;"></div>
+    <div class="seg-form" id="segForm_music" style="display:none;">
+      <input type="number" id="segStart_music" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
+      <input type="number" id="segEnd_music" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
+      <input type="number" id="segSpeed_music" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
+      <button class="record-btn" type="button" id="segOk_music">추가</button>
+      <button class="record-btn" type="button" id="segCancel_music">취소</button>
+    </div>
+    <div class="file-list seg-scroll" id="musicSegmentList" style="margin-top:6px;"></div>
 
     <div class="dl-row">
       <button class="record-btn" id="downloadMusicBtn" disabled>⬇ WAV</button>
@@ -791,17 +812,42 @@ function addSegment(track){
   const buffer = getTrackBuffer(track);
   if(!buffer) return;
   if(track === 'voice' && typeof voiceAutoSpeed !== 'undefined' && voiceAutoSpeed) setVoiceAuto(false);
-  const defaultEnd = Math.min(5, buffer.duration);
-  getSegmentsArray(track).push({ id: ++segmentIdCounter, start: 0, end: defaultEnd, speed: 1 });
+  const form = document.getElementById('segForm_' + track);
+  if(form.style.display !== 'none'){ form.style.display = 'none'; return; }
+  const segs = getSegmentsArray(track);
+  const lastEnd = segs.length ? Math.max(...segs.map(x => x.end)) : 0;
+  const st = Math.min(lastEnd, Math.max(0, buffer.duration - 1));
+  document.getElementById('segStart_' + track).value = st;
+  document.getElementById('segEnd_' + track).value = Math.min(buffer.duration, Math.round((st + 5) * 10) / 10);
+  document.getElementById('segSpeed_' + track).value = 1;
+  form.style.display = 'flex';
+  document.getElementById('segStart_' + track).focus();
+}
+function confirmSegment(track){
+  const buffer = getTrackBuffer(track);
+  if(!buffer) return;
+  let st = Number(document.getElementById('segStart_' + track).value) || 0;
+  let en = Number(document.getElementById('segEnd_' + track).value) || 0;
+  let sp = Number(document.getElementById('segSpeed_' + track).value) || 1;
+  st = Math.max(0, st); en = Math.min(buffer.duration, en); sp = Math.max(0.25, Math.min(3, sp));
+  if(en <= st + 0.05){ document.getElementById('loadError').textContent = '구간의 끝은 시작보다 커야 합니다.'; return; }
+  document.getElementById('loadError').textContent = '';
+  getSegmentsArray(track).push({ id: ++segmentIdCounter, start: st, end: en, speed: sp });
+  document.getElementById('segForm_' + track).style.display = 'none';
   renderSegments(track);
   getTrackPlayer(track).markDirty();
 }
+['voice','music'].forEach(k => {
+  document.getElementById('segOk_' + k).addEventListener('click', () => confirmSegment(k));
+  document.getElementById('segCancel_' + k).addEventListener('click', () => { document.getElementById('segForm_' + k).style.display = 'none'; });
+  ['segStart_','segEnd_','segSpeed_'].forEach(pre => document.getElementById(pre + k).addEventListener('keydown', e => { if(e.key === 'Enter') confirmSegment(k); }));
+});
 
 document.getElementById('addVoiceSegmentBtn').addEventListener('click', () => addSegment('voice'));
 document.getElementById('addMusicSegmentBtn').addEventListener('click', () => addSegment('music'));
 
 // 음성 자동 속도 맞춤: 구간별 말하는 빠르기(음절 수/초)를 재서 평균에 맞도록 구간별 속도를 채움 (±20% 제한)
-function computeAutoVoiceSegments(){
+async function computeAutoVoiceSegments(onProgress){
   const buf = voiceBuffer;
   const status = { textContent: '' };
   if(!buf) return { segs: [], msg: '' };
@@ -810,10 +856,13 @@ function computeAutoVoiceSegments(){
   const chs = []; for(let c=0;c<nch;c++) chs.push(buf.getChannelData(c));
   const env = new Float32Array(n);
   for(let i=0;i<n;i++){
+    if(i % 1500 === 0){ if(onProgress) onProgress(i / n * 0.8); await new Promise(r => setTimeout(r, 0)); }
     let sum = 0; const b0 = i*hop;
     for(let c=0;c<nch;c++){ const d = chs[c]; for(let k=0;k<hop;k++){ const x = d[b0+k]; sum += x*x; } }
     env[i] = Math.sqrt(sum / (hop*nch));
   }
+  if(onProgress) onProgress(0.85);
+  await new Promise(r => setTimeout(r, 0));
   const sm = new Float32Array(n);
   for(let i=0;i<n;i++) sm[i] = ((env[i-1]||env[i]) + env[i]*2 + (env[i+1]||env[i])) / 4;
   const sample = []; for(let i=0;i<n;i+=7) sample.push(sm[i]);
@@ -878,12 +927,30 @@ function computeAutoVoiceSegments(){
 // 자동 모드: 음성/속도가 바뀌었을 때만 다시 계산 (재생·믹싱·내보내기 직전에 호출)
 let voiceAutoSpeed = false;
 let _voiceAutoKey = null;
-function applyAutoVoice(){
+let _autoPromise = null, _autoT0 = 0, _autoBusy = false;
+function setAutoBar(pct, text){
+  if(!_autoT0) _autoT0 = performance.now();
+  document.getElementById('voiceAutoFill').style.width = Math.min(100, pct) + '%';
+  document.getElementById('voiceAutoText').textContent = text + ' ' + Math.round(Math.min(100, pct)) + '% · ' + ((performance.now() - _autoT0) / 1000).toFixed(1) + '초';
+}
+function hideAutoBar(){
+  _autoT0 = 0;
+  setTimeout(() => { if(_autoT0 === 0){ document.getElementById('voiceAutoFill').style.width = '0%'; document.getElementById('voiceAutoText').textContent = voiceAutoSpeed ? '자동 맞춤 완료' : '자동 맞춤 대기'; } }, 1500);
+}
+async function applyAutoVoice(){
   if(!voiceAutoSpeed || !voiceBuffer) return;
   const k = _voiceAutoKey;
   if(k && k.buf === voiceBuffer && k.speed === voiceSpeed && k.arr === voiceSpeedSegments) return;
-  voiceSpeedSegments = computeAutoVoiceSegments().segs;
-  _voiceAutoKey = { buf: voiceBuffer, speed: voiceSpeed, arr: voiceSpeedSegments };
+  if(_autoPromise){ await _autoPromise; return; }
+  const buf = voiceBuffer, spd = voiceSpeed;
+  _autoPromise = (async () => {
+    setAutoBar(0, '분석 중');
+    const r = await computeAutoVoiceSegments(f => setAutoBar(f * 40, '분석 중'));
+    if(!voiceAutoSpeed) return;
+    voiceSpeedSegments = r.segs;
+    _voiceAutoKey = { buf, speed: spd, arr: voiceSpeedSegments };
+  })();
+  try{ await _autoPromise; } finally { _autoPromise = null; }
 }
 function updateAutoVoiceUI(){
   const btn = document.getElementById('autoVoiceSpeedBtn');
@@ -891,13 +958,32 @@ function updateAutoVoiceUI(){
   btn.classList.toggle('recording', voiceAutoSpeed);
   document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
 }
-function setVoiceAuto(on){
-  if(on === voiceAutoSpeed) return;
+async function setVoiceAuto(on){
+  if(on === voiceAutoSpeed || _autoBusy) return;
   voiceAutoSpeed = on;
-  if(on){ voiceSpeedSegments = []; _voiceAutoKey = null; try{ applyAutoVoice(); }catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; } }
+  if(on){
+    _autoBusy = true;
+    voiceSpeedSegments = []; _voiceAutoKey = null;
+    renderSegments('voice');
+    updateAutoVoiceUI();
+    try{
+      await applyAutoVoice();
+      voicePlayerCtl.markDirty();
+      await voicePlayerCtl.prepare();
+    }catch(err){
+      document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message;
+    }finally{
+      _autoBusy = false;
+      setAutoBar(100, '완료');
+      hideAutoBar();
+    }
+    return;
+  }
   renderSegments('voice');
   updateAutoVoiceUI();
   voicePlayerCtl.markDirty();
+  document.getElementById('voiceAutoFill').style.width = '0%';
+  document.getElementById('voiceAutoText').textContent = '자동 맞춤 대기';
 }
 document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
   if(!voiceAutoSpeed && voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
@@ -2055,7 +2141,7 @@ function getVoiceBaseName(){
 }
 
 document.getElementById('downloadVoiceWavBtn').addEventListener('click', async () => {
-  applyAutoVoice();
+  await applyAutoVoice();
   const status = document.getElementById('loadError');
   const trimmed = getTrimmedVoiceBuffer();
   const { start: trimStartNow } = getVoiceTrimRange();
@@ -2066,7 +2152,7 @@ document.getElementById('downloadVoiceWavBtn').addEventListener('click', async (
   downloadAsWav(buf, getVoiceBaseName() + '.wav', status, 'voice', 'voiceWav');
 });
 document.getElementById('downloadVoiceMp3Btn').addEventListener('click', async (e) => {
-  applyAutoVoice();
+  await applyAutoVoice();
   const status = document.getElementById('loadError');
   const btn = e.currentTarget;
   btn.disabled = true;
@@ -2119,7 +2205,7 @@ function makePlayer(kind){
 
   async function ensureProcessed(){
     if(!st.dirty && st.processed) return st.processed;
-    if(kind === 'voice') applyAutoVoice();
+    if(kind === 'voice') await applyAutoVoice();
     const trimmed = trimmedBuffer();
     let processed = trimmed;
     const speedNow = speedFactor();
@@ -2134,8 +2220,10 @@ function makePlayer(kind){
         status.textContent = '음성 속도 처리 중…';
         processed = await buildSegmentedVoiceBuffer(trimmed, trimStartNow, speedNow, voiceSpeedSegments, pct => {
           status.textContent = '음성 속도 처리 중… ' + pct + '%';
+          if(voiceAutoSpeed) setAutoBar(40 + pct * 0.6, '속도 처리 중');
         });
         status.textContent = '';
+        if(voiceAutoSpeed && !_autoBusy) hideAutoBar();
       }
     } else if(speedNow !== 1 || musicSpeedSegments.length > 0){
       const status = document.getElementById('loadError');
@@ -2334,7 +2422,7 @@ function makePlayer(kind){
     updateProgressDisplay();
   }
 
-  return { markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing };
+  return { prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing };
 }
 
 function attachScrub(barId, durationFn, seekFn){
@@ -3029,7 +3117,7 @@ function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, tr
 }
 
 async function performMix(){
-  applyAutoVoice();
+  await applyAutoVoice();
   if(!voiceBuffer || !musicBuffer) return false;
   const mixBtn = document.getElementById('mixBtn');
   const mixStatus = document.getElementById('mixStatus');
