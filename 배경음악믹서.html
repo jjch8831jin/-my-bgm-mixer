@@ -70,7 +70,9 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 10px; margin-bottom: 14px;
   }
-  .section-head h2{ margin-bottom: 0; }
+  .section-head h2{ margin-bottom: 0; white-space: nowrap; }
+  .section-head{ flex-wrap: wrap; }
+  .track-columns .head-tools .record-btn{ padding: 5px 9px; }
   .section-head .record-btn{ flex-shrink: 0; }
 
   .drop-row{ display: flex; gap: 12px; }
@@ -274,6 +276,9 @@
   .auto-track{ flex: 1; min-width: 180px; display: flex; align-items: center; gap: 10px; }
   .auto-track .progress-bar{ flex: 1; }
   .auto-track .time{ margin-top: 0; white-space: nowrap; min-width: 9em; text-align: right; }
+  .tool-row.icon-row{ justify-content: flex-start; gap: 8px; }
+  .tool-row.icon-row .record-btn{ flex: none; font-size: 14pt; padding: 6px 16px; }
+  #toolPanel .speed-row > .record-btn{ font-size: 14pt; padding: 6px 14px; }
   .head-tools{ display: flex; gap: 6px; }
   .folder-line{ font-size: 12pt; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
@@ -316,17 +321,6 @@
     <button class="record-btn" id="resetAllBtn" style="margin-top:10px;" title="전체 초기화">🔄 전체 초기화</button>
   </header>
 
-  <section>
-    <h2>PC 소리로 배경음악 녹음</h2>
-    <div class="record-box" style="margin-top:0; padding-top:0; border-top:none;">
-      <div class="record-row">
-        <button class="record-btn" id="recordBtn">🎙 PC 소리로 배경음악 녹음</button>
-        <span class="record-time" id="recordTime"></span>
-      </div>
-      <div class="record-hint" id="recordHint">공유 창에서 <b>"전체 화면"</b>을 선택하고 <b>"시스템 오디오 공유"</b>를 체크하면 PC에서 재생 중인 모든 소리(유튜브, 음악 앱 등)가 녹음됩니다. (Windows Chrome/Edge에서만 지원 — Mac은 브라우저 탭 소리만 가능)</div>
-      <canvas id="recordLiveCanvas" style="margin-top:10px;"></canvas>
-    </div>
-  </section>
 
   <div class="track-columns">
   <section class="track-card" id="card_voice">
@@ -360,26 +354,41 @@
       <div class="ruler" id="musicRuler"></div>
     </div>
   </section>
+  <section class="record-card">
+    <h2>PC 소리 녹음</h2>
+    <div class="record-box" style="margin-top:0; padding-top:0; border-top:none;">
+      <div class="record-row">
+        <button class="record-btn" id="recordBtn">🎙 PC 소리로 배경음악 녹음</button>
+        <span class="record-time" id="recordTime"></span>
+      </div>
+      <div class="record-hint" id="recordHint">공유 창에서 <b>"전체 화면"</b> 선택 후 <b>"시스템 오디오 공유"</b>를 체크하세요. (Windows Chrome/Edge)</div>
+      <canvas id="recordLiveCanvas" style="margin-top:10px;"></canvas>
+    </div>
+  </section>
   </div>
 
   <section id="toolPanel">
     <div class="section-head"><h2>편집 · 재생 · 내보내기</h2>
       <div class="segmented big" id="toolSelect">
-        <button type="button" data-track="voice" class="active">🎙 음성</button>
-        <button type="button" data-track="music">🎵 배경음악</button>
-        <button type="button" data-track="all">▶ 통합</button>
+        <button type="button" data-track="voice" class="active" title="음성">🎙 음성</button>
+        <button type="button" data-track="music" title="배경음악">🎵 배경음악</button>
+        <button type="button" data-track="all" title="통합 (음성+배경음악 동시 재생)">▶ 통합</button>
       </div>
     </div>
     <div class="tool-panel" id="panel_all">
       <div class="player-row" style="margin-top:4px; gap:14px;">
-        <button class="record-btn" id="togetherBtn" type="button" title="음성과 배경음악을 동시에 재생 / 일시정지" style="font-size:14pt; padding:10px 24px;">▶ 통합 재생</button>
-        <button class="record-btn" id="togetherStopBtn" type="button" title="둘 다 정지" style="font-size:14pt; padding:10px 24px;">⏹ 정지</button>
+        <button class="record-btn" id="togetherBtn" type="button" title="음성과 배경음악을 동시에 재생 / 일시정지" style="font-size:14pt; padding:8px 20px;">▶ 통합 재생</button>
+        <button class="record-btn" id="togetherStopBtn" type="button" title="둘 다 정지" style="font-size:14pt; padding:8px 20px;">⏹ 정지</button>
+      </div>
+      <div class="speed-row" style="justify-content:center; margin-top:12px;">
+        <label class="mix-chip" title="음성 크기 (%) — 최종 믹싱에도 반영됩니다"><span class="ic">🎙</span><span class="lb">음성 크기</span><input type="number" id="voiceVolume" min="0" max="300" step="1" value="100"><span class="un">%</span></label>
+        <label class="mix-chip" title="배경음악 크기 (%) — 3번 믹싱 설정의 음악 크기와 같은 값입니다"><span class="ic">🎵</span><span class="lb">음악 크기</span><input type="number" id="musicVolume2" min="0" max="300" step="1" value="25"><span class="un">%</span></label>
       </div>
       <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 4번 믹싱 후 미리듣기에서 들으세요.</div>
     </div>
     <div class="tool-panel" id="panel_voice">
-      <div class="tool-row" style="margin-top:0;">
-        <button class="record-btn" id="zoomVoiceBtn" type="button" disabled title="파형을 크게 열어 정밀하게 편집">🔍 확대 편집</button>
+      <div class="tool-row icon-row" style="margin-top:0;">
+        <button class="record-btn" id="zoomVoiceBtn" type="button" disabled title="확대 편집 (파형을 크게 열어 정밀하게 편집)">🔍 확대 편집</button>
         <button class="record-btn" id="cutModeVoiceBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
         <button class="record-btn" id="applyCutVoiceBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
         <button class="record-btn" id="clearCutVoiceBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
@@ -399,8 +408,8 @@
         <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.5" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
-        <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
-        <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동맞춤</button>
+        <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
+        <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)">⚖ 자동맞춤</button>
         <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
       </div>
       <div class="seg-form" id="segForm_voice" style="display:none;">
@@ -419,8 +428,8 @@
       <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
     </div>
     <div class="tool-panel" id="panel_music">
-      <div class="tool-row" style="margin-top:0;">
-        <button class="record-btn" id="zoomMusicBtn" type="button" disabled title="파형을 크게 열어 정밀하게 편집">🔍 확대 편집</button>
+      <div class="tool-row icon-row" style="margin-top:0;">
+        <button class="record-btn" id="zoomMusicBtn" type="button" disabled title="확대 편집 (파형을 크게 열어 정밀하게 편집)">🔍 확대 편집</button>
         <button class="record-btn" id="cutModeMusicBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
         <button class="record-btn" id="applyCutMusicBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
         <button class="record-btn" id="clearCutMusicBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
@@ -440,7 +449,7 @@
         <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
-        <button class="record-btn" id="addMusicSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
+        <button class="record-btn" id="addMusicSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
       </div>
       <div class="seg-form" id="segForm_music" style="display:none;">
         <input type="number" id="segStart_music" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
@@ -989,7 +998,7 @@ async function applyAutoVoice(){
 }
 function updateAutoVoiceUI(){
   const btn = document.getElementById('autoVoiceSpeedBtn');
-  btn.textContent = voiceAutoSpeed ? '⚖ 자동맞춤중' : '⚖ 자동맞춤';
+  btn.textContent = voiceAutoSpeed ? '⚖ 자동맞춤중' : '⚖ 자동맞춤'; btn.title = voiceAutoSpeed ? '자동 맞춤 중 (다시 누르면 끔)' : '자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)';
   btn.classList.toggle('recording', voiceAutoSpeed);
   document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
 }
@@ -2220,6 +2229,12 @@ function makePlayer(kind){
   function rawBuffer(){ return kind === 'voice' ? voiceBuffer : musicBuffer; }
   function trimRange(){ return kind === 'voice' ? getVoiceTrimRange() : getMusicTrimRange(); }
   function speedFactor(){ return kind === 'voice' ? voiceSpeed : musicSpeed; }
+  function volNow(){
+    if(typeof activeTrack === 'undefined' || activeTrack !== 'all') return 1;
+    const el = document.getElementById(kind === 'voice' ? 'voiceVolume' : 'musicVolume');
+    return Math.max(0, Number(el.value) || 0) / 100;
+  }
+  function applyVolume(){ if(st.gain) st.gain.gain.value = volNow(); }
   function trimmedBuffer(){ return kind === 'voice' ? getTrimmedVoiceBuffer() : getTrimmedMusicBuffer(); }
 
   function setButtons(){
@@ -2335,7 +2350,11 @@ function makePlayer(kind){
     const source = ctx.createBufferSource();
     source.buffer = processed;
     source.playbackRate.value = st.rate;
-    source.connect(ctx.destination);
+    const g = ctx.createGain();
+    g.gain.value = volNow();
+    source.connect(g);
+    g.connect(ctx.destination);
+    st.gain = g;
     source.onended = () => {
       if(st.source !== source) return; // 이미 새 재생으로 교체된 경우 무시
       st.playing = false;
@@ -2457,7 +2476,7 @@ function makePlayer(kind){
     updateProgressDisplay();
   }
 
-  return { prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing };
+  return { applyVolume, prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing };
 }
 
 function attachScrub(barId, durationFn, seekFn){
@@ -2559,6 +2578,7 @@ function saveSettings(){
   try{
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
       musicVolume: document.getElementById('musicVolume').value,
+      voiceVolume: document.getElementById('voiceVolume').value,
       fadeIn: document.getElementById('fadeIn').value,
       fadeOut: document.getElementById('fadeOut').value,
       voiceDelay: document.getElementById('voiceOffset').value,
@@ -2582,7 +2602,9 @@ function loadSettings(){
   } catch(e){ return; }
   if(s.musicVolume !== undefined){
     document.getElementById('musicVolume').value = s.musicVolume;
+    document.getElementById('musicVolume2').value = s.musicVolume;
   }
+  if(s.voiceVolume !== undefined) document.getElementById('voiceVolume').value = s.voiceVolume;
   if(s.fadeIn !== undefined) document.getElementById('fadeIn').value = s.fadeIn;
   if(s.fadeOut !== undefined) document.getElementById('fadeOut').value = s.fadeOut;
   if(s.voiceDelay !== undefined) document.getElementById('voiceOffset').value = s.voiceDelay;
@@ -3073,7 +3095,8 @@ function readSettings(duration){
   fadeIn = Math.min(fadeIn, duration/2);
   fadeOut = Math.min(fadeOut, duration/2);
   voiceDelay = Math.min(voiceDelay, duration);
-  return { musicGainValue, fadeIn, fadeOut, voiceDelay, musicIntroLevel, musicOutro, musicOutroLevel, duration };
+  const voiceGainValue = Math.max(0, Number(document.getElementById('voiceVolume').value) || 0) / 100;
+  return { voiceGainValue, musicGainValue, fadeIn, fadeOut, voiceDelay, musicIntroLevel, musicOutro, musicOutroLevel, duration };
 }
 
 function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, trimmedMusicBuffer){
@@ -3081,7 +3104,10 @@ function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, tr
 
   const voiceSource = ctx.createBufferSource();
   voiceSource.buffer = adjustedVoiceBuffer;
-  voiceSource.connect(destination);
+  const voiceGainNode = ctx.createGain();
+  voiceGainNode.gain.value = s.voiceGainValue;
+  voiceSource.connect(voiceGainNode);
+  voiceGainNode.connect(destination);
 
   const musicSource = ctx.createBufferSource();
   musicSource.buffer = trimmedMusicBuffer;
@@ -3377,6 +3403,16 @@ setActiveTrack('voice');
   });
   document.getElementById('togetherStopBtn').addEventListener('click', () => { voicePlayerCtl.stop(); musicPlayerCtl.stop(); setTimeout(refresh, 50); });
   setInterval(refresh, 300);
+})();
+
+// ---- 통합 화면 소리 크기 ----
+(function(){
+  const v = document.getElementById('voiceVolume'), m1 = document.getElementById('musicVolume'), m2 = document.getElementById('musicVolume2');
+  function apply(){ voicePlayerCtl.applyVolume(); musicPlayerCtl.applyVolume(); }
+  v.addEventListener('input', () => { onSettingsChanged(); saveSettings(); apply(); });
+  m2.addEventListener('input', () => { m1.value = m2.value; onSettingsChanged(); saveSettings(); apply(); });
+  m1.addEventListener('input', () => { m2.value = m1.value; apply(); });
+  m2.value = m1.value;
 })();
 </script>
 </body>
