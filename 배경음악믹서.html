@@ -209,9 +209,18 @@
   .console .segmented button{ filter:none; text-shadow:none; background:#455c70; color:#fff !important; border:1px solid #6f8aa0; font-size:14pt; padding:3px 11px; opacity:1; }
   .console .segmented button.active{ background:#ffb547; color:#131f2c; border-color:#ffb547; }
   .console .fader{ -webkit-appearance:none; appearance:none; background:transparent; }
+  .console .fader{ --div:3; }
+  .console .fader.vol{ --div:4; }
   .console .fader::-webkit-slider-runnable-track{ height:28px; border-radius:3px; background:
     linear-gradient(#0b141c,#0b141c) center/100% 6px no-repeat,
-    linear-gradient(90deg,#8fa9c2 0 1px,transparent 1px) 0 0/calc((100% - 18px)/3) 100% repeat-x;
+    linear-gradient(270deg,#8fa9c2 0 1px,transparent 1px) 0 0/100% 100% no-repeat,
+    linear-gradient(90deg,#8fa9c2 0 1px,transparent 1px) 0 0/calc(100%/var(--div)) 100% repeat-x;
+    background-origin:content-box; box-sizing:border-box; padding:0 9px; }
+  .console .fader.vol::-webkit-slider-runnable-track{ background:
+    linear-gradient(#0b141c,#0b141c) center/100% 6px no-repeat,
+    linear-gradient(90deg,transparent calc(50% - 1px),#ffb547 calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)) 0 0/100% 100% no-repeat,
+    linear-gradient(270deg,#8fa9c2 0 1px,transparent 1px) 0 0/100% 100% no-repeat,
+    linear-gradient(90deg,#8fa9c2 0 1px,transparent 1px) 0 0/calc(100%/4) 100% repeat-x;
     background-origin:content-box; box-sizing:border-box; padding:0 9px; }
   .console .fader::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:34px; margin-top:-3px; border-radius:3px; border:1px solid #0b141c;
     background:linear-gradient(90deg,#d9e2ea 0 42%,#ffb547 42% 58%,#d9e2ea 58%); box-shadow:0 2px 4px rgba(0,0,0,.6); cursor:grab; }
@@ -434,6 +443,10 @@
   #resetAllBtn:hover{ background:#2b3d4d; color:#fff; border-color:#9db4c9; }
   #mixStatus:empty{ display:none; }
   .mix-btn{ padding:9px 16px; white-space:nowrap; }
+  .wave-tools{ display:flex; align-items:center; gap:6px; flex:1; margin:0 12px; min-width:0; flex-wrap:wrap; }
+  .wave-tools .record-btn{ font-size:14pt; padding:2px 12px; }
+  .wave-tools .cut-info{ font-size:12pt; color:#dbe6f0; margin-left:6px; }
+  #toolPanel .section-head{ justify-content:flex-start; margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -460,7 +473,12 @@
     <div class="tc-right">
     <div class="file-list" id="voiceList"></div>
     <div class="wave-block">
-      <div class="wave-label"><span>음성 파형</span><span id="voiceDur">—</span></div>
+      <div class="wave-label"><span>음성 파형</span><span class="wave-tools">
+        <button class="record-btn" id="zoomVoiceBtn" type="button" disabled title="확대 편집 (파형을 크게 열어 정밀하게 편집)">🔍 확대 편집</button>
+        <button class="record-btn" id="cutModeVoiceBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
+        <button class="record-btn" id="applyCutVoiceBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
+        <button class="record-btn" id="clearCutVoiceBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
+<span class="cut-info" id="voiceCutInfo"></span></span><span id="voiceDur">—</span></div>
       <canvas id="voiceCanvas"></canvas>
       <div class="ruler" id="voiceRuler"></div>
     </div>
@@ -480,7 +498,12 @@
     <div class="tc-right">
     <div class="file-list" id="musicList"></div>
     <div class="wave-block">
-      <div class="wave-label"><span>배경음악 파형</span><span id="musicDur">—</span></div>
+      <div class="wave-label"><span>배경음악 파형</span><span class="wave-tools">
+        <button class="record-btn" id="zoomMusicBtn" type="button" disabled title="확대 편집 (파형을 크게 열어 정밀하게 편집)">🔍 확대 편집</button>
+        <button class="record-btn" id="cutModeMusicBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
+        <button class="record-btn" id="applyCutMusicBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
+        <button class="record-btn" id="clearCutMusicBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
+<span class="cut-info" id="musicCutInfo"></span></span><span id="musicDur">—</span></div>
       <canvas id="musicCanvas"></canvas>
       <div class="ruler" id="musicRuler"></div>
     </div>
@@ -502,7 +525,7 @@
   </div>
 
   <section id="toolPanel">
-    <div class="section-head"><h2>편집 · 재생 · 내보내기</h2>
+    <div class="section-head">
       <div class="segmented big" id="toolSelect">
         <button type="button" data-track="voice" class="active" title="음성">🎙 음성</button>
         <button type="button" data-track="music" title="배경음악">🎵 배경음악</button>
@@ -521,13 +544,6 @@
       <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 5번 믹싱 후 미리듣기에서 들으세요.</div>
     </div>
     <div class="tool-panel" id="panel_voice">
-      <div class="tool-row icon-row" style="margin-top:0;">
-        <button class="record-btn" id="zoomVoiceBtn" type="button" disabled title="확대 편집 (파형을 크게 열어 정밀하게 편집)">🔍 확대 편집</button>
-        <button class="record-btn" id="cutModeVoiceBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
-        <button class="record-btn" id="applyCutVoiceBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
-        <button class="record-btn" id="clearCutVoiceBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
-      </div>
-      <div class="record-hint" id="voiceCutInfo"></div>
       <div class="player-line">
         <div class="pl-left"><div class="player-row" style="margin-top:0; justify-content:flex-start;">
           <button class="player-btn" id="voicePrevBtn" disabled title="이전 트랙">⏮</button>
@@ -564,13 +580,6 @@
       <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
     </div>
     <div class="tool-panel" id="panel_music">
-      <div class="tool-row icon-row" style="margin-top:0;">
-        <button class="record-btn" id="zoomMusicBtn" type="button" disabled title="확대 편집 (파형을 크게 열어 정밀하게 편집)">🔍 확대 편집</button>
-        <button class="record-btn" id="cutModeMusicBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
-        <button class="record-btn" id="applyCutMusicBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
-        <button class="record-btn" id="clearCutMusicBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
-      </div>
-      <div class="record-hint" id="musicCutInfo"></div>
       <div class="player-line">
         <div class="pl-left"><div class="player-row" style="margin-top:0; justify-content:flex-start;">
           <button class="player-btn" id="musicPrevBtn" disabled title="이전 트랙">⏮</button>
@@ -612,10 +621,10 @@
     <h2>4. 믹싱 설정</h2>
     <div class="console">
       <div class="cg cg-vol">
-        <div class="strip"><span class="sl">🎙 음성</span><input type="range" class="fader" data-num="voiceVolume3" min="0" max="300" step="1" value="100" aria-label="음성 크기"><span class="sn"><input type="number" id="voiceVolume3" min="0" max="300" step="1" value="100" aria-label="음성 크기 (%)">%</span></div>
-        <div class="strip"><span class="sl">🎵 음악</span><input type="range" class="fader" data-num="musicVolume" min="0" max="300" step="1" value="25" aria-label="음악 크기"><span class="sn"><input type="number" id="musicVolume" min="0" max="300" step="1" value="25" aria-label="배경음악 크기 (%)">%</span></div>
-        <div class="strip"><span class="sl">🔉 시작</span><input type="range" class="fader" data-num="musicIntroLevel" min="0" max="300" step="1" value="100" aria-label="시작 구간 음량"><span class="sn"><input type="number" id="musicIntroLevel" min="0" max="300" step="1" value="100" aria-label="시작 구간 음량 (%)">%</span></div>
-        <div class="strip"><span class="sl">🔉 연장</span><input type="range" class="fader" data-num="musicOutroLevel" min="0" max="300" step="1" value="100" aria-label="연장 구간 음량"><span class="sn"><input type="number" id="musicOutroLevel" min="0" max="300" step="1" value="100" aria-label="연장 구간 음량 (%)">%</span></div>
+        <div class="strip"><span class="sl">🎙 음성</span><input type="range" class="fader vol" data-num="voiceVolume3" min="0" max="200" step="0.5" value="100" aria-label="음성 크기"><span class="sn"><input type="number" id="voiceVolume3" min="0" max="300" step="1" value="100" aria-label="음성 크기 (%)">%</span></div>
+        <div class="strip"><span class="sl">🎵 음악</span><input type="range" class="fader vol" data-num="musicVolume" min="0" max="200" step="0.5" value="25" aria-label="음악 크기"><span class="sn"><input type="number" id="musicVolume" min="0" max="300" step="1" value="25" aria-label="배경음악 크기 (%)">%</span></div>
+        <div class="strip"><span class="sl">🔉 시작</span><input type="range" class="fader vol" data-num="musicIntroLevel" min="0" max="200" step="0.5" value="100" aria-label="시작 구간 음량"><span class="sn"><input type="number" id="musicIntroLevel" min="0" max="300" step="1" value="100" aria-label="시작 구간 음량 (%)">%</span></div>
+        <div class="strip"><span class="sl">🔉 연장</span><input type="range" class="fader vol" data-num="musicOutroLevel" min="0" max="200" step="0.5" value="100" aria-label="연장 구간 음량"><span class="sn"><input type="number" id="musicOutroLevel" min="0" max="300" step="1" value="100" aria-label="연장 구간 음량 (%)">%</span></div>
         <div class="strip" title="페이드 인 (초)"><span class="sl">📈 인</span><input type="range" class="fader" data-num="fadeIn" data-def="2" min="0" max="30" step="0.5" value="2" aria-label="페이드 인 (초)"><span class="sn"><input type="number" id="fadeIn" min="0" step="0.5" value="2" aria-label="페이드 인 (초)">초</span></div>
         <div class="strip" title="페이드 아웃 (초)"><span class="sl">📉 아웃</span><input type="range" class="fader" data-num="fadeOut" data-def="3" min="0" max="30" step="0.5" value="3" aria-label="페이드 아웃 (초)"><span class="sn"><input type="number" id="fadeOut" min="0" step="0.5" value="3" aria-label="페이드 아웃 (초)">초</span></div>
       </div>
@@ -3558,11 +3567,16 @@ setActiveTrack('voice');
 (function(){
   const faders=[...document.querySelectorAll('.fader')];
   const fire=el=>el.dispatchEvent(new Event('input',{bubbles:true}));
+  const toVol=p=> p<=100 ? p : 100+(p-100)*2;
+  const toPos=v=> v<=100 ? v : 100+(v-100)/2;
+  const f2n=f=> f.classList.contains('vol') ? Math.round(toVol(Number(f.value))) : Number(f.value);
+  const n2f=(f,v)=> f.classList.contains('vol') ? toPos(Number(v)||0) : v;
   faders.forEach(f=>{
     const n=document.getElementById(f.dataset.num);
-    f.addEventListener('input',()=>{ n.value=f.value; fire(n); });
-    n.addEventListener('input',()=>{ f.value=n.value; });
-    f.addEventListener('dblclick',()=>{ n.value=f.dataset.def||((f.dataset.num==='musicVolume')?25:100); f.value=n.value; fire(n); });
+    f.value=n2f(f,n.value);
+    f.addEventListener('input',()=>{ n.value=f2n(f); fire(n); });
+    n.addEventListener('input',()=>{ f.value=n2f(f,n.value); });
+    f.addEventListener('dblclick',()=>{ n.value=f.dataset.def||((f.dataset.num==='musicVolume')?25:100); f.value=n2f(f,n.value); fire(n); });
   });
   document.querySelectorAll('.ks button').forEach(b=>b.addEventListener('click',()=>{
     const el=document.getElementById(b.dataset.t);
@@ -3574,7 +3588,7 @@ setActiveTrack('voice');
   v1.addEventListener('input',()=>{ v3.value=v1.value; });
   function sync(){
     v3.value=v1.value;
-    faders.forEach(f=>{ const n=document.getElementById(f.dataset.num); if(f.value!==n.value && document.activeElement!==f) f.value=n.value; });
+    faders.forEach(f=>{ const n=document.getElementById(f.dataset.num); if(document.activeElement!==f && Number(f.value)!==Number(n2f(f,n.value))) f.value=n2f(f,n.value); });
   }
   sync(); setInterval(sync,300);
 })();
