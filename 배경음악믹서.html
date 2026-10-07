@@ -447,6 +447,8 @@
   .wave-tools .record-btn{ font-size:14pt; padding:2px 12px; }
   .wave-tools .cut-info{ font-size:12pt; color:#dbe6f0; margin-left:6px; }
   #toolPanel .section-head{ justify-content:flex-start; margin-bottom:10px; }
+  .all-tag{ font-size:14pt; color:#f4f8fc; white-space:nowrap; width:96px; flex:none; }
+  #panel_all .player-line{ margin-top:12px; }
 </style>
 </head>
 <body>
@@ -533,13 +535,23 @@
       </div>
     </div>
     <div class="tool-panel" id="panel_all">
-      <div class="player-row" style="margin-top:4px; gap:14px;">
-        <button class="record-btn" id="togetherBtn" type="button" title="음성과 배경음악을 동시에 재생 / 일시정지" style="font-size:14pt; padding:8px 20px;">▶ 통합 재생</button>
-        <button class="record-btn" id="togetherStopBtn" type="button" title="둘 다 정지" style="font-size:14pt; padding:8px 20px;">⏹ 정지</button>
-      </div>
-      <div class="speed-row" style="justify-content:center; margin-top:12px;">
+      <div class="speed-row" style="margin-top:0;">
+        <button class="player-btn" id="togetherPrevBtn" type="button" title="이전 트랙">⏮</button>
+        <button class="player-btn primary" id="togetherBtn" type="button" title="음성과 배경음악을 동시에 재생 / 일시정지">▶</button>
+        <button class="player-btn" id="togetherStopBtn" type="button" title="둘 다 정지">⏹</button>
+        <button class="player-btn" id="togetherNextBtn" type="button" title="다음 트랙">⏭</button>
         <label class="mix-chip" title="음성 크기 (%) — 최종 믹싱에도 반영됩니다"><span class="ic">🎙</span><span class="lb">음성 크기</span><input type="number" id="voiceVolume" min="0" max="300" step="1" value="100"><span class="un">%</span></label>
         <label class="mix-chip" title="배경음악 크기 (%) — 4번 믹싱 설정의 음악 크기와 같은 값입니다"><span class="ic">🎵</span><span class="lb">음악 크기</span><input type="number" id="musicVolume2" min="0" max="300" step="1" value="25"><span class="un">%</span></label>
+      </div>
+      <div class="player-line">
+        <span class="all-tag">🎙 음성</span>
+        <div class="progress-bar scrubbable" id="allVoiceBar"><div class="progress-fill" id="allVoiceFill"></div></div>
+        <div class="time" id="allVoiceTime" style="margin-top:0;">00:00 / 00:00</div>
+      </div>
+      <div class="player-line" style="margin-top:8px;">
+        <span class="all-tag">🎵 음악</span>
+        <div class="progress-bar scrubbable" id="allMusicBar"><div class="progress-fill music" id="allMusicFill"></div></div>
+        <div class="time" id="allMusicTime" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 5번 믹싱 후 미리듣기에서 들으세요.</div>
     </div>
@@ -2622,7 +2634,7 @@ function makePlayer(kind){
     updateProgressDisplay();
   }
 
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
@@ -3542,15 +3554,28 @@ setActiveTrack('voice');
 (function(){
   const btn = document.getElementById('togetherBtn');
   function anyPlaying(){ return voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying(); }
-  function refresh(){ btn.textContent = anyPlaying() ? '⏸ 일시정지' : '▶ 통합 재생'; }
+  function refresh(){ btn.textContent = anyPlaying() ? '⏸' : '▶'; }
   btn.addEventListener('click', () => {
     if(anyPlaying()){ voicePlayerCtl.pause(); musicPlayerCtl.pause(); }
     else { voicePlayerCtl.play(); musicPlayerCtl.play(); }
     setTimeout(refresh, 50);
   });
-  voicePlayerCtl.onEnd = () => { if(musicPlayerCtl.isLooping()){ musicPlayerCtl.stop(); setTimeout(refresh, 50); } };
+  // 길이 기준(음성/음악/긴 쪽)을 통합 재생에도 적용
+  voicePlayerCtl.onEnd = () => { if(durationMode === 'voice' || musicPlayerCtl.isLooping()){ musicPlayerCtl.stop(); } setTimeout(refresh, 50); };
+  musicPlayerCtl.onEnd = () => { if(durationMode === 'music'){ voicePlayerCtl.stop(); } setTimeout(refresh, 50); };
   document.getElementById('togetherStopBtn').addEventListener('click', () => { voicePlayerCtl.stop(); musicPlayerCtl.stop(); setTimeout(refresh, 50); });
-  setInterval(refresh, 300);
+  document.getElementById('togetherPrevBtn').addEventListener('click', () => { voicePlayerCtl.prev(); musicPlayerCtl.prev(); });
+  document.getElementById('togetherNextBtn').addEventListener('click', () => { voicePlayerCtl.next(); musicPlayerCtl.next(); });
+  attachScrub('allVoiceBar', () => voicePlayerCtl.getDuration(), f => voicePlayerCtl.seekToFraction(f));
+  attachScrub('allMusicBar', () => musicPlayerCtl.getDuration(), f => musicPlayerCtl.seekToFraction(f));
+  function bars(){
+    [['Voice',voicePlayerCtl],['Music',musicPlayerCtl]].forEach(([n,c])=>{
+      const d=c.getDuration()||0, e=Math.min(c.getElapsed(), d||0);
+      document.getElementById('all'+n+'Fill').style.width=(d>0?e/d*100:0)+'%';
+      document.getElementById('all'+n+'Time').textContent=fmtTime(e)+' / '+fmtTime(d);
+    });
+  }
+  setInterval(()=>{ refresh(); bars(); }, 150);
 })();
 
 // ---- 통합 화면 소리 크기 ----
