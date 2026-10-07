@@ -327,7 +327,7 @@
       <div class="field-row"><label>음성 구간별 속도 (특정 부분만 다르게)</label></div>
       <div class="file-list" id="voiceSegmentList"></div>
       <button class="record-btn" id="addVoiceSegmentBtn" type="button">+ 구간 추가</button>
-      <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 구간별 속도를 채웁니다">⚖ 자동 속도 맞춤</button>
+      <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동 속도 맞춤: 꺼짐</button>
     </div>
 
     <div class="file-actions">
@@ -808,11 +808,10 @@ document.getElementById('addVoiceSegmentBtn').addEventListener('click', () => ad
 document.getElementById('addMusicSegmentBtn').addEventListener('click', () => addSegment('music'));
 
 // 음성 자동 속도 맞춤: 구간별 말하는 빠르기(음절 수/초)를 재서 평균에 맞도록 구간별 속도를 채움 (±20% 제한)
-function autoBalanceVoiceSpeed(){
+function computeAutoVoiceSegments(){
   const buf = voiceBuffer;
-  const status = document.getElementById('loadError');
-  if(!buf) return;
-  if(voiceSpeedSegments.length > 0 && !confirm('기존 구간별 속도를 지우고 자동으로 다시 채울까요?')) return;
+  const status = { textContent: '' };
+  if(!buf) return { segs: [], msg: '' };
   const sr = buf.sampleRate, hop = Math.round(sr * 0.01), nch = buf.numberOfChannels;
   const n = Math.floor(buf.length / hop);
   const chs = []; for(let c=0;c<nch;c++) chs.push(buf.getChannelData(c));
@@ -827,7 +826,7 @@ function autoBalanceVoiceSpeed(){
   const sample = []; for(let i=0;i<n;i+=7) sample.push(sm[i]);
   sample.sort((x,y)=>x-y);
   const loud = sample[Math.floor(sample.length*0.9)] || 0;
-  if(loud <= 0){ status.textContent = '분석할 음성이 없습니다.'; return; }
+  if(loud <= 0){ return { segs: [], msg: '분석할 음성이 없습니다.' }; }
   const thr = loud*0.2, peakThr = loud*0.3;
   const isPeak = new Uint8Array(n);
   let lastPeak = -100;
@@ -850,7 +849,7 @@ function autoBalanceVoiceSpeed(){
     rates.push(speech >= 100 ? peaks / (speech*0.01) : null);
   }
   const valid = rates.filter(r => r !== null).sort((x,y)=>x-y);
-  if(valid.length < 2){ status.textContent = '자동 맞춤을 하기에 음성이 너무 짧습니다.'; return; }
+  if(valid.length < 2){ return { segs: [], msg: '자동 맞춤을 하기에 음성이 너무 짧습니다.' }; }
   const target = valid[Math.floor(valid.length/2)];
   let ratios = rates.map(r => r === null ? null : Math.max(0.8, Math.min(1.2, target / Math.max(0.1, r))));
   let prev = 1;
@@ -880,15 +879,33 @@ function autoBalanceVoiceSpeed(){
     const speed = Math.max(0.25, Math.min(3, Math.round(voiceSpeed*g.ratio*100)/100));
     if(end - start > 0.3) segs.push({ id: ++segmentIdCounter, start, end, speed });
   });
-  voiceSpeedSegments = segs;
-  renderSegments('voice');
-  voicePlayerCtl.markDirty();
-  status.textContent = segs.length === 0
-    ? '이미 속도가 고르게 나와서 바꿀 구간이 없습니다.'
-    : '자동 속도 맞춤 완료: ' + segs.length + '개 구간 (필요하면 직접 고칠 수 있습니다)';
+  return { segs, msg: segs.length === 0 ? '이미 속도가 고르게 나와서 바꿀 구간이 없습니다.' : '' };
+}
+
+// 자동 모드: 음성/속도가 바뀌었을 때만 다시 계산 (재생·믹싱·내보내기 직전에 호출)
+let voiceAutoSpeed = false;
+let _voiceAutoKey = null;
+function applyAutoVoice(){
+  if(!voiceAutoSpeed || !voiceBuffer) return;
+  const k = _voiceAutoKey;
+  if(k && k.buf === voiceBuffer && k.speed === voiceSpeed && k.arr === voiceSpeedSegments) return;
+  voiceSpeedSegments = computeAutoVoiceSegments().segs;
+  _voiceAutoKey = { buf: voiceBuffer, speed: voiceSpeed, arr: voiceSpeedSegments };
+}
+function updateAutoVoiceUI(){
+  const btn = document.getElementById('autoVoiceSpeedBtn');
+  btn.textContent = voiceAutoSpeed ? '⚖ 자동 속도 맞춤: 켜짐' : '⚖ 자동 속도 맞춤: 꺼짐';
+  btn.style.fontWeight = voiceAutoSpeed ? '700' : '';
+  document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
+  document.getElementById('addVoiceSegmentBtn').style.display = voiceAutoSpeed ? 'none' : '';
 }
 document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
-  try{ autoBalanceVoiceSpeed(); }catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; }
+  if(!voiceAutoSpeed && voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
+  voiceAutoSpeed = !voiceAutoSpeed;
+  if(voiceAutoSpeed){ voiceSpeedSegments = []; _voiceAutoKey = null; try{ applyAutoVoice(); }catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; } }
+  renderSegments('voice');
+  updateAutoVoiceUI();
+  voicePlayerCtl.markDirty();
 });
 
 document.addEventListener('input', e => {
@@ -2042,6 +2059,7 @@ function getVoiceBaseName(){
 }
 
 document.getElementById('downloadVoiceWavBtn').addEventListener('click', async () => {
+  applyAutoVoice();
   const status = document.getElementById('loadError');
   const trimmed = getTrimmedVoiceBuffer();
   const { start: trimStartNow } = getVoiceTrimRange();
@@ -2052,6 +2070,7 @@ document.getElementById('downloadVoiceWavBtn').addEventListener('click', async (
   downloadAsWav(buf, getVoiceBaseName() + '.wav', status, 'voice', 'voiceWav');
 });
 document.getElementById('downloadVoiceMp3Btn').addEventListener('click', async (e) => {
+  applyAutoVoice();
   const status = document.getElementById('loadError');
   const btn = e.currentTarget;
   btn.disabled = true;
@@ -2104,6 +2123,7 @@ function makePlayer(kind){
 
   async function ensureProcessed(){
     if(!st.dirty && st.processed) return st.processed;
+    if(kind === 'voice') applyAutoVoice();
     const trimmed = trimmedBuffer();
     let processed = trimmed;
     const speedNow = speedFactor();
@@ -2897,7 +2917,7 @@ document.getElementById('voiceSpeedSlider').addEventListener('input', e => {
   document.getElementById('voiceSpeedVal').textContent = voiceSpeed.toFixed(2) + 'x';
   onSettingsChanged();
   saveSettings();
-  voicePlayerCtl.setSpeed();
+  if(voiceAutoSpeed) voicePlayerCtl.markDirty(); else voicePlayerCtl.setSpeed();
 });
 document.getElementById('musicSpeedSlider').addEventListener('input', e => {
   musicSpeed = Math.round(Number(e.target.value) * 100) / 100;
@@ -3013,6 +3033,7 @@ function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, tr
 }
 
 async function performMix(){
+  applyAutoVoice();
   if(!voiceBuffer || !musicBuffer) return false;
   const mixBtn = document.getElementById('mixBtn');
   const mixStatus = document.getElementById('mixStatus');
