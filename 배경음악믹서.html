@@ -455,6 +455,7 @@
   #resetAllBtn{ border-color:#0e1822; }
   .pl-left{ width:240px !important; }
   body section .player-btn.on{ background:#ffb547; color:#131f2c; border-color:#ffd08a; box-shadow:0 0 10px rgba(255,181,71,.55), 0 2px 0 #0b141c; }
+  body section .dl-row .record-btn.busy, body section .dl-row .record-btn.busy:disabled, body section .dl-row .record-btn.busy:hover:not(:disabled){ background:#ef4a3a; border-color:#ff8a7c; color:#fff; box-shadow:0 0 10px rgba(239,74,58,.7); filter:none; }
 </style>
 </head>
 <body>
@@ -1163,8 +1164,8 @@ async function applyAutoVoice(){
 }
 function updateAutoVoiceUI(){
   const btn = document.getElementById('autoVoiceSpeedBtn');
-  btn.textContent = voiceAutoSpeed ? '⚖ 자동맞춤중' : '⚖ 자동맞춤'; btn.title = voiceAutoSpeed ? '자동 맞춤 중 (다시 누르면 끔)' : '자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)';
-  btn.classList.toggle('recording', voiceAutoSpeed);
+  btn.textContent = _autoBusy ? '⚖ 자동맞춤중' : '⚖ 자동맞춤'; btn.title = _autoBusy ? '자동 맞춤 중입니다. 끝나면 처음 모양으로 돌아옵니다.' : (voiceAutoSpeed ? '자동 맞춤이 적용되어 있습니다 (다시 누르면 다시 맞춤, 끄려면 음성 초기화)' : '')|| '자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)';
+  btn.classList.toggle('recording', _autoBusy);
   document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
 }
 async function setVoiceAuto(on){
@@ -1185,6 +1186,7 @@ async function setVoiceAuto(on){
       _autoBusy = false;
       setAutoBar(100, '완료');
       hideAutoBar();
+      updateAutoVoiceUI();
     }
     return;
   }
@@ -1195,8 +1197,14 @@ async function setVoiceAuto(on){
   document.getElementById('voiceAutoText').textContent = '00:00 / 00:00';
 }
 document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
-  if(!voiceAutoSpeed && voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
-  setVoiceAuto(!voiceAutoSpeed);
+  if(_autoBusy) return;
+  if(voiceAutoSpeed){ // 이미 적용된 상태에서 누르면 처음부터 다시 맞춤
+    voiceAutoSpeed = false; voiceSpeedSegments = []; _voiceAutoKey = null;
+    setVoiceAuto(true);
+    return;
+  }
+  if(voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
+  setVoiceAuto(true);
 });
 
 document.addEventListener('input', e => {
@@ -2178,6 +2186,24 @@ const EXPORT_COLORS = {
   musicMp3: '#a0456f'
 };
 
+// 받기 버튼: 작업하는 동안 자동맞춤처럼 빨간색 + '…중' 글자로 표시
+function onBusyClick(id, fn){
+  const btn = document.getElementById(id);
+  btn.addEventListener('click', async (e) => {
+    if(btn.dataset.busy) return;
+    btn.dataset.busy = '1';
+    const orig = btn.textContent;
+    btn.dataset.orig = orig;
+    btn.textContent = orig.replace(/\s*$/, '') + ' 저장중';
+    btn.classList.add('busy');
+    try{ await fn(e); }
+    finally{
+      delete btn.dataset.busy;
+      btn.textContent = btn.dataset.orig;
+      btn.classList.remove('busy');
+    }
+  });
+}
 async function downloadAsWav(buffer, filename, statusEl, scope, colorKey){
   if(!buffer) return;
   const blob = encodeWAV(buffer);
@@ -2363,7 +2389,7 @@ function getVoiceBaseName(){
   return voiceItems[0].name.replace(/\.[^/.]+$/, '');
 }
 
-document.getElementById('downloadVoiceWavBtn').addEventListener('click', async () => {
+onBusyClick('downloadVoiceWavBtn', async () => {
   await applyAutoVoice();
   const status = document.getElementById('loadError');
   const trimmed = getTrimmedVoiceBuffer();
@@ -2372,9 +2398,9 @@ document.getElementById('downloadVoiceWavBtn').addEventListener('click', async (
   const buf = await buildSegmentedVoiceBuffer(trimmed, trimStartNow, voiceSpeed, voiceSpeedSegments, pct => {
     status.textContent = '음성 속도 처리 중… ' + pct + '%';
   });
-  downloadAsWav(buf, getVoiceBaseName() + '.wav', status, 'voice', 'voiceWav');
+  await downloadAsWav(buf, getVoiceBaseName() + '.wav', status, 'voice', 'voiceWav');
 });
-document.getElementById('downloadVoiceMp3Btn').addEventListener('click', async (e) => {
+onBusyClick('downloadVoiceMp3Btn', async (e) => {
   await applyAutoVoice();
   const status = document.getElementById('loadError');
   const btn = e.currentTarget;
@@ -2386,7 +2412,7 @@ document.getElementById('downloadVoiceMp3Btn').addEventListener('click', async (
     status.textContent = '음성 속도 처리 중… ' + pct + '%';
   });
   btn.disabled = false;
-  downloadAsMp3(buf, getVoiceBaseName() + '.mp3', status, btn, 'voiceMp3Bar', 'voiceMp3Fill', 'voice', 'voiceMp3', 'voiceMp3StopBtn');
+  await downloadAsMp3(buf, getVoiceBaseName() + '.mp3', status, btn, 'voiceMp3Bar', 'voiceMp3Fill', 'voice', 'voiceMp3', 'voiceMp3StopBtn');
 });
 
 function getItemBoundaries(items){
@@ -2732,7 +2758,7 @@ document.getElementById('zoomNextBtn').addEventListener('click', () => { const p
 
 attachScrub('zoomProgressBar', () => { const p = zoomActivePlayer(); return p ? p.getDuration() : 0; }, frac => { const p = zoomActivePlayer(); if(p) p.seekToFraction(frac); });
 
-document.getElementById('downloadMusicBtn').addEventListener('click', async () => {
+onBusyClick('downloadMusicBtn', async () => {
   const status = document.getElementById('loadError');
   const trimmed = getTrimmedMusicBuffer();
   const { start: trimStartNow } = getMusicTrimRange();
@@ -2740,9 +2766,9 @@ document.getElementById('downloadMusicBtn').addEventListener('click', async () =
   const buf = await buildSegmentedMusicBuffer(trimmed, trimStartNow, musicSpeed, musicSpeedSegments, pct => {
     status.textContent = '배경음악 속도 처리 중… ' + pct + '%';
   });
-  downloadAsWav(buf, '배경음악.wav', status, 'music', 'musicWav');
+  await downloadAsWav(buf, '배경음악.wav', status, 'music', 'musicWav');
 });
-document.getElementById('downloadMusicMp3Btn').addEventListener('click', async (e) => {
+onBusyClick('downloadMusicMp3Btn', async (e) => {
   const status = document.getElementById('loadError');
   const btn = e.currentTarget;
   btn.disabled = true;
@@ -2753,7 +2779,7 @@ document.getElementById('downloadMusicMp3Btn').addEventListener('click', async (
     status.textContent = '배경음악 속도 처리 중… ' + pct + '%';
   });
   btn.disabled = false;
-  downloadAsMp3(buf, '배경음악.mp3', status, btn, 'musicMp3Bar', 'musicMp3Fill', 'music', 'musicMp3', 'musicMp3StopBtn');
+  await downloadAsMp3(buf, '배경음악.mp3', status, btn, 'musicMp3Bar', 'musicMp3Fill', 'music', 'musicMp3', 'musicMp3StopBtn');
 });
 
 
@@ -3536,7 +3562,7 @@ function encodeWAV(audioBuffer){
   return new Blob([buffer], { type: 'audio/wav' });
 }
 
-document.getElementById('exportBtn').addEventListener('click', async () => {
+onBusyClick('exportBtn', async () => {
   const status = document.getElementById('exportStatus');
   if(!mixedBuffer){
     status.textContent = '먼저 믹싱합니다…';
@@ -3550,14 +3576,14 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
   }
 });
 
-document.getElementById('exportMp3Btn').addEventListener('click', async (e) => {
+onBusyClick('exportMp3Btn', async (e) => {
   const status = document.getElementById('exportStatus');
   if(!mixedBuffer){
     status.textContent = '먼저 믹싱합니다…';
     const ok = await performMix();
     if(!ok) return;
   }
-  downloadAsMp3(mixedBuffer, '믹스결과.mp3', status, e.currentTarget, 'exportMp3Bar', 'exportMp3Fill', 'mix', null, 'exportMp3StopBtn');
+  await downloadAsMp3(mixedBuffer, '믹스결과.mp3', status, e.currentTarget, 'exportMp3Bar', 'exportMp3Fill', 'mix', null, 'exportMp3StopBtn');
 });
 
 // ---- 편집 도구 통합: 음성/배경음악 선택 ----
