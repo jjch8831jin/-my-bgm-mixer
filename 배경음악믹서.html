@@ -283,6 +283,9 @@
   .folder-line{ font-size: 12pt; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
   .dl-row .record-btn{ flex: 1; background: var(--music); border-color: var(--music); color: #fff8ec; padding: 9px 10px; }
+  .dl-label{ align-self: center; font-size: 14pt; font-weight: 600; color: var(--text-dim); margin-right: 4px; }
+  .dl-row .record-btn.folder-btn{ flex: none; background: var(--panel-2); border-color: var(--border); color: var(--text); padding: 9px 16px; }
+  .dl-row .record-btn.folder-btn.on{ background: var(--voice); border-color: var(--voice); color: #f5fbf7; }
   .dl-row .record-btn:hover:not(:disabled){ filter: brightness(1.06); color: #fff8ec; }
   .dl-row .record-btn:disabled{ background: var(--border); border-color: var(--border); color: var(--text-dim); }
   .record-btn.recording{ background: var(--danger); border-color: var(--danger); color: #fff5f0; }
@@ -324,8 +327,8 @@
 
   <div class="track-columns">
   <section class="track-card" id="card_voice">
-    <div class="section-head"><h2>1. 음성</h2><div class="head-tools"><button class="record-btn" id="resetVoiceBtn" type="button" title="음성 초기화">↺ 초기화</button><button class="record-btn" id="chooseFolderBtn_voice" type="button" title="음성 저장 폴더 설정 / 해제">📁 폴더 설정</button></div></div>
-    <div class="folder-line" id="folderStatus_voice">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
+    <div class="section-head"><h2>1. 음성</h2><div class="head-tools"><button class="record-btn" id="resetVoiceBtn" type="button" title="음성 초기화">↺ 초기화</button></div></div>
+    <div id="folderStatus_voice" style="display:none"></div>
     <div class="drop voice" id="dropVoice">
       <div class="label">내레이션 / 음성</div>
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
@@ -340,8 +343,8 @@
   </section>
 
   <section class="track-card" id="card_music">
-    <div class="section-head"><h2>2. 배경음악</h2><div class="head-tools"><button class="record-btn" id="resetMusicBtn" type="button" title="배경음악 초기화">↺ 초기화</button><button class="record-btn" id="chooseFolderBtn_music" type="button" title="배경음악 저장 폴더 설정 / 해제">📁 폴더 설정</button></div></div>
-    <div class="folder-line" id="folderStatus_music">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
+    <div class="section-head"><h2>2. 배경음악</h2><div class="head-tools"><button class="record-btn" id="resetMusicBtn" type="button" title="배경음악 초기화">↺ 초기화</button></div></div>
+    <div id="folderStatus_music" style="display:none"></div>
     <div class="drop music" id="dropMusic">
       <div class="label">배경음악</div>
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
@@ -421,8 +424,10 @@
       </div>
       <div class="file-list seg-scroll" id="voiceSegmentList" style="margin-top:6px;"></div>
       <div class="dl-row">
+        <span class="dl-label">받기</span>
         <button class="record-btn" id="downloadVoiceWavBtn" disabled>⬇ WAV</button>
         <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ MP3</button>
+        <button class="record-btn folder-btn" id="chooseFolderBtn_voice" type="button" title="음성 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
       <div class="progress-bar mini" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div></div>
       <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
@@ -460,8 +465,10 @@
       </div>
       <div class="file-list seg-scroll" id="musicSegmentList" style="margin-top:6px;"></div>
       <div class="dl-row">
+        <span class="dl-label">받기</span>
         <button class="record-btn" id="downloadMusicBtn" disabled>⬇ WAV</button>
         <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ MP3</button>
+        <button class="record-btn folder-btn" id="chooseFolderBtn_music" type="button" title="배경음악 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
       <div class="progress-bar mini" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div></div>
       <button class="record-btn" id="musicMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
@@ -533,20 +540,19 @@
         <div class="time" id="timeLabel">00:00 / 00:00</div>
       </div>
     </div>
+    <div class="dl-row" style="margin-top:14px;">
+      <span class="dl-label">받기</span>
+      <button class="record-btn" id="exportBtn" disabled>⬇ WAV</button>
+      <button class="record-btn" id="exportMp3Btn" disabled>⬇ MP3</button>
+      <button class="record-btn folder-btn" id="chooseFolderBtn_mix" type="button" title="믹스결과 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
+    </div>
+    <div id="folderStatus_mix" style="display:none"></div>
+    <div class="progress-bar mini" id="exportMp3Bar"><div class="progress-fill music" id="exportMp3Fill"></div></div>
+    <button class="record-btn" id="exportMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
+    <div class="export-status" id="exportStatus"></div>
   </section>
 
-  <div class="folder-row">
-    <button class="record-btn" id="chooseFolderBtn_mix" type="button">📁 믹스결과 폴더 설정</button>
-  </div>
-  <div class="record-hint" id="folderStatus_mix">폴더 미지정 — 저장할 때마다 창이 뜹니다.</div>
 
-  <div class="export-row">
-    <button class="export-btn" id="exportBtn" disabled>⬇ WAV 다운로드</button>
-    <button class="export-btn" id="exportMp3Btn" disabled>⬇ MP3 다운로드</button>
-  </div>
-  <div class="progress-bar mini" id="exportMp3Bar"><div class="progress-fill music" id="exportMp3Fill"></div></div>
-  <button class="record-btn" id="exportMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
-  <div class="export-status" id="exportStatus"></div>
 
 </div>
 
@@ -1887,11 +1893,9 @@ function updateFolderStatus(scope){
       : (scope === 'voice' ? '음성 폴더 미지정' : scope === 'music' ? '배경음악 폴더 미지정' : '믹스결과 폴더 미지정') + ' — 저장 창이 그 폴더에서 시작하려면 지정하세요.';
   }
   if(btn){
-    if(scope === 'mix'){
-      btn.textContent = handle ? '📁 믹스결과 폴더 해제' : '📁 믹스결과 폴더 설정';
-    } else {
-      btn.textContent = handle ? '📁 폴더 해제' : '📁 폴더 설정';
-    }
+    btn.textContent = handle ? '📁 폴더 ✓' : '📁 폴더';
+    btn.classList.toggle('on', !!handle);
+    btn.title = handle ? '저장 폴더: "' + handle.name + '" (한 번 더 누르면 해제)' : '저장 폴더 지정 (저장 창이 그 폴더에서 시작합니다)';
   }
 }
 
