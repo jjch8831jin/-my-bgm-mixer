@@ -560,11 +560,6 @@
         <div class="progress-bar scrubbable" id="allMusicBar"><div class="progress-fill music" id="allMusicFill"></div></div>
         <div class="time" id="allMusicTime" style="margin-top:0;">00:00 / 00:00</div>
       </div>
-      <div class="dl-row" style="margin-top:12px;">
-        <span class="dl-label">폴더</span>
-        <button class="record-btn folder-btn" data-folder="voice" data-label="음성" type="button" title="음성 저장·불러오기 폴더 지정 (한 번 더 누르면 해제)" style="flex:none;">📁 음성 폴더</button>
-        <button class="record-btn folder-btn" data-folder="music" data-label="배경음악" type="button" title="배경음악 저장·불러오기 폴더 지정 (한 번 더 누르면 해제)" style="flex:none;">📁 배경음악 폴더</button>
-      </div>
       <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 5번 믹싱 후 미리듣기에서 들으세요.</div>
     </div>
     <div class="tool-panel" id="panel_voice">
@@ -2489,7 +2484,7 @@ function makePlayer(kind){
     if(st.raf){ cancelAnimationFrame(st.raf); st.raf = null; }
   }
 
-  function loopEff(){ return !!(st.loopOn || (st.repeat && activeTrack !== 'all')); }
+  function loopEff(){ return !!(st.loopOn || st.repeat); }
   function elapsedNow(){
     if(!st.playing) return st.pausedAt;
     const dur = st.processed ? durP() : st.pausedAt;
