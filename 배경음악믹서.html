@@ -432,6 +432,8 @@
   body section .error, body .error{ color:#ff8a7c; }
   #resetAllBtn{ background:#1f2d3a; color:#f4f8fc; border:1px solid #455c70; border-radius:4px; box-shadow:0 2px 0 #0b141c; }
   #resetAllBtn:hover{ background:#2b3d4d; color:#fff; border-color:#9db4c9; }
+  #mixStatus:empty{ display:none; }
+  .mix-btn{ padding:9px 16px; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -646,11 +648,8 @@
 
   <section>
     <h2>5. 믹싱 & 미리듣기</h2>
-    <div class="mix-row">
+    <div class="transport" style="margin-top:6px;">
       <button class="mix-btn" id="mixBtn" disabled>🎚 믹싱하기</button>
-      <span class="mix-status" id="mixStatus">음성과 배경음악을 불러온 뒤 믹싱하세요.</span>
-    </div>
-    <div class="transport" style="margin-top:16px;">
       <button class="play-btn" id="playBtn" disabled>▶</button>
       <button class="player-btn" id="mixStopBtn" disabled title="정지">⏹</button>
       <div class="progress-wrap">
@@ -658,6 +657,7 @@
         <div class="time" id="timeLabel">00:00 / 00:00</div>
       </div>
     </div>
+    <div class="mix-status" id="mixStatus" style="margin-top:6px;"></div>
     <div class="dl-row" style="margin-top:14px;">
       <span class="dl-label">받기</span>
       <button class="record-btn" id="exportBtn" disabled>⬇ WAV</button>
@@ -1925,7 +1925,7 @@ function updateReadyState(){
   document.getElementById('cutModeMusicBtn').disabled = !musicBuffer;
   document.getElementById('clearCutVoiceBtn').disabled = !voiceBuffer;
   document.getElementById('clearCutMusicBtn').disabled = !musicBuffer;
-  resetMixState(ready ? '설정을 확인하고 믹싱하세요.' : '음성과 배경음악을 불러온 뒤 믹싱하세요.');
+  resetMixState('');
 }
 
 function downloadBlob(blob, filename){
