@@ -38,7 +38,7 @@
     .track-columns > section{ width: 100%; margin-bottom: 16px; }
   }
 
-  header{ margin-bottom: 28px; }
+  header{ margin-bottom: 20px; }
   h1{
     font-family: Georgia, "Nanum Myeongjo", serif;
     font-weight: 700;
@@ -78,9 +78,9 @@
 
   .drop{
     flex: 0 0 auto;
-    border: 3px dashed var(--border);
+    border: 2px dashed var(--border);
     border-radius: var(--radius);
-    padding: 18px 14px;
+    padding: 12px 14px;
     text-align: center;
     cursor: pointer;
     transition: border-color .15s ease, background .15s ease;
@@ -96,7 +96,7 @@
   .drop.voice .label{ color: var(--voice); }
   .drop.music .label{ color: var(--music); }
   .drop .filename{ font-size: 14px; color: var(--text-dim); word-break: break-all; margin-top: 6px; }
-  .drop .hint{ font-size: 14px; color: var(--text-dim); margin-top: 2px; }
+  .drop .hint{ font-size: 12px; color: var(--text-dim); margin-top: 2px; }
   .drop input{ display: none; }
 
   canvas{ display: block; width: 100%; height: 56px; border-radius: 6px; background: var(--panel-2); }
@@ -130,7 +130,7 @@
   .zoom-hint{ margin-top: 8px; font-size: 14px; color: var(--text-dim); }
   .wave-block{ margin-top: 12px; }
   .wave-block + .wave-block{ margin-top: 8px; }
-  .wave-label{ font-size: 14px; color: var(--text-dim); margin-bottom: 4px; display:flex; justify-content: space-between; }
+  .wave-label{ font-size: 12px; color: var(--text-dim); margin-bottom: 4px; display:flex; justify-content: space-between; }
 
   .file-list{ margin-bottom: 6px; }
   .file-item{
@@ -187,6 +187,14 @@
   .segmented button:last-child{ border-right: none; }
   .segmented button.active{ background: var(--music-dim); color: #5a3c0e; }
 
+  .mix-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .mix-chip{ display: flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; margin: 0; }
+  .mix-chip .ic{ font-size: 18px; line-height: 1; }
+  .mix-chip .lb{ font-size: 12px; color: var(--text-dim); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mix-chip .segmented{ flex: none; }
+  .mix-chip .un{ font-size: 12px; color: var(--text-dim); }
+  .mix-chip input[type="number"]{ width: 58px; padding: 4px 6px; }
+  .mix-chip .segmented button{ padding: 3px 9px; font-size: 15px; }
   .transport{ display: flex; align-items: center; gap: 12px; }
   .play-btn{
     width: 44px; height: 44px; border-radius: 50%; border: none;
@@ -225,12 +233,26 @@
   .record-box{ margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
   .record-row{ display: flex; align-items: center; gap: 10px; }
   .record-btn{
-    background: transparent; border: 1.5px solid var(--music); color: var(--music);
-    border-radius: 6px; padding: 8px 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 6px 11px; font-size: 13px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: border-color .12s ease, color .12s ease;
   }
+  .record-btn:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
+  .record-btn:disabled{ opacity: .45; cursor: not-allowed; }
+  .tool-row{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .tool-row .record-btn{ flex: 1; min-width: 0; padding: 7px 6px; }
+  .chip-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+  .seg-row{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .seg-row .seg-title{ font-size: 12px; color: var(--text-dim); margin-right: auto; }
+  .head-tools{ display: flex; gap: 6px; }
+  .folder-line{ font-size: 12px; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
+  .dl-row .record-btn{ flex: 1; background: var(--music); border-color: var(--music); color: #fff8ec; padding: 9px 10px; }
+  .dl-row .record-btn:hover:not(:disabled){ filter: brightness(1.06); color: #fff8ec; }
+  .dl-row .record-btn:disabled{ background: var(--border); border-color: var(--border); color: var(--text-dim); }
   .record-btn.recording{ background: var(--danger); border-color: var(--danger); color: #fff5f0; }
   .record-time{ font-size: 14px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-  .record-hint{ font-size: 14px; color: var(--text-dim); margin-top: 8px; }
+  .record-hint{ font-size: 12px; color: var(--text-dim); margin-top: 8px; }
   .file-actions{ display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .folder-row{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
@@ -260,7 +282,7 @@
   <header>
     <h1>배경음악 믹서</h1>
     <p>음성 파일 위에 배경음악을 입혀 하나의 오디오로 내보냅니다.</p>
-    <button class="record-btn" id="resetAllBtn" style="margin-top:10px;">🔄 전체 초기화</button>
+    <button class="record-btn" id="resetAllBtn" style="margin-top:10px;" title="전체 초기화">🔄 전체 초기화</button>
   </header>
 
   <section>
@@ -277,8 +299,8 @@
 
   <div class="track-columns">
   <section>
-    <div class="section-head"><h2>1. 음성</h2><div style="display:flex; gap:8px;"><button class="record-btn" id="resetVoiceBtn" type="button">초기화</button><button class="record-btn" id="chooseFolderBtn_voice" type="button">📁 폴더 설정</button></div></div>
-    <div class="record-hint" id="folderStatus_voice">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
+    <div class="section-head"><h2>1. 음성</h2><div class="head-tools"><button class="record-btn" id="resetVoiceBtn" type="button" title="음성 초기화">↺ 초기화</button><button class="record-btn" id="chooseFolderBtn_voice" type="button" title="음성 저장 폴더 설정 / 해제">📁 폴더 설정</button></div></div>
+    <div class="folder-line" id="folderStatus_voice">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
     <div class="drop voice" id="dropVoice">
       <div class="label">내레이션 / 음성</div>
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
@@ -286,15 +308,15 @@
     </div>
 
     <div class="wave-block">
-      <div class="wave-label"><span>음성 파형 (드래그해서 삭제 구간 선택)</span><span id="voiceDur">—</span></div>
-      <button class="record-btn" id="zoomVoiceBtn" type="button" disabled style="margin-bottom:6px;">🔍 확대해서 편집</button>
+      <div class="wave-label"><span>음성 파형</span><span id="voiceDur">—</span></div>
       <div class="file-list" id="voiceList"></div>
       <canvas id="voiceCanvas"></canvas>
       <div class="ruler" id="voiceRuler"></div>
-      <div class="file-actions" style="margin-top:8px;">
-        <button class="record-btn" id="cutModeVoiceBtn" type="button" disabled>✂ 구간 삭제 모드</button>
-        <button class="record-btn" id="applyCutVoiceBtn" type="button" disabled>선택 구간 삭제</button>
-        <button class="record-btn" id="clearCutVoiceBtn" type="button" disabled>삭제 구간 해제</button>
+      <div class="tool-row">
+        <button class="record-btn" id="zoomVoiceBtn" type="button" disabled title="파형을 크게 열어 정밀하게 편집">🔍 확대 편집</button>
+        <button class="record-btn" id="cutModeVoiceBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
+        <button class="record-btn" id="applyCutVoiceBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
+        <button class="record-btn" id="clearCutVoiceBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
       </div>
       <div class="record-hint" id="voiceCutInfo"></div>
       <div class="player-row">
@@ -307,40 +329,30 @@
       <div class="time" id="voiceTimeLabel">00:00 / 00:00</div>
     </div>
 
-    <div class="two-col">
-      <div class="field">
-        <div class="field-row"><label>삭제 구간 시작 (초)</label></div>
-        <input type="number" id="voiceCutStart" min="0" step="0.5" value="0">
-      </div>
-      <div class="field">
-        <div class="field-row"><label>삭제 구간 끝 (초)</label></div>
-        <input type="number" id="voiceEndOffset" min="0" step="0.5" value="0">
-      </div>
+    <div class="chip-grid">
+      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">삭제 시작</span><input type="number" id="voiceCutStart" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">삭제 끝</span><input type="number" id="voiceEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
     </div>
 
-    <div class="field">
-      <div class="field-row"><label>음성 재생 속도</label><span class="val" id="voiceSpeedVal">1.00x</span></div>
-      <input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1">
+    <div class="seg-row">
+        <span class="seg-title">구간별 속도</span>
+        <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
+        <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동 맞춤: 꺼짐</button>
     </div>
+    <div class="file-list" id="voiceSegmentList" style="margin-top:6px;"></div>
 
-    <div class="field">
-      <div class="field-row"><label>음성 구간별 속도 (특정 부분만 다르게)</label></div>
-      <div class="file-list" id="voiceSegmentList"></div>
-      <button class="record-btn" id="addVoiceSegmentBtn" type="button">+ 구간 추가</button>
-      <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동 속도 맞춤: 꺼짐</button>
-    </div>
-
-    <div class="file-actions">
-      <button class="record-btn" id="downloadVoiceWavBtn" disabled>⬇ 음성 WAV</button>
-      <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ 음성 MP3</button>
+    <div class="dl-row">
+      <button class="record-btn" id="downloadVoiceWavBtn" disabled>⬇ WAV</button>
+      <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ MP3</button>
     </div>
     <div class="progress-bar mini" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div></div>
     <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
   </section>
 
   <section>
-    <div class="section-head"><h2>2. 배경음악</h2><div style="display:flex; gap:8px;"><button class="record-btn" id="resetMusicBtn" type="button">초기화</button><button class="record-btn" id="chooseFolderBtn_music" type="button">📁 폴더 설정</button></div></div>
-    <div class="record-hint" id="folderStatus_music">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
+    <div class="section-head"><h2>2. 배경음악</h2><div class="head-tools"><button class="record-btn" id="resetMusicBtn" type="button" title="배경음악 초기화">↺ 초기화</button><button class="record-btn" id="chooseFolderBtn_music" type="button" title="배경음악 저장 폴더 설정 / 해제">📁 폴더 설정</button></div></div>
+    <div class="folder-line" id="folderStatus_music">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
     <div class="drop music" id="dropMusic">
       <div class="label">배경음악</div>
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
@@ -348,15 +360,15 @@
     </div>
 
     <div class="wave-block">
-      <div class="wave-label"><span>배경음악 파형 (드래그해서 삭제 구간 선택)</span><span id="musicDur">—</span></div>
-      <button class="record-btn" id="zoomMusicBtn" type="button" disabled style="margin-bottom:6px;">🔍 확대해서 편집</button>
+      <div class="wave-label"><span>배경음악 파형</span><span id="musicDur">—</span></div>
       <div class="file-list" id="musicList"></div>
       <canvas id="musicCanvas"></canvas>
       <div class="ruler" id="musicRuler"></div>
-      <div class="file-actions" style="margin-top:8px;">
-        <button class="record-btn" id="cutModeMusicBtn" type="button" disabled>✂ 구간 삭제 모드</button>
-        <button class="record-btn" id="applyCutMusicBtn" type="button" disabled>선택 구간 삭제</button>
-        <button class="record-btn" id="clearCutMusicBtn" type="button" disabled>삭제 구간 해제</button>
+      <div class="tool-row">
+        <button class="record-btn" id="zoomMusicBtn" type="button" disabled title="파형을 크게 열어 정밀하게 편집">🔍 확대 편집</button>
+        <button class="record-btn" id="cutModeMusicBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
+        <button class="record-btn" id="applyCutMusicBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
+        <button class="record-btn" id="clearCutMusicBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
       </div>
       <div class="record-hint" id="musicCutInfo"></div>
       <div class="player-row">
@@ -369,31 +381,21 @@
       <div class="time" id="musicTimeLabel">00:00 / 00:00</div>
     </div>
 
-    <div class="two-col">
-      <div class="field">
-        <div class="field-row"><label>삭제 구간 시작 (초)</label></div>
-        <input type="number" id="musicOffset" min="0" step="0.5" value="0">
-      </div>
-      <div class="field">
-        <div class="field-row"><label>삭제 구간 끝 (초)</label></div>
-        <input type="number" id="musicEndOffset" min="0" step="0.5" value="0">
-      </div>
+    <div class="chip-grid">
+      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">삭제 시작</span><input type="number" id="musicOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">삭제 끝</span><input type="number" id="musicEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+      <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
     </div>
 
-    <div class="field">
-      <div class="field-row"><label>배경음악 재생 속도</label><span class="val" id="musicSpeedVal">1.00x</span></div>
-      <input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.05" value="1">
+    <div class="seg-row">
+        <span class="seg-title">구간별 속도</span>
+        <button class="record-btn" id="addMusicSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
     </div>
+    <div class="file-list" id="musicSegmentList" style="margin-top:6px;"></div>
 
-    <div class="field">
-      <div class="field-row"><label>배경음악 구간별 속도 (특정 부분만 다르게)</label></div>
-      <div class="file-list" id="musicSegmentList"></div>
-      <button class="record-btn" id="addMusicSegmentBtn" type="button">+ 구간 추가</button>
-    </div>
-
-    <div class="file-actions">
-      <button class="record-btn" id="downloadMusicBtn" disabled>⬇ 배경음악 WAV</button>
-      <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ 배경음악 MP3</button>
+    <div class="dl-row">
+      <button class="record-btn" id="downloadMusicBtn" disabled>⬇ WAV</button>
+      <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ MP3</button>
     </div>
     <div class="progress-bar mini" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div></div>
     <button class="record-btn" id="musicMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
@@ -404,59 +406,49 @@
 
   <section>
     <h2>3. 믹싱 설정</h2>
-
-    <div class="field">
-      <div class="field-row"><label>배경음악 크기 (%)</label></div>
-      <input type="number" id="musicVolume" min="0" max="300" step="1" value="25">
-    </div>
-
-    <div class="two-col">
-      <div class="field">
-        <div class="field-row"><label>페이드 인 (초)</label></div>
-        <input type="number" id="fadeIn" min="0" step="0.5" value="2">
+    <div class="mix-grid">
+      <label class="mix-chip" title="배경음악 크기 (%)">
+        <span class="ic">🔊</span><span class="lb">음악 크기</span>
+        <input type="number" id="musicVolume" min="0" max="300" step="1" value="25" aria-label="배경음악 크기 (%)"><span class="un">%</span>
+      </label>
+      <label class="mix-chip" title="페이드 인 (초)">
+        <span class="ic">📈</span><span class="lb">페이드 인</span>
+        <input type="number" id="fadeIn" min="0" step="0.5" value="2" aria-label="페이드 인 (초)"><span class="un">초</span>
+      </label>
+      <label class="mix-chip" title="페이드 아웃 (초)">
+        <span class="ic">📉</span><span class="lb">페이드 아웃</span>
+        <input type="number" id="fadeOut" min="0" step="0.5" value="3" aria-label="페이드 아웃 (초)"><span class="un">초</span>
+      </label>
+      <label class="mix-chip" title="음성 시작 지연 (초)">
+        <span class="ic">⏳</span><span class="lb">음성 지연</span>
+        <input type="number" id="voiceOffset" min="0" step="0.5" value="0" aria-label="음성 시작 지연 (초)"><span class="un">초</span>
+      </label>
+      <label class="mix-chip" title="음성 종료 후 연장 (초)">
+        <span class="ic">➕</span><span class="lb">끝 연장</span>
+        <input type="number" id="musicOutro" min="0" step="0.5" value="0" aria-label="음성 종료 후 연장 (초)"><span class="un">초</span>
+      </label>
+      <label class="mix-chip" title="시작 구간 음량 (%)">
+        <span class="ic">🔉</span><span class="lb">시작 음량</span>
+        <input type="number" id="musicIntroLevel" min="0" max="300" step="1" value="100" aria-label="시작 구간 음량 (%)"><span class="un">%</span>
+      </label>
+      <label class="mix-chip" title="연장 구간 음량 (%)">
+        <span class="ic">🔉</span><span class="lb">연장 음량</span>
+        <input type="number" id="musicOutroLevel" min="0" max="300" step="1" value="100" aria-label="연장 구간 음량 (%)"><span class="un">%</span>
+      </label>
+      <div class="mix-chip" title="믹스 길이 기준">
+        <span class="ic">📏</span><span class="lb">길이 기준</span>
+        <div class="segmented" id="durationMode">
+          <button data-mode="voice" class="active" title="음성 길이에 맞춤">🎙</button>
+          <button data-mode="music" title="음악 길이에 맞춤">🎵</button>
+          <button data-mode="longer" title="둘 중 긴 쪽에 맞춤">↔</button>
+        </div>
       </div>
-      <div class="field">
-        <div class="field-row"><label>페이드 아웃 (초)</label></div>
-        <input type="number" id="fadeOut" min="0" step="0.5" value="3">
-      </div>
-    </div>
-
-    <div class="two-col">
-      <div class="field">
-        <div class="field-row"><label>음성 시작 지연 (초)</label></div>
-        <input type="number" id="voiceOffset" min="0" step="0.5" value="0">
-      </div>
-      <div class="field">
-        <div class="field-row"><label>음성 종료 후 연장 (초)</label></div>
-        <input type="number" id="musicOutro" min="0" step="0.5" value="0">
-      </div>
-    </div>
-
-    <div class="two-col">
-      <div class="field">
-        <div class="field-row"><label>시작 구간 음량 (%)</label></div>
-        <input type="number" id="musicIntroLevel" min="0" max="300" step="1" value="100">
-      </div>
-      <div class="field">
-        <div class="field-row"><label>연장 구간 음량 (%)</label></div>
-        <input type="number" id="musicOutroLevel" min="0" max="300" step="1" value="100">
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="field-row"><label>믹스 길이 기준</label></div>
-      <div class="segmented" id="durationMode">
-        <button data-mode="voice" class="active">음성 길이</button>
-        <button data-mode="music">음악 길이</button>
-        <button data-mode="longer">둘 중 긴 쪽</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="field-row"><label>음악이 더 짧을 때</label></div>
-      <div class="segmented" id="loopMode">
-        <button data-mode="loop" class="active">반복 재생</button>
-        <button data-mode="once">한 번만 재생</button>
+      <div class="mix-chip" title="음악이 더 짧을 때">
+        <span class="ic">🔁</span><span class="lb">음악이 짧으면</span>
+        <div class="segmented" id="loopMode">
+          <button data-mode="loop" class="active" title="반복 재생">🔁</button>
+          <button data-mode="once" title="한 번만 재생">1</button>
+        </div>
       </div>
     </div>
   </section>
@@ -894,7 +886,7 @@ function applyAutoVoice(){
 }
 function updateAutoVoiceUI(){
   const btn = document.getElementById('autoVoiceSpeedBtn');
-  btn.textContent = voiceAutoSpeed ? '⚖ 자동 속도 맞춤: 켜짐' : '⚖ 자동 속도 맞춤: 꺼짐';
+  btn.textContent = voiceAutoSpeed ? '⚖ 자동 맞춤: 켜짐' : '⚖ 자동 맞춤: 꺼짐';
   btn.style.fontWeight = voiceAutoSpeed ? '700' : '';
   document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
   document.getElementById('addVoiceSegmentBtn').style.display = voiceAutoSpeed ? 'none' : '';
@@ -1401,7 +1393,7 @@ function setCutMode(track, on){
   else { musicCutMode = on; musicCutSel = null; }
   const modeBtn = document.getElementById(track === 'voice' ? 'cutModeVoiceBtn' : 'cutModeMusicBtn');
   modeBtn.classList.toggle('recording', on);
-  modeBtn.textContent = on ? '✂ 삭제 모드 끄기' : '✂ 구간 삭제 모드';
+  modeBtn.textContent = on ? '✂ 모드 끄기' : '✂ 삭제 모드';
   if(track === 'voice') redrawVoiceMarker(); else redrawMusicMarker();
   updateCutInfo(track);
 }
@@ -1566,14 +1558,14 @@ function rebuild(kind){
     voiceCutSel = null;
     voiceCutMode = false;
     const btn = document.getElementById('cutModeVoiceBtn');
-    if(btn){ btn.classList.remove('recording'); btn.textContent = '✂ 구간 삭제 모드'; }
+    if(btn){ btn.classList.remove('recording'); btn.textContent = '✂ 삭제 모드'; }
     document.getElementById('voiceCutInfo').textContent = '';
     document.getElementById('applyCutVoiceBtn').disabled = true;
   } else {
     musicCutSel = null;
     musicCutMode = false;
     const btn = document.getElementById('cutModeMusicBtn');
-    if(btn){ btn.classList.remove('recording'); btn.textContent = '✂ 구간 삭제 모드'; }
+    if(btn){ btn.classList.remove('recording'); btn.textContent = '✂ 삭제 모드'; }
     document.getElementById('musicCutInfo').textContent = '';
     document.getElementById('applyCutMusicBtn').disabled = true;
   }
