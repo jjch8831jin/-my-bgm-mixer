@@ -262,12 +262,18 @@
   #toolPanel{ margin-top: 16px; }
   .seg-scroll .seg-input{ width: 90px; }
   .segmented.big button.active[data-track="voice"]{ background: var(--voice); color: #f5fbf7; }
+  .segmented.big button.active[data-track="all"]{ background: #3f5f86; color: #f2f6fb; }
   .segmented.big button.active[data-track="music"]{ background: var(--music); color: #fff8ec; }
   .player-line{ display: flex; align-items: center; gap: 14px; margin-top: 10px; }
   .player-line .progress-bar{ flex: 1; }
+  .pl-left{ width: 190px; flex: none; }
+  .player-line .time{ min-width: 9em; text-align: right; white-space: nowrap; }
   .tool-panel{ display: none; }
   .tool-panel.active{ display: block; }
   .tool-panel .speed-row2 .auto-bar{ flex: 1; }
+  .auto-track{ flex: 1; min-width: 180px; display: flex; align-items: center; gap: 10px; }
+  .auto-track .progress-bar{ flex: 1; }
+  .auto-track .time{ margin-top: 0; white-space: nowrap; min-width: 9em; text-align: right; }
   .head-tools{ display: flex; gap: 6px; }
   .folder-line{ font-size: 12pt; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
@@ -361,7 +367,15 @@
       <div class="segmented big" id="toolSelect">
         <button type="button" data-track="voice" class="active">🎙 음성</button>
         <button type="button" data-track="music">🎵 배경음악</button>
+        <button type="button" data-track="all">▶ 통합</button>
       </div>
+    </div>
+    <div class="tool-panel" id="panel_all">
+      <div class="player-row" style="margin-top:4px; gap:14px;">
+        <button class="record-btn" id="togetherBtn" type="button" title="음성과 배경음악을 동시에 재생 / 일시정지" style="font-size:14pt; padding:10px 24px;">▶ 통합 재생</button>
+        <button class="record-btn" id="togetherStopBtn" type="button" title="둘 다 정지" style="font-size:14pt; padding:10px 24px;">⏹ 정지</button>
+      </div>
+      <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 4번 믹싱 후 미리듣기에서 들으세요.</div>
     </div>
     <div class="tool-panel" id="panel_voice">
       <div class="tool-row" style="margin-top:0;">
@@ -372,12 +386,12 @@
       </div>
       <div class="record-hint" id="voiceCutInfo"></div>
       <div class="player-line">
-        <div class="player-row" style="margin-top:0;">
+        <div class="pl-left"><div class="player-row" style="margin-top:0; justify-content:flex-start;">
           <button class="player-btn" id="voicePrevBtn" disabled title="이전 트랙">⏮</button>
           <button class="player-btn primary" id="voicePlayBtn" disabled title="재생/일시정지">▶</button>
           <button class="player-btn" id="voiceStopBtn" disabled title="정지">⏹</button>
           <button class="player-btn" id="voiceNextBtn" disabled title="다음 트랙">⏭</button>
-        </div>
+        </div></div>
         <div class="progress-bar scrubbable" id="voiceProgressBar"><div class="progress-fill" id="voiceProgressFill"></div></div>
         <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
@@ -387,8 +401,8 @@
         <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동맞춤</button>
+        <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
       </div>
-      <div class="speed-row2"><div class="auto-bar" id="voiceAutoBar" title="자동 맞춤 진행 상황"><div class="progress-fill" id="voiceAutoFill"></div><span id="voiceAutoText">자동 맞춤 대기</span></div></div>
       <div class="seg-form" id="segForm_voice" style="display:none;">
         <input type="number" id="segStart_voice" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
         <input type="number" id="segEnd_voice" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
@@ -413,12 +427,12 @@
       </div>
       <div class="record-hint" id="musicCutInfo"></div>
       <div class="player-line">
-        <div class="player-row" style="margin-top:0;">
+        <div class="pl-left"><div class="player-row" style="margin-top:0; justify-content:flex-start;">
           <button class="player-btn" id="musicPrevBtn" disabled title="이전 트랙">⏮</button>
           <button class="player-btn primary" id="musicPlayBtn" disabled title="재생/일시정지">▶</button>
           <button class="player-btn" id="musicStopBtn" disabled title="정지">⏹</button>
           <button class="player-btn" id="musicNextBtn" disabled title="다음 트랙">⏭</button>
-        </div>
+        </div></div>
         <div class="progress-bar scrubbable" id="musicProgressBar"><div class="progress-fill" id="musicProgressFill"></div></div>
         <div class="time" id="musicTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
@@ -952,13 +966,12 @@ let _voiceAutoKey = null;
 let _autoPromise = null, _autoT0 = 0, _autoBusy = false;
 function setAutoBar(pct, text){
   if(!_autoT0) _autoT0 = performance.now();
+  const el = (performance.now() - _autoT0) / 1000;
+  const total = pct >= 100 ? el : (pct > 0 ? el * 100 / pct : 0);
   document.getElementById('voiceAutoFill').style.width = Math.min(100, pct) + '%';
-  document.getElementById('voiceAutoText').textContent = text + ' ' + Math.round(Math.min(100, pct)) + '% · ' + ((performance.now() - _autoT0) / 1000).toFixed(1) + '초';
+  document.getElementById('voiceAutoText').textContent = fmtTime(el) + ' / ' + fmtTime(total);
 }
-function hideAutoBar(){
-  _autoT0 = 0;
-  setTimeout(() => { if(_autoT0 === 0){ document.getElementById('voiceAutoFill').style.width = '0%'; document.getElementById('voiceAutoText').textContent = voiceAutoSpeed ? '자동 맞춤 완료' : '자동 맞춤 대기'; } }, 1500);
-}
+function hideAutoBar(){ _autoT0 = 0; }
 async function applyAutoVoice(){
   if(!voiceAutoSpeed || !voiceBuffer) return;
   const k = _voiceAutoKey;
@@ -1005,7 +1018,7 @@ async function setVoiceAuto(on){
   updateAutoVoiceUI();
   voicePlayerCtl.markDirty();
   document.getElementById('voiceAutoFill').style.width = '0%';
-  document.getElementById('voiceAutoText').textContent = '자동 맞춤 대기';
+  document.getElementById('voiceAutoText').textContent = '00:00 / 00:00';
 }
 document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
   if(!voiceAutoSpeed && voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
@@ -3335,6 +3348,7 @@ let activeTrack = 'voice';
 function setActiveTrack(k){
   activeTrack = k;
   document.querySelectorAll('#toolSelect button').forEach(b => b.classList.toggle('active', b.dataset.track === k));
+  document.getElementById('panel_all').classList.toggle('active', k === 'all');
   ['voice','music'].forEach(t => {
     document.getElementById('panel_' + t).classList.toggle('active', t === k);
     const c = document.getElementById('card_' + t);
@@ -3350,6 +3364,20 @@ document.getElementById('toolSelect').addEventListener('click', e => {
 ['voice','music'].forEach(t => document.getElementById('card_' + t).addEventListener('pointerdown', () => setActiveTrack(t)));
 document.getElementById('recordBtn').addEventListener('click', () => setActiveTrack('music'));
 setActiveTrack('voice');
+
+// ---- 통합 재생: 음성+배경음악 동시 재생/일시정지 ----
+(function(){
+  const btn = document.getElementById('togetherBtn');
+  function anyPlaying(){ return voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying(); }
+  function refresh(){ btn.textContent = anyPlaying() ? '⏸ 일시정지' : '▶ 통합 재생'; }
+  btn.addEventListener('click', () => {
+    if(anyPlaying()){ voicePlayerCtl.pause(); musicPlayerCtl.pause(); }
+    else { voicePlayerCtl.play(); musicPlayerCtl.play(); }
+    setTimeout(refresh, 50);
+  });
+  document.getElementById('togetherStopBtn').addEventListener('click', () => { voicePlayerCtl.stop(); musicPlayerCtl.stop(); setTimeout(refresh, 50); });
+  setInterval(refresh, 300);
+})();
 </script>
 </body>
 </html>
