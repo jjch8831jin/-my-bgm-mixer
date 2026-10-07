@@ -2278,7 +2278,22 @@ async function stretchBufferSpeed(buffer, speed, onProgress, cache){
   const ctx = getCtx();
   const st = new SoundTouch();
   st.tempo = speed; // 템포만 바꿔 피치는 그대로 유지 (SoundTouch의 핵심 기능)
-  const source = new WebAudioBufferSource(buffer);
+  // 끝에 0.6초 무음을 덧붙여 SoundTouch 내부에 남은 마지막 소리까지 모두 뽑아낸 뒤, 원래 길이로 잘라냄
+  // (덧붙이지 않으면 조각마다 끝 0.2~0.3초가 사라져 문장 사이 단어가 잘림)
+  const padFrames = Math.ceil(buffer.sampleRate * 0.6);
+  const srcL = buffer.getChannelData(0);
+  const srcR = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : srcL;
+  const source = {
+    extract(target, numFrames, position){
+      let n = 0;
+      for(; n < numFrames && position + n < buffer.length + padFrames; n++){
+        const idx = position + n;
+        target[n*2] = idx < buffer.length ? srcL[idx] : 0;
+        target[n*2+1] = idx < buffer.length ? srcR[idx] : 0;
+      }
+      return n;
+    }
+  };
   const filter = new SimpleFilter(source, st);
 
   const chunkFrames = 4096;
@@ -2316,12 +2331,14 @@ async function stretchBufferSpeed(buffer, speed, onProgress, cache){
   });
 
   const numChannels = buffer.numberOfChannels >= 2 ? 2 : 1;
+  totalFramesOut = Math.min(totalFramesOut, Math.max(1, Math.round(buffer.length / speed)));
   const out = ctx.createBuffer(numChannels, Math.max(1, totalFramesOut), ctx.sampleRate);
   const left = out.getChannelData(0);
   const right = numChannels === 2 ? out.getChannelData(1) : null;
   let pos = 0;
   for(const chunk of outChunks){
-    const frames = chunk.length / 2;
+    const frames = Math.min(chunk.length / 2, totalFramesOut - pos);
+    if(frames <= 0) break;
     for(let i=0; i<frames; i++){
       left[pos+i] = chunk[i*2];
       if(right) right[pos+i] = chunk[i*2+1];
