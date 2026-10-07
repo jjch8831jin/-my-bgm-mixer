@@ -189,8 +189,8 @@
   .segmented button:last-child{ border-right: none; }
   .segmented button.active{ background: var(--music-dim); color: #5a3c0e; }
 
-  .console{ display:flex; flex-wrap:wrap; gap:10px; background:#1f2d3a; border:1px solid #0e1822; border-radius:10px; padding:10px; color:#f4f8fc; }
-  .console .cg{ background:#2b3d4d; border:1px solid #455c70; border-radius:8px; padding:8px 10px; }
+  .console{ display:flex; flex-wrap:wrap; gap:8px; background:#1f2d3a; border:1px solid #0e1822; border-radius:10px; padding:10px; color:#f4f8fc; }
+  .console .cg{ background:#2b3d4d; border:1px solid #455c70; border-radius:8px; padding:8px 8px; }
   .cg-vol{ display:flex; gap:8px; }
   .cg-time{ grid-template-columns:auto !important; }
   .strip{ display:flex; flex-direction:column; align-items:center; gap:4px; width:84px; }
@@ -218,8 +218,15 @@
   .console .fader::-moz-range-track{ height:6px; background:#0b141c; border-radius:3px; }
   .console .fader::-moz-range-thumb{ width:16px; height:34px; border-radius:3px; border:1px solid #0b141c; background:linear-gradient(90deg,#d9e2ea 0 42%,#ffb547 42% 58%,#d9e2ea 58%); }
   .console input[type="number"]::-webkit-inner-spin-button{ opacity:1; height:30px; cursor:pointer; }
-  .console .strip .sn input[type="number"]{ width:68px; }
-  .console .strip{ width:94px; }
+  .console .strip .sn input[type="number"]{ width:62px; }
+  .console .strip{ width:88px; }
+  .cg-meter{ display:flex; gap:4px; }
+  .mt{ display:flex; flex-direction:column; align-items:center; gap:4px; width:44px; }
+  .mt .sl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
+  .mt .bar{ position:relative; width:18px; height:96px; margin:34px 0 0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
+  .mt .fill{ position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(to top,#2fbf5b 0,#2fbf5b 60%,#f2d33c 78%,#ef4a3a 100%); background-size:100% 96px; background-position:bottom; }
+  .mt .pk{ position:absolute; left:0; right:0; height:2px; bottom:0; background:#fff; }
+  .mt .db{ font-size:12pt; color:#f4f8fc; height:34px; line-height:34px; margin-top:0; white-space:nowrap; }
   .mix-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
   .mix-chip{ display: flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; margin: 0; }
   .mix-chip .ic{ font-size: 16pt; line-height: 1; }
@@ -378,6 +385,53 @@
   }
   .mix-btn:disabled{ background: #b7cadc; color: #1d2f42; cursor: not-allowed; }
   .mix-status{ font-size: 14pt; color: var(--text-dim); }
+
+  /* ---- 전체 카드 콘솔 스타일 ---- */
+  body section{ --text:#f4f8fc; --text-dim:#dbe6f0; --panel:#2b3d4d; --panel-2:#3a4f62; --border:#6f8aa0; background:#1f2d3a; border-color:#0e1822; color:#f4f8fc; }
+  body section h2{ color:#f4f8fc; }
+  body section .record-btn, body section .player-btn{ background:#455c70; color:#f4f8fc; border:1px solid #6f8aa0; border-radius:4px; box-shadow:0 2px 0 #0b141c; }
+  body section .record-btn:hover:not(:disabled){ background:#5a7690; color:#fff; border-color:#9db4c9; }
+  body section .record-btn:active:not(:disabled), body section .player-btn:active:not(:disabled){ transform:translateY(1px); box-shadow:none; }
+  body section .record-btn:disabled, body section .player-btn:disabled, body section .tool-row .record-btn:disabled{ background:#2b3d4d; color:#9fb3c5; border-color:#455c70; box-shadow:none; opacity:1; }
+  body section .record-btn.recording{ background:#ef4a3a; border-color:#ff8a7c; color:#fff; box-shadow:0 0 10px rgba(239,74,58,.7); }
+  body section .player-btn.primary{ background:#2fbf5b; color:#08210f; border:1px solid #7be09a; border-radius:4px; box-shadow:0 0 8px rgba(47,191,91,.55), 0 2px 0 #0b141c; }
+  body section .player-btn.primary:disabled{ background:#2b3d4d; color:#9fb3c5; box-shadow:none; border-color:#455c70; }
+  body section .segmented{ border-color:#6f8aa0; border-radius:4px; }
+  body section .segmented button{ background:#455c70; color:#f4f8fc; border-color:#6f8aa0; }
+  body section .segmented button.active, body section .segmented.big button.active[data-track]{ background:#ffb547; color:#131f2c; box-shadow:0 0 10px rgba(255,181,71,.55); }
+  body section input[type="number"]{ background:#f4f8fc; color:#131f2c; border:1px solid #8fa9c2; }
+  body section .mix-chip, body section .seg-form{ background:#2b3d4d; border-color:#455c70; border-radius:6px; }
+  body section .mix-chip .lb, body section .mix-chip .un, body section .mix-chip .ic{ color:#f4f8fc; }
+  body section .progress-bar{ height:8px; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:visible; }
+  body section .progress-bar.scrubbable:hover{ height:8px; margin-top:0; }
+  body section .progress-fill{ position:relative; background:#2fbf5b; border-radius:2px; }
+  body section .progress-fill.music{ background:#ffb547; }
+  body section .progress-bar.scrubbable .progress-fill::after{ content:""; position:absolute; right:-8px; top:-9px; width:16px; height:24px; border-radius:3px; border:1px solid #0b141c; background:linear-gradient(90deg,#d9e2ea 0 42%,#ffb547 42% 58%,#d9e2ea 58%); box-shadow:0 2px 4px rgba(0,0,0,.6); }
+  body section .time{ background:#0b141c; color:#7dffa8; border:1px solid #455c70; border-radius:4px; padding:2px 10px; font-family:Consolas,"D2Coding",monospace; text-align:center; }
+  body section .auto-track .time{ color:#ff9a8c; }
+  body section .record-hint{ color:#dbe6f0; }
+  body section .dl-row .record-btn{ background:#ffb547; color:#131f2c; border-color:#ffd08a; }
+  body section .dl-row .record-btn:hover:not(:disabled){ background:#ffc56b; color:#131f2c; filter:none; }
+  body section .dl-row .record-btn.folder-btn{ background:#455c70; color:#f4f8fc; border-color:#6f8aa0; }
+  body section .dl-row .record-btn.folder-btn.on{ background:#2fbf5b; color:#08210f; border-color:#7be09a; box-shadow:0 0 8px rgba(47,191,91,.55); }
+  body section .dl-row .record-btn:disabled{ background:#2b3d4d; color:#9fb3c5; border-color:#455c70; }
+  body section .dl-label{ color:#f4f8fc; }
+  body section .mix-btn{ background:#ffb547; color:#131f2c; border:1px solid #ffd08a; border-radius:4px; box-shadow:0 2px 0 #0b141c; }
+  body section .mix-btn:disabled{ background:#2b3d4d; color:#9fb3c5; border-color:#455c70; box-shadow:none; }
+  body section .mix-status, body section .export-status{ color:#f4f8fc; }
+  body section .transport{ display:flex; align-items:center; gap:14px; }
+  body section .play-btn{ background:#2fbf5b; color:#08210f; border:1px solid #7be09a; border-radius:4px; width:44px; height:44px; box-shadow:0 0 8px rgba(47,191,91,.55), 0 2px 0 #0b141c; }
+  body section .play-btn:disabled{ background:#2b3d4d; color:#9fb3c5; border-color:#455c70; box-shadow:none; }
+  body section .progress-wrap{ flex:1; display:flex; align-items:center; gap:14px; }
+  body section .progress-wrap .progress-bar{ flex:1; }
+  body section .progress-wrap .time{ min-width:9em; }
+  body section .drop .label{ color:#f4f8fc; }
+  body section .drop.voice .label{ color:#6df0a0; }
+  body section .drop.music .label{ color:#ffc56b; }
+  body section .drop .filename, body section .drop .hint{ color:#dbe6f0; }
+  body section .error, body .error{ color:#ff8a7c; }
+  #resetAllBtn{ background:#1f2d3a; color:#f4f8fc; border:1px solid #455c70; border-radius:4px; box-shadow:0 2px 0 #0b141c; }
+  #resetAllBtn:hover{ background:#2b3d4d; color:#fff; border-color:#9db4c9; }
 </style>
 </head>
 <body>
@@ -567,6 +621,11 @@
         <div class="knob" title="음성 시작 지연 (초)"><span class="kl">⏳ 음성 지연</span><span class="ks"><button type="button" data-st="-0.5" data-t="voiceOffset">−</button><input type="number" id="voiceOffset" min="0" step="0.5" value="0" aria-label="음성 시작 지연 (초)"><button type="button" data-st="0.5" data-t="voiceOffset">＋</button></span></div>
         <div class="knob" title="음성 종료 후 연장 (초)"><span class="kl">➕ 끝 연장</span><span class="ks"><button type="button" data-st="-0.5" data-t="musicOutro">−</button><input type="number" id="musicOutro" min="0" step="0.5" value="0" aria-label="음성 종료 후 연장 (초)"><button type="button" data-st="0.5" data-t="musicOutro">＋</button></span></div>
       </div>
+      <div class="cg cg-meter" title="재생 중 소리 크기">
+        <div class="mt"><span class="sl">🎙</span><div class="bar"><div class="fill" data-m="voice"></div><div class="pk" data-p="voice"></div></div><span class="db" data-d="voice">−∞</span></div>
+        <div class="mt"><span class="sl">🎵</span><div class="bar"><div class="fill" data-m="music"></div><div class="pk" data-p="music"></div></div><span class="db" data-d="music">−∞</span></div>
+        <div class="mt"><span class="sl">합계</span><div class="bar"><div class="fill" data-m="master"></div><div class="pk" data-p="master"></div></div><span class="db" data-d="master">−∞</span></div>
+      </div>
       <div class="cg cg-mode">
         <div class="sw" title="믹스 길이 기준"><span class="kl">📏 길이</span>
           <div class="segmented" id="durationMode">
@@ -667,6 +726,17 @@ function getCtx(){
   return audioCtx;
 }
 
+// ---- 레벨 미터 ----
+const meterNodes = {};
+function getMeter(name){
+  if(meterNodes[name]) return meterNodes[name];
+  const ctx = getCtx();
+  const an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0;
+  if(name === 'master'){ an.connect(ctx.destination); }
+  else { an.connect(getMeter('master')); }
+  meterNodes[name] = an;
+  return an;
+}
 function fmtTime(s){
   if(!isFinite(s)) s = 0;
   const m = Math.floor(s/60);
@@ -2416,7 +2486,7 @@ function makePlayer(kind){
     const g = ctx.createGain();
     g.gain.value = volNow();
     source.connect(g);
-    g.connect(ctx.destination);
+    g.connect(getMeter(kind));
     st.gain = g;
     source.onended = () => {
       if(st.source !== source) return; // 이미 새 재생으로 교체된 경우 무시
@@ -3292,7 +3362,7 @@ function playPreviewFrom(startPos){
   ctx.resume();
   const source = ctx.createBufferSource();
   source.buffer = mixedBuffer;
-  source.connect(ctx.destination);
+  source.connect(getMeter('master'));
   source.start(0, startPos);
   previewSources = [source];
   previewStartTime = ctx.currentTime - startPos;
@@ -3501,6 +3571,32 @@ setActiveTrack('voice');
     faders.forEach(f=>{ const n=document.getElementById(f.dataset.num); if(f.value!==n.value && document.activeElement!==f) f.value=n.value; });
   }
   sync(); setInterval(sync,300);
+})();
+
+// ---- 레벨 미터 갱신 ----
+(function(){
+  const names=['voice','music','master'];
+  const els={}, buf=new Float32Array(1024), lv={}, pk={}, pkT={};
+  names.forEach(n=>{ els[n]={f:document.querySelector('[data-m='+n+']'),p:document.querySelector('[data-p='+n+']'),d:document.querySelector('[data-d='+n+']')}; lv[n]=0; pk[n]=0; pkT[n]=0; });
+  function frame(t){
+    names.forEach(n=>{
+      let peak=0;
+      const an=meterNodes[n];
+      if(an){ an.getFloatTimeDomainData(buf); for(let i=0;i<buf.length;i++){ const a=Math.abs(buf[i]); if(a>peak) peak=a; } }
+      const db=peak>0?20*Math.log10(peak):-120;
+      const v=Math.max(0,Math.min(1,(db+60)/60));
+      lv[n]= v>lv[n] ? v : Math.max(v, lv[n]-0.02);
+      if(v>=pk[n]){ pk[n]=v; pkT[n]=t; } else if(t-pkT[n]>800){ pk[n]=Math.max(lv[n],pk[n]-0.015); }
+      const e=els[n];
+      e.f.style.height=(lv[n]*100)+'%';
+      e.p.style.bottom='calc('+(pk[n]*100)+'% - 1px)';
+      e.p.style.opacity = pk[n]>0.01?1:0;
+      e.d.textContent = pk[n]>0.01 ? Math.round(pk[n]*60-60) : '−∞';
+      e.d.style.color = pk[n]>=0.999 ? '#ff6b5a' : '#f4f8fc';
+    });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 })();
 </script>
 </body>
