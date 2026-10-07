@@ -453,6 +453,8 @@
   h1{ color:#0f1a24; }
   header p{ color:#16293a; }
   #resetAllBtn{ border-color:#0e1822; }
+  .pl-left{ width:240px !important; }
+  body section .player-btn.on{ background:#ffb547; color:#131f2c; border-color:#ffd08a; box-shadow:0 0 10px rgba(255,181,71,.55), 0 2px 0 #0b141c; }
 </style>
 </head>
 <body>
@@ -544,6 +546,7 @@
         <button class="player-btn primary" id="togetherBtn" type="button" title="음성과 배경음악을 동시에 재생 / 일시정지">▶</button>
         <button class="player-btn" id="togetherStopBtn" type="button" title="둘 다 정지">⏹</button>
         <button class="player-btn" id="togetherNextBtn" type="button" title="다음 트랙">⏭</button>
+        <button class="player-btn" id="togetherRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 함께 재생)">🔁</button>
         <label class="mix-chip" title="음성 크기 (%) — 최종 믹싱에도 반영됩니다"><span class="ic">🎙</span><span class="lb">음성 크기</span><input type="number" id="voiceVolume" min="0" max="300" step="1" value="100"><span class="un">%</span></label>
         <label class="mix-chip" title="배경음악 크기 (%) — 4번 믹싱 설정의 음악 크기와 같은 값입니다"><span class="ic">🎵</span><span class="lb">음악 크기</span><input type="number" id="musicVolume2" min="0" max="300" step="1" value="25"><span class="un">%</span></label>
       </div>
@@ -571,6 +574,7 @@
           <button class="player-btn primary" id="voicePlayBtn" disabled title="재생/일시정지">▶</button>
           <button class="player-btn" id="voiceStopBtn" disabled title="정지">⏹</button>
           <button class="player-btn" id="voiceNextBtn" disabled title="다음 트랙">⏭</button>
+          <button class="player-btn" id="voiceRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 재생)">🔁</button>
         </div></div>
         <div class="progress-bar scrubbable" id="voiceProgressBar"><div class="progress-fill" id="voiceProgressFill"></div></div>
         <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
@@ -607,6 +611,7 @@
           <button class="player-btn primary" id="musicPlayBtn" disabled title="재생/일시정지">▶</button>
           <button class="player-btn" id="musicStopBtn" disabled title="정지">⏹</button>
           <button class="player-btn" id="musicNextBtn" disabled title="다음 트랙">⏭</button>
+          <button class="player-btn" id="musicRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 재생)">🔁</button>
         </div></div>
         <div class="progress-bar scrubbable" id="musicProgressBar"><div class="progress-fill" id="musicProgressFill"></div></div>
         <div class="time" id="musicTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
@@ -2484,10 +2489,11 @@ function makePlayer(kind){
     if(st.raf){ cancelAnimationFrame(st.raf); st.raf = null; }
   }
 
+  function loopEff(){ return !!(st.loopOn || (st.repeat && activeTrack !== 'all')); }
   function elapsedNow(){
     if(!st.playing) return st.pausedAt;
     const dur = st.processed ? durP() : st.pausedAt;
-    if(st.loopOn && dur > 0) return (st.pausedAt + (getCtx().currentTime - st.startCtxTime)) % dur;
+    if(loopEff() && dur > 0) return (st.pausedAt + (getCtx().currentTime - st.startCtxTime)) % dur;
     return Math.min(dur, st.pausedAt + (getCtx().currentTime - st.startCtxTime));
   }
 
@@ -2531,7 +2537,7 @@ function makePlayer(kind){
     source.playbackRate.value = st.rate;
     // 통합 재생에서 음악이 음성보다 짧고 '반복'이면 음성이 끝날 때까지 반복
     st.loopOn = kind === 'music' && activeTrack === 'all' && loopMode === 'loop' && durationMode !== 'music' && voicePlayerCtl.getDuration() > durP() + 0.05;
-    source.loop = st.loopOn;
+    source.loop = loopEff();
     const g = ctx.createGain();
     g.gain.value = volNow();
     source.connect(g);
@@ -2547,7 +2553,7 @@ function makePlayer(kind){
       updateProgressDisplay();
       if(api.onEnd) api.onEnd();
     };
-    source.start(0, (st.loopOn ? (st.pausedAt * st.rate) % processed.duration : st.pausedAt * st.rate));
+    source.start(0, (loopEff() ? (st.pausedAt * st.rate) % processed.duration : st.pausedAt * st.rate));
     st.source = source;
     st.startCtxTime = ctx.currentTime;
     st.playing = true;
@@ -2659,6 +2665,12 @@ function makePlayer(kind){
     updateProgressDisplay();
   }
 
+  const repBtn = document.getElementById(kind + 'RepeatBtn');
+  if(repBtn) repBtn.addEventListener('click', () => {
+    st.repeat = !st.repeat;
+    repBtn.classList.toggle('on', st.repeat);
+    if(st.source && st.playing) st.source.loop = loopEff();
+  });
   const api = { applyVolume, prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
@@ -3586,8 +3598,13 @@ setActiveTrack('voice');
     setTimeout(refresh, 50);
   });
   // 길이 기준(음성/음악/긴 쪽)을 통합 재생에도 적용
-  voicePlayerCtl.onEnd = () => { if(durationMode === 'voice' || musicPlayerCtl.isLooping()){ musicPlayerCtl.stop(); } setTimeout(refresh, 50); };
-  musicPlayerCtl.onEnd = () => { if(durationMode === 'music'){ voicePlayerCtl.stop(); } setTimeout(refresh, 50); };
+  let repeatAll = false;
+  function maybeRestart(){
+    if(repeatAll && !anyPlaying()) setTimeout(() => { if(repeatAll && !anyPlaying()){ voicePlayerCtl.play(); musicPlayerCtl.play(); } }, 30);
+  }
+  voicePlayerCtl.onEnd = () => { if(durationMode === 'voice' || musicPlayerCtl.isLooping()){ musicPlayerCtl.stop(); } setTimeout(refresh, 50); maybeRestart(); };
+  musicPlayerCtl.onEnd = () => { if(durationMode === 'music'){ voicePlayerCtl.stop(); } setTimeout(refresh, 50); maybeRestart(); };
+  document.getElementById('togetherRepeatBtn').addEventListener('click', e => { repeatAll = !repeatAll; e.currentTarget.classList.toggle('on', repeatAll); });
   document.getElementById('togetherStopBtn').addEventListener('click', () => { voicePlayerCtl.stop(); musicPlayerCtl.stop(); setTimeout(refresh, 50); });
   document.getElementById('togetherPrevBtn').addEventListener('click', () => { voicePlayerCtl.prev(); musicPlayerCtl.prev(); });
   document.getElementById('togetherNextBtn').addEventListener('click', () => { voicePlayerCtl.next(); musicPlayerCtl.next(); });
