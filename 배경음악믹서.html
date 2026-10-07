@@ -1992,7 +1992,9 @@ function makePlayer(kind){
     ? { prev:'voicePrevBtn', play:'voicePlayBtn', stop:'voiceStopBtn', next:'voiceNextBtn', fill:'voiceProgressFill', time:'voiceTimeLabel', durSpan:'voiceDur' }
     : { prev:'musicPrevBtn', play:'musicPlayBtn', stop:'musicStopBtn', next:'musicNextBtn', fill:'musicProgressFill', time:'musicTimeLabel', durSpan:'musicDur' };
 
-  const st = { source:null, processed:null, boundaries:[0], pausedAt:0, playing:false, startCtxTime:0, raf:null, dirty:true };
+  const st = { source:null, processed:null, boundaries:[0], pausedAt:0, playing:false, startCtxTime:0, raf:null, dirty:true, rate:1 };
+  function durP(){ return st.processed ? st.processed.duration / st.rate : 0; }
+  function hasSegs(){ return (kind === 'voice' ? voiceSpeedSegments : musicSpeedSegments).length > 0; }
 
   function rawBuffer(){ return kind === 'voice' ? voiceBuffer : musicBuffer; }
   function trimRange(){ return kind === 'voice' ? getVoiceTrimRange() : getMusicTrimRange(); }
@@ -2021,7 +2023,11 @@ function makePlayer(kind){
     let processed = trimmed;
     const speedNow = speedFactor();
     const { start: trimStartNow } = trimRange();
-    if(kind === 'voice'){
+    st.rate = 1;
+    if(!hasSegs()){
+      // 구간별 속도가 없으면 재생 속도(playbackRate)로 즉시 재생 — 변환 대기 없음
+      st.rate = speedNow;
+    } else if(kind === 'voice'){
       if(speedNow !== 1 || voiceSpeedSegments.length > 0){
         const status = document.getElementById('loadError');
         status.textContent = '음성 속도 처리 중…';
@@ -2044,9 +2050,10 @@ function makePlayer(kind){
     const rawBounds = getItemBoundaries(kind === 'voice' ? voiceItems : musicItems);
     const mapped = rawBounds.slice(0, -1)
       .map(b => (b - start) / speed)
-      .filter(t => t > 0.05 && t < processed.duration - 0.05);
+      .filter(t => t > 0.05 && t < processed.duration / st.rate - 0.05);
     mapped.unshift(0);
     st.boundaries = mapped;
+    st.fastOk = !hasSegs();
     st.dirty = false;
     return processed;
   }
@@ -2062,12 +2069,12 @@ function makePlayer(kind){
 
   function elapsedNow(){
     if(!st.playing) return st.pausedAt;
-    const dur = st.processed ? st.processed.duration : st.pausedAt;
+    const dur = st.processed ? durP() : st.pausedAt;
     return Math.min(dur, st.pausedAt + (getCtx().currentTime - st.startCtxTime));
   }
 
   function updateProgressDisplay(){
-    const dur = st.processed ? st.processed.duration : 0;
+    const dur = durP();
     const elapsed = elapsedNow();
     const pct = dur > 0 ? (elapsed / dur) * 100 : 0;
     document.getElementById(ids.fill).style.width = pct + '%';
@@ -2098,11 +2105,12 @@ function makePlayer(kind){
   async function play(){
     if(!rawBuffer()) return;
     const processed = await ensureProcessed();
-    if(st.pausedAt >= processed.duration - 0.01) st.pausedAt = 0;
+    if(st.pausedAt >= durP() - 0.01) st.pausedAt = 0;
     const ctx = getCtx();
     ctx.resume();
     const source = ctx.createBufferSource();
     source.buffer = processed;
+    source.playbackRate.value = st.rate;
     source.connect(ctx.destination);
     source.onended = () => {
       if(st.source !== source) return; // 이미 새 재생으로 교체된 경우 무시
@@ -2113,7 +2121,7 @@ function makePlayer(kind){
       setButtons();
       updateProgressDisplay();
     };
-    source.start(0, st.pausedAt);
+    source.start(0, st.pausedAt * st.rate);
     st.source = source;
     st.startCtxTime = ctx.currentTime;
     st.playing = true;
@@ -2141,7 +2149,7 @@ function makePlayer(kind){
   function seekTo(t){
     const wasPlaying = st.playing;
     stopSourceOnly();
-    st.pausedAt = Math.max(0, Math.min(st.processed ? st.processed.duration : t, t));
+    st.pausedAt = Math.max(0, Math.min(st.processed ? durP() : t, t));
     st.playing = false;
     if(wasPlaying){ play(); } else { setButtons(); updateProgressDisplay(); }
   }
@@ -2190,14 +2198,28 @@ function makePlayer(kind){
     stop();
   }
 
+  // 속도 변경: 구간별 속도가 없으면 재생 중에도 즉시 반영, 있으면 다시 처리
+  function setSpeed(){
+    if(hasSegs() || st.dirty || !st.processed || !st.fastOk){ markDirty(); return; }
+    const newRate = speedFactor();
+    const pos = elapsedNow() * st.rate; // 버퍼 기준 현재 위치
+    st.rate = newRate;
+    st.pausedAt = pos / newRate;
+    if(st.playing){
+      st.startCtxTime = getCtx().currentTime;
+      if(st.source) st.source.playbackRate.value = newRate;
+    }
+    updateProgressDisplay();
+  }
+
   async function seekToFraction(frac){
     if(!rawBuffer()) return;
     const processed = await ensureProcessed();
-    seekTo(Math.max(0, Math.min(1, frac)) * processed.duration);
+    seekTo(Math.max(0, Math.min(1, frac)) * durP());
   }
 
   function getDuration(){
-    return st.processed ? st.processed.duration : (rawBuffer() ? rawBuffer().duration : 0);
+    return st.processed ? durP() : (rawBuffer() ? rawBuffer().duration : 0);
   }
 
   document.getElementById(ids.play).addEventListener('click', () => { st.playing ? pause() : play(); });
@@ -2211,7 +2233,7 @@ function makePlayer(kind){
     updateProgressDisplay();
   }
 
-  return { markDirty, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing };
+  return { markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing };
 }
 
 function attachScrub(barId, durationFn, seekFn){
@@ -2790,14 +2812,14 @@ document.getElementById('voiceSpeedSlider').addEventListener('input', e => {
   document.getElementById('voiceSpeedVal').textContent = voiceSpeed.toFixed(2) + 'x';
   onSettingsChanged();
   saveSettings();
-  voicePlayerCtl.markDirty();
+  voicePlayerCtl.setSpeed();
 });
 document.getElementById('musicSpeedSlider').addEventListener('input', e => {
   musicSpeed = Math.round(Number(e.target.value) * 100) / 100;
   document.getElementById('musicSpeedVal').textContent = musicSpeed.toFixed(2) + 'x';
   onSettingsChanged();
   saveSettings();
-  musicPlayerCtl.markDirty();
+  musicPlayerCtl.setSpeed();
 });
 document.getElementById('durationMode').addEventListener('click', e => {
   const btn = e.target.closest('button');
