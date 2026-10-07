@@ -449,6 +449,10 @@
   #toolPanel .section-head{ justify-content:flex-start; margin-bottom:10px; }
   .all-tag{ font-size:14pt; color:#f4f8fc; white-space:nowrap; width:96px; flex:none; }
   #panel_all .player-line{ margin-top:12px; }
+  .wrap > .error{ color:#7a1f10; }
+  h1{ color:#0f1a24; }
+  header p{ color:#16293a; }
+  #resetAllBtn{ border-color:#0e1822; }
 </style>
 </head>
 <body>
@@ -464,7 +468,7 @@
   <div class="track-columns">
   <section class="track-card track-card2" id="card_voice">
     <div class="tc-left">
-    <div class="section-head"><h2>1. 음성</h2><div class="head-tools"><button class="record-btn" id="resetVoiceBtn" type="button" title="음성 초기화">↺ 초기화</button></div></div>
+    <div class="section-head"><h2>1. 음성</h2><div class="head-tools"><button class="record-btn folder-btn" data-folder="voice" type="button" title="음성 저장·불러오기 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button><button class="record-btn" id="resetVoiceBtn" type="button" title="음성 초기화">↺ 초기화</button></div></div>
     <div id="folderStatus_voice" style="display:none"></div>
     <div class="drop voice" id="dropVoice">
       <div class="label">내레이션</div>
@@ -489,7 +493,7 @@
 
   <section class="track-card track-card2" id="card_music">
     <div class="tc-left">
-    <div class="section-head"><h2>2. 배경음악</h2><div class="head-tools"><button class="record-btn" id="resetMusicBtn" type="button" title="배경음악 초기화">↺ 초기화</button></div></div>
+    <div class="section-head"><h2>2. 배경음악</h2><div class="head-tools"><button class="record-btn folder-btn" data-folder="music" type="button" title="배경음악 저장·불러오기 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button><button class="record-btn" id="resetMusicBtn" type="button" title="배경음악 초기화">↺ 초기화</button></div></div>
     <div id="folderStatus_music" style="display:none"></div>
     <div class="drop music" id="dropMusic">
       <div class="label">배경음악</div>
@@ -553,6 +557,11 @@
         <div class="progress-bar scrubbable" id="allMusicBar"><div class="progress-fill music" id="allMusicFill"></div></div>
         <div class="time" id="allMusicTime" style="margin-top:0;">00:00 / 00:00</div>
       </div>
+      <div class="dl-row" style="margin-top:12px;">
+        <span class="dl-label">폴더</span>
+        <button class="record-btn folder-btn" data-folder="voice" data-label="음성" type="button" title="음성 저장·불러오기 폴더 지정 (한 번 더 누르면 해제)" style="flex:none;">📁 음성 폴더</button>
+        <button class="record-btn folder-btn" data-folder="music" data-label="배경음악" type="button" title="배경음악 저장·불러오기 폴더 지정 (한 번 더 누르면 해제)" style="flex:none;">📁 배경음악 폴더</button>
+      </div>
       <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 5번 믹싱 후 미리듣기에서 들으세요.</div>
     </div>
     <div class="tool-panel" id="panel_voice">
@@ -586,7 +595,7 @@
         <span class="dl-label">받기</span>
         <button class="record-btn" id="downloadVoiceWavBtn" disabled>⬇ WAV</button>
         <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ MP3</button>
-        <button class="record-btn folder-btn" id="chooseFolderBtn_voice" type="button" title="음성 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
+        <button class="record-btn folder-btn" id="chooseFolderBtn_voice" data-folder="voice" type="button" title="음성 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
       <div class="progress-bar mini" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div></div>
       <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
@@ -620,7 +629,7 @@
         <span class="dl-label">받기</span>
         <button class="record-btn" id="downloadMusicBtn" disabled>⬇ WAV</button>
         <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ MP3</button>
-        <button class="record-btn folder-btn" id="chooseFolderBtn_music" type="button" title="배경음악 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
+        <button class="record-btn folder-btn" id="chooseFolderBtn_music" data-folder="music" type="button" title="배경음악 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
       <div class="progress-bar mini" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div></div>
       <button class="record-btn" id="musicMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
@@ -683,7 +692,7 @@
       <span class="dl-label">받기</span>
       <button class="record-btn" id="exportBtn" disabled>⬇ WAV</button>
       <button class="record-btn" id="exportMp3Btn" disabled>⬇ MP3</button>
-      <button class="record-btn folder-btn" id="chooseFolderBtn_mix" type="button" title="믹스결과 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
+      <button class="record-btn folder-btn" id="chooseFolderBtn_mix" data-folder="mix" type="button" title="믹스결과 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
     </div>
     <div id="folderStatus_mix" style="display:none"></div>
     <div class="progress-bar mini" id="exportMp3Bar"><div class="progress-fill music" id="exportMp3Fill"></div></div>
@@ -2035,18 +2044,19 @@ async function clearSaveFolder(scope){
 
 function updateFolderStatus(scope){
   const el = document.getElementById('folderStatus_' + scope);
-  const btn = document.getElementById('chooseFolderBtn_' + scope);
+  const btns = document.querySelectorAll('[data-folder="' + scope + '"]');
   const handle = savedDirHandles[scope];
   if(el){
     el.textContent = handle
       ? '기본 폴더: "' + handle.name + '" — 저장 창이 이 폴더에서 시작합니다.'
       : (scope === 'voice' ? '음성 폴더 미지정' : scope === 'music' ? '배경음악 폴더 미지정' : '믹스결과 폴더 미지정') + ' — 저장 창이 그 폴더에서 시작하려면 지정하세요.';
   }
-  if(btn){
-    btn.textContent = handle ? '📁 폴더 ✓' : '📁 폴더';
+  btns.forEach(btn => {
+    const lead = btn.dataset.label ? btn.dataset.label + ' ' : '';
+    btn.textContent = handle ? '📁 ' + lead + '폴더 ✓' : '📁 ' + lead + '폴더';
     btn.classList.toggle('on', !!handle);
-    btn.title = handle ? '저장 폴더: "' + handle.name + '" (한 번 더 누르면 해제)' : '저장 폴더 지정 (저장 창이 그 폴더에서 시작합니다)';
-  }
+    btn.title = handle ? '폴더: "' + handle.name + '" — 저장·불러오기 창이 여기서 시작합니다 (한 번 더 누르면 해제)' : '폴더 지정 (저장·불러오기 창이 그 폴더에서 시작합니다)';
+  });
 }
 
 async function toggleFolder(scope){
@@ -2059,9 +2069,7 @@ async function toggleFolder(scope){
   updateFolderStatus(scope);
 }
 
-document.getElementById('chooseFolderBtn_voice')?.addEventListener('click', () => toggleFolder('voice'));
-document.getElementById('chooseFolderBtn_music')?.addEventListener('click', () => toggleFolder('music'));
-document.getElementById('chooseFolderBtn_mix')?.addEventListener('click', () => toggleFolder('mix'));
+document.querySelectorAll('[data-folder]').forEach(b => b.addEventListener('click', () => toggleFolder(b.dataset.folder)));
 
 (async () => {
   for(const scope of ['voice', 'music', 'mix']){
