@@ -327,6 +327,7 @@
       <div class="field-row"><label>음성 구간별 속도 (특정 부분만 다르게)</label></div>
       <div class="file-list" id="voiceSegmentList"></div>
       <button class="record-btn" id="addVoiceSegmentBtn" type="button">+ 구간 추가</button>
+      <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 구간별 속도를 채웁니다">⚖ 자동 속도 맞춤</button>
     </div>
 
     <div class="file-actions">
@@ -805,6 +806,90 @@ function addSegment(track){
 
 document.getElementById('addVoiceSegmentBtn').addEventListener('click', () => addSegment('voice'));
 document.getElementById('addMusicSegmentBtn').addEventListener('click', () => addSegment('music'));
+
+// 음성 자동 속도 맞춤: 구간별 말하는 빠르기(음절 수/초)를 재서 평균에 맞도록 구간별 속도를 채움 (±20% 제한)
+function autoBalanceVoiceSpeed(){
+  const buf = voiceBuffer;
+  const status = document.getElementById('loadError');
+  if(!buf) return;
+  if(voiceSpeedSegments.length > 0 && !confirm('기존 구간별 속도를 지우고 자동으로 다시 채울까요?')) return;
+  const sr = buf.sampleRate, hop = Math.round(sr * 0.01), nch = buf.numberOfChannels;
+  const n = Math.floor(buf.length / hop);
+  const chs = []; for(let c=0;c<nch;c++) chs.push(buf.getChannelData(c));
+  const env = new Float32Array(n);
+  for(let i=0;i<n;i++){
+    let sum = 0; const b0 = i*hop;
+    for(let c=0;c<nch;c++){ const d = chs[c]; for(let k=0;k<hop;k++){ const x = d[b0+k]; sum += x*x; } }
+    env[i] = Math.sqrt(sum / (hop*nch));
+  }
+  const sm = new Float32Array(n);
+  for(let i=0;i<n;i++) sm[i] = ((env[i-1]||env[i]) + env[i]*2 + (env[i+1]||env[i])) / 4;
+  const sample = []; for(let i=0;i<n;i+=7) sample.push(sm[i]);
+  sample.sort((x,y)=>x-y);
+  const loud = sample[Math.floor(sample.length*0.9)] || 0;
+  if(loud <= 0){ status.textContent = '분석할 음성이 없습니다.'; return; }
+  const thr = loud*0.2, peakThr = loud*0.3;
+  const isPeak = new Uint8Array(n);
+  let lastPeak = -100;
+  for(let i=12;i<n-6;i++){
+    const v = sm[i];
+    if(v < peakThr || v < sm[i-1] || v <= sm[i+1]) continue;
+    let ok = true;
+    for(let k=1;k<=5;k++){ if(sm[i-k] > v || sm[i+k] > v){ ok = false; break; } }
+    if(!ok || i - lastPeak < 8) continue;
+    let mn = v; for(let k=1;k<=12;k++) mn = Math.min(mn, sm[i-k]);
+    if(mn > v*0.7) continue;
+    isPeak[i] = 1; lastPeak = i;
+  }
+  const W = 250; // 2.5초
+  const nw = Math.ceil(n / W);
+  const rates = [];
+  for(let w=0;w<nw;w++){
+    let peaks = 0, speech = 0;
+    for(let i=w*W;i<Math.min(n,(w+1)*W);i++){ peaks += isPeak[i]; if(sm[i] > thr) speech++; }
+    rates.push(speech >= 100 ? peaks / (speech*0.01) : null);
+  }
+  const valid = rates.filter(r => r !== null).sort((x,y)=>x-y);
+  if(valid.length < 2){ status.textContent = '자동 맞춤을 하기에 음성이 너무 짧습니다.'; return; }
+  const target = valid[Math.floor(valid.length/2)];
+  let ratios = rates.map(r => r === null ? null : Math.max(0.8, Math.min(1.2, target / Math.max(0.1, r))));
+  let prev = 1;
+  ratios = ratios.map(r => { if(r === null) return prev; prev = r; return r; });
+  const sm2 = ratios.map((r,i) => ((ratios[i-1] ?? r) + r*2 + (ratios[i+1] ?? r)) / 4);
+  const q = sm2.map(r => Math.round(r*20)/20);
+  // 같은 값끼리 묶기
+  const groups = [];
+  for(let w=0;w<nw;w++){
+    const g = groups[groups.length-1];
+    if(g && g.ratio === q[w]) g.endW = w+1; else groups.push({ ratio: q[w], startW: w, endW: w+1 });
+  }
+  // 경계를 가장 조용한 지점으로 이동
+  function snap(frame){
+    let best = frame, bv = Infinity;
+    for(let i=Math.max(0,frame-50); i<=Math.min(n-1,frame+50); i++){ if(sm[i] < bv){ bv = sm[i]; best = i; } }
+    return best;
+  }
+  const fSec = f => f*hop/sr;
+  const segs = [];
+  groups.forEach((g, gi) => {
+    if(g.ratio === 1) return;
+    const sF = gi === 0 ? 0 : snap(g.startW*W);
+    const eF = gi === groups.length-1 ? null : snap(g.endW*W);
+    const start = Math.round(fSec(sF)*10)/10;
+    const end = eF === null ? Math.round(buf.duration*10)/10 : Math.round(fSec(eF)*10)/10;
+    const speed = Math.max(0.25, Math.min(3, Math.round(voiceSpeed*g.ratio*100)/100));
+    if(end - start > 0.3) segs.push({ id: ++segmentIdCounter, start, end, speed });
+  });
+  voiceSpeedSegments = segs;
+  renderSegments('voice');
+  voicePlayerCtl.markDirty();
+  status.textContent = segs.length === 0
+    ? '이미 속도가 고르게 나와서 바꿀 구간이 없습니다.'
+    : '자동 속도 맞춤 완료: ' + segs.length + '개 구간 (필요하면 직접 고칠 수 있습니다)';
+}
+document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
+  try{ autoBalanceVoiceSpeed(); }catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; }
+});
 
 document.addEventListener('input', e => {
   const el = e.target;
