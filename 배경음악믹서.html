@@ -279,6 +279,39 @@
   .tool-row.icon-row{ justify-content: flex-start; gap: 8px; }
   .tool-row.icon-row .record-btn{ flex: none; font-size: 14pt; padding: 6px 16px; }
   #toolPanel .speed-row > .record-btn{ font-size: 14pt; padding: 6px 14px; }
+  .track-columns{ flex-direction: column; gap: 12px; }
+  .track-columns > section.track-card2{ width: 100%; margin-bottom: 0; display: grid; grid-template-columns: 330px 1fr; gap: 6px 18px; align-items: start; padding: 14px 18px; }
+  .track-card2 .tc-left{ min-width: 0; }
+  .track-card2 .tc-right{ min-width: 0; }
+  .track-card2 .section-head{ margin-bottom: 8px; }
+  .track-card2 .drop{ padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .track-card2 .drop .label{ margin: 0; }
+  .track-card2 .drop .hint{ margin: 0; font-size: 12pt; }
+  .track-card2 canvas{ height: 40px; }
+  .track-card2 .ruler{ height: 16px; margin-top: 0; }
+  .track-card2 .ruler-tick{ font-size: 12pt; line-height: 1.1; }
+  .track-card2 .wave-label{ margin-bottom: 2px; font-size: 12pt; }
+  .track-card2 .section-head{ margin-bottom: 6px; }
+  .track-card2 .record-hint{ margin-top: 0; }
+  .track-columns > section.track-card2{ padding: 10px 16px; gap: 4px 18px; }
+  .track-columns{ gap: 10px; }
+  .track-card2 .wave-block{ margin-top: 0; }
+  .track-card2 .file-list:empty{ display: none; }
+  .track-card2 .ruler:empty{ display: none; }
+  .track-card2 h2{ margin: 0 0 8px; }
+  @media (max-width: 860px){ .track-columns > section.track-card2{ grid-template-columns: 1fr; } }
+  .track-card2 .tc-left, .track-card2 .tc-right, .track-card2 .wave-block{ display: contents; }
+  .track-card2 .section-head, .track-card2 > .tc-left > h2{ grid-column: 1; grid-row: 1; }
+  .track-card2 .drop, .track-card2 .record-row{ grid-column: 1; grid-row: 2; align-self: center; }
+  .track-card2 .wave-label{ grid-column: 2; grid-row: 1; align-self: end; }
+  .track-card2 .wave-block canvas{ grid-column: 2; grid-row: 2; align-self: center; }
+  .track-card2 .wave-block .ruler{ grid-column: 2; grid-row: 3; }
+  .track-card2 .file-list{ grid-column: 1 / -1; grid-row: 4; }
+  .track-card2 .record-hint{ grid-column: 2; grid-row: 1; align-self: end; }
+  .track-card2 #recordLiveCanvas{ grid-column: 2; grid-row: 2; align-self: center; }
+  @media (max-width: 860px){
+    .track-card2 .section-head, .track-card2 > .tc-left > h2, .track-card2 .drop, .track-card2 .record-row, .track-card2 .wave-label, .track-card2 .wave-block canvas, .track-card2 .wave-block .ruler, .track-card2 .file-list, .track-card2 .record-hint, .track-card2 #recordLiveCanvas{ grid-column: 1; grid-row: auto; }
+  }
   .head-tools{ display: flex; gap: 6px; }
   .folder-line{ font-size: 12pt; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
@@ -326,23 +359,28 @@
 
 
   <div class="track-columns">
-  <section class="track-card" id="card_voice">
+  <section class="track-card track-card2" id="card_voice">
+    <div class="tc-left">
     <div class="section-head"><h2>1. 음성</h2><div class="head-tools"><button class="record-btn" id="resetVoiceBtn" type="button" title="음성 초기화">↺ 초기화</button></div></div>
     <div id="folderStatus_voice" style="display:none"></div>
     <div class="drop voice" id="dropVoice">
-      <div class="label">내레이션 / 음성</div>
+      <div class="label">내레이션</div>
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
       <input type="file" id="voiceInput" accept="audio/*" multiple>
     </div>
-    <div class="file-list" id="voiceList" style="margin-top:8px;"></div>
+    </div>
+    <div class="tc-right">
+    <div class="file-list" id="voiceList"></div>
     <div class="wave-block">
       <div class="wave-label"><span>음성 파형</span><span id="voiceDur">—</span></div>
       <canvas id="voiceCanvas"></canvas>
       <div class="ruler" id="voiceRuler"></div>
     </div>
+    </div>
   </section>
 
-  <section class="track-card" id="card_music">
+  <section class="track-card track-card2" id="card_music">
+    <div class="tc-left">
     <div class="section-head"><h2>2. 배경음악</h2><div class="head-tools"><button class="record-btn" id="resetMusicBtn" type="button" title="배경음악 초기화">↺ 초기화</button></div></div>
     <div id="folderStatus_music" style="display:none"></div>
     <div class="drop music" id="dropMusic">
@@ -350,22 +388,27 @@
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
       <input type="file" id="musicInput" accept="audio/*" multiple>
     </div>
-    <div class="file-list" id="musicList" style="margin-top:8px;"></div>
+    </div>
+    <div class="tc-right">
+    <div class="file-list" id="musicList"></div>
     <div class="wave-block">
       <div class="wave-label"><span>배경음악 파형</span><span id="musicDur">—</span></div>
       <canvas id="musicCanvas"></canvas>
       <div class="ruler" id="musicRuler"></div>
     </div>
+    </div>
   </section>
-  <section class="record-card">
-    <h2>PC 소리 녹음</h2>
-    <div class="record-box" style="margin-top:0; padding-top:0; border-top:none;">
+  <section class="record-card track-card2">
+    <div class="tc-left">
+      <h2>3. PC 소리 녹음</h2>
       <div class="record-row">
         <button class="record-btn" id="recordBtn">🎙 PC 소리로 배경음악 녹음</button>
         <span class="record-time" id="recordTime"></span>
       </div>
-      <div class="record-hint" id="recordHint">공유 창에서 <b>"전체 화면"</b> 선택 후 <b>"시스템 오디오 공유"</b>를 체크하세요. (Windows Chrome/Edge)</div>
-      <canvas id="recordLiveCanvas" style="margin-top:10px;"></canvas>
+    </div>
+    <div class="tc-right record-box" style="margin-top:0; padding-top:0; border-top:none;">
+      <div class="record-hint" id="recordHint" style="margin-top:0;">공유 창에서 <b>"전체 화면"</b> 선택 후 <b>"시스템 오디오 공유"</b>를 체크하세요. (Windows Chrome/Edge)</div>
+      <canvas id="recordLiveCanvas" style="margin-top:6px;"></canvas>
     </div>
   </section>
   </div>
@@ -385,9 +428,9 @@
       </div>
       <div class="speed-row" style="justify-content:center; margin-top:12px;">
         <label class="mix-chip" title="음성 크기 (%) — 최종 믹싱에도 반영됩니다"><span class="ic">🎙</span><span class="lb">음성 크기</span><input type="number" id="voiceVolume" min="0" max="300" step="1" value="100"><span class="un">%</span></label>
-        <label class="mix-chip" title="배경음악 크기 (%) — 3번 믹싱 설정의 음악 크기와 같은 값입니다"><span class="ic">🎵</span><span class="lb">음악 크기</span><input type="number" id="musicVolume2" min="0" max="300" step="1" value="25"><span class="un">%</span></label>
+        <label class="mix-chip" title="배경음악 크기 (%) — 4번 믹싱 설정의 음악 크기와 같은 값입니다"><span class="ic">🎵</span><span class="lb">음악 크기</span><input type="number" id="musicVolume2" min="0" max="300" step="1" value="25"><span class="un">%</span></label>
       </div>
-      <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 4번 믹싱 후 미리듣기에서 들으세요.</div>
+      <div class="record-hint" style="text-align:center;">음성과 배경음악을 동시에 들어봅니다. 지연·페이드·음량이 반영된 소리는 아래 5번 믹싱 후 미리듣기에서 들으세요.</div>
     </div>
     <div class="tool-panel" id="panel_voice">
       <div class="tool-row icon-row" style="margin-top:0;">
@@ -478,7 +521,7 @@
   <div class="error" id="loadError"></div>
 
   <section>
-    <h2>3. 믹싱 설정</h2>
+    <h2>4. 믹싱 설정</h2>
     <div class="mix-grid">
       <label class="mix-chip" title="배경음악 크기 (%)">
         <span class="ic">🔊</span><span class="lb">음악 크기</span>
@@ -527,7 +570,7 @@
   </section>
 
   <section>
-    <h2>4. 믹싱 & 미리듣기</h2>
+    <h2>5. 믹싱 & 미리듣기</h2>
     <div class="mix-row">
       <button class="mix-btn" id="mixBtn" disabled>🎚 믹싱하기</button>
       <span class="mix-status" id="mixStatus">음성과 배경음악을 불러온 뒤 믹싱하세요.</span>
