@@ -250,6 +250,24 @@
   .seg-form{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; }
   .seg-form input{ width: 70px; background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 6px; font-size: 14pt; text-align: center; }
   .seg-scroll{ max-height: 150px; overflow-y: auto; }
+  .zone{ border-top: 1px solid var(--border); margin-top: 14px; padding-top: 10px; }
+  .zone-title{ font-size: 12pt; font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
+  .speed-row{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .speed-row .mix-chip{ flex: 0 0 auto; }
+  .speed-row2{ display: flex; margin-top: 8px; }
+  .track-card{ cursor: default; }
+  .track-card.active.voice-sel{ box-shadow: 0 0 0 2px var(--voice); }
+  .track-card.active.music-sel{ box-shadow: 0 0 0 2px var(--music); }
+  .segmented.big button{ font-size: 14pt; padding: 8px 18px; white-space: nowrap; }
+  #toolPanel{ margin-top: 16px; }
+  .seg-scroll .seg-input{ width: 90px; }
+  .segmented.big button.active[data-track="voice"]{ background: var(--voice); color: #f5fbf7; }
+  .segmented.big button.active[data-track="music"]{ background: var(--music); color: #fff8ec; }
+  .player-line{ display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+  .player-line .progress-bar{ flex: 1; }
+  .tool-panel{ display: none; }
+  .tool-panel.active{ display: block; }
+  .tool-panel .speed-row2 .auto-bar{ flex: 1; }
   .head-tools{ display: flex; gap: 6px; }
   .folder-line{ font-size: 12pt; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
@@ -305,7 +323,7 @@
   </section>
 
   <div class="track-columns">
-  <section>
+  <section class="track-card" id="card_voice">
     <div class="section-head"><h2>1. 음성</h2><div class="head-tools"><button class="record-btn" id="resetVoiceBtn" type="button" title="음성 초기화">↺ 초기화</button><button class="record-btn" id="chooseFolderBtn_voice" type="button" title="음성 저장 폴더 설정 / 해제">📁 폴더 설정</button></div></div>
     <div class="folder-line" id="folderStatus_voice">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
     <div class="drop voice" id="dropVoice">
@@ -313,58 +331,15 @@
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
       <input type="file" id="voiceInput" accept="audio/*" multiple>
     </div>
-
+    <div class="file-list" id="voiceList" style="margin-top:8px;"></div>
     <div class="wave-block">
       <div class="wave-label"><span>음성 파형</span><span id="voiceDur">—</span></div>
-      <div class="file-list" id="voiceList"></div>
       <canvas id="voiceCanvas"></canvas>
       <div class="ruler" id="voiceRuler"></div>
-      <div class="tool-row">
-        <button class="record-btn" id="zoomVoiceBtn" type="button" disabled title="파형을 크게 열어 정밀하게 편집">🔍 확대 편집</button>
-        <button class="record-btn" id="cutModeVoiceBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
-        <button class="record-btn" id="applyCutVoiceBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
-        <button class="record-btn" id="clearCutVoiceBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
-      </div>
-      <div class="record-hint" id="voiceCutInfo"></div>
-      <div class="player-row">
-        <button class="player-btn" id="voicePrevBtn" disabled title="이전 트랙">⏮</button>
-        <button class="player-btn primary" id="voicePlayBtn" disabled title="재생/일시정지">▶</button>
-        <button class="player-btn" id="voiceStopBtn" disabled title="정지">⏹</button>
-        <button class="player-btn" id="voiceNextBtn" disabled title="다음 트랙">⏭</button>
-      </div>
-      <div class="progress-bar scrubbable" id="voiceProgressBar" style="margin-top:8px;"><div class="progress-fill" id="voiceProgressFill"></div></div>
-      <div class="time" id="voiceTimeLabel">00:00 / 00:00</div>
     </div>
-
-    <div class="chip-grid">
-      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.5" value="0"><span class="un">초</span></label>
-      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
-      <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
-    </div>
-
-    <div class="seg-row">
-        <div class="auto-bar" id="voiceAutoBar" title="자동 맞춤 진행 상황"><div class="progress-fill" id="voiceAutoFill"></div><span id="voiceAutoText">자동 맞춤 대기</span></div>
-        <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
-        <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동맞춤</button>
-    </div>
-    <div class="seg-form" id="segForm_voice" style="display:none;">
-      <input type="number" id="segStart_voice" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
-      <input type="number" id="segEnd_voice" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
-      <input type="number" id="segSpeed_voice" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
-      <button class="record-btn" type="button" id="segOk_voice">추가</button>
-      <button class="record-btn" type="button" id="segCancel_voice">취소</button>
-    </div>
-    <div class="file-list seg-scroll" id="voiceSegmentList" style="margin-top:6px;"></div>
-
-    <div class="dl-row">
-      <button class="record-btn" id="downloadVoiceWavBtn" disabled>⬇ WAV</button>
-      <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ MP3</button>
-    </div>
-    <div class="progress-bar mini" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div></div>
-    <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
   </section>
 
-  <section>
+  <section class="track-card" id="card_music">
     <div class="section-head"><h2>2. 배경음악</h2><div class="head-tools"><button class="record-btn" id="resetMusicBtn" type="button" title="배경음악 초기화">↺ 초기화</button><button class="record-btn" id="chooseFolderBtn_music" type="button" title="배경음악 저장 폴더 설정 / 해제">📁 폴더 설정</button></div></div>
     <div class="folder-line" id="folderStatus_music">폴더 미지정 — 저장 창이 그 폴더에서 시작하려면 지정하세요.</div>
     <div class="drop music" id="dropMusic">
@@ -372,56 +347,103 @@
       <div class="hint">탭하여 선택 (여러 개 가능)</div>
       <input type="file" id="musicInput" accept="audio/*" multiple>
     </div>
-
+    <div class="file-list" id="musicList" style="margin-top:8px;"></div>
     <div class="wave-block">
       <div class="wave-label"><span>배경음악 파형</span><span id="musicDur">—</span></div>
-      <div class="file-list" id="musicList"></div>
       <canvas id="musicCanvas"></canvas>
       <div class="ruler" id="musicRuler"></div>
-      <div class="tool-row">
+    </div>
+  </section>
+  </div>
+
+  <section id="toolPanel">
+    <div class="section-head"><h2>편집 · 재생 · 내보내기</h2>
+      <div class="segmented big" id="toolSelect">
+        <button type="button" data-track="voice" class="active">🎙 음성</button>
+        <button type="button" data-track="music">🎵 배경음악</button>
+      </div>
+    </div>
+    <div class="tool-panel" id="panel_voice">
+      <div class="tool-row" style="margin-top:0;">
+        <button class="record-btn" id="zoomVoiceBtn" type="button" disabled title="파형을 크게 열어 정밀하게 편집">🔍 확대 편집</button>
+        <button class="record-btn" id="cutModeVoiceBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
+        <button class="record-btn" id="applyCutVoiceBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
+        <button class="record-btn" id="clearCutVoiceBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
+      </div>
+      <div class="record-hint" id="voiceCutInfo"></div>
+      <div class="player-line">
+        <div class="player-row" style="margin-top:0;">
+          <button class="player-btn" id="voicePrevBtn" disabled title="이전 트랙">⏮</button>
+          <button class="player-btn primary" id="voicePlayBtn" disabled title="재생/일시정지">▶</button>
+          <button class="player-btn" id="voiceStopBtn" disabled title="정지">⏹</button>
+          <button class="player-btn" id="voiceNextBtn" disabled title="다음 트랙">⏭</button>
+        </div>
+        <div class="progress-bar scrubbable" id="voiceProgressBar"><div class="progress-fill" id="voiceProgressFill"></div></div>
+        <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
+      </div>
+      <div class="speed-row" style="margin-top:12px;">
+        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.5" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
+        <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
+        <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다">⚖ 자동맞춤</button>
+      </div>
+      <div class="speed-row2"><div class="auto-bar" id="voiceAutoBar" title="자동 맞춤 진행 상황"><div class="progress-fill" id="voiceAutoFill"></div><span id="voiceAutoText">자동 맞춤 대기</span></div></div>
+      <div class="seg-form" id="segForm_voice" style="display:none;">
+        <input type="number" id="segStart_voice" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
+        <input type="number" id="segEnd_voice" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
+        <input type="number" id="segSpeed_voice" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
+        <button class="record-btn" type="button" id="segOk_voice">추가</button>
+        <button class="record-btn" type="button" id="segCancel_voice">취소</button>
+      </div>
+      <div class="file-list seg-scroll" id="voiceSegmentList" style="margin-top:6px;"></div>
+      <div class="dl-row">
+        <button class="record-btn" id="downloadVoiceWavBtn" disabled>⬇ WAV</button>
+        <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ MP3</button>
+      </div>
+      <div class="progress-bar mini" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div></div>
+      <button class="record-btn" id="voiceMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
+    </div>
+    <div class="tool-panel" id="panel_music">
+      <div class="tool-row" style="margin-top:0;">
         <button class="record-btn" id="zoomMusicBtn" type="button" disabled title="파형을 크게 열어 정밀하게 편집">🔍 확대 편집</button>
         <button class="record-btn" id="cutModeMusicBtn" type="button" disabled title="구간 삭제 모드 (파형을 드래그해서 삭제 구간 선택)">✂ 삭제 모드</button>
         <button class="record-btn" id="applyCutMusicBtn" type="button" disabled title="선택 구간 삭제">🗑 선택 삭제</button>
         <button class="record-btn" id="clearCutMusicBtn" type="button" disabled title="삭제 구간 해제">↩ 해제</button>
       </div>
       <div class="record-hint" id="musicCutInfo"></div>
-      <div class="player-row">
-        <button class="player-btn" id="musicPrevBtn" disabled title="이전 트랙">⏮</button>
-        <button class="player-btn primary" id="musicPlayBtn" disabled title="재생/일시정지">▶</button>
-        <button class="player-btn" id="musicStopBtn" disabled title="정지">⏹</button>
-        <button class="player-btn" id="musicNextBtn" disabled title="다음 트랙">⏭</button>
+      <div class="player-line">
+        <div class="player-row" style="margin-top:0;">
+          <button class="player-btn" id="musicPrevBtn" disabled title="이전 트랙">⏮</button>
+          <button class="player-btn primary" id="musicPlayBtn" disabled title="재생/일시정지">▶</button>
+          <button class="player-btn" id="musicStopBtn" disabled title="정지">⏹</button>
+          <button class="player-btn" id="musicNextBtn" disabled title="다음 트랙">⏭</button>
+        </div>
+        <div class="progress-bar scrubbable" id="musicProgressBar"><div class="progress-fill" id="musicProgressFill"></div></div>
+        <div class="time" id="musicTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
-      <div class="progress-bar scrubbable" id="musicProgressBar" style="margin-top:8px;"><div class="progress-fill" id="musicProgressFill"></div></div>
-      <div class="time" id="musicTimeLabel">00:00 / 00:00</div>
-    </div>
-
-    <div class="chip-grid">
-      <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
-      <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
-      <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
-    </div>
-
-    <div class="seg-row">
-        
+      <div class="speed-row" style="margin-top:12px;">
+        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addMusicSegmentBtn" type="button" title="특정 부분만 속도를 다르게">+ 구간 속도</button>
+      </div>
+      <div class="seg-form" id="segForm_music" style="display:none;">
+        <input type="number" id="segStart_music" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
+        <input type="number" id="segEnd_music" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
+        <input type="number" id="segSpeed_music" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
+        <button class="record-btn" type="button" id="segOk_music">추가</button>
+        <button class="record-btn" type="button" id="segCancel_music">취소</button>
+      </div>
+      <div class="file-list seg-scroll" id="musicSegmentList" style="margin-top:6px;"></div>
+      <div class="dl-row">
+        <button class="record-btn" id="downloadMusicBtn" disabled>⬇ WAV</button>
+        <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ MP3</button>
+      </div>
+      <div class="progress-bar mini" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div></div>
+      <button class="record-btn" id="musicMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
     </div>
-    <div class="seg-form" id="segForm_music" style="display:none;">
-      <input type="number" id="segStart_music" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
-      <input type="number" id="segEnd_music" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
-      <input type="number" id="segSpeed_music" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
-      <button class="record-btn" type="button" id="segOk_music">추가</button>
-      <button class="record-btn" type="button" id="segCancel_music">취소</button>
-    </div>
-    <div class="file-list seg-scroll" id="musicSegmentList" style="margin-top:6px;"></div>
-
-    <div class="dl-row">
-      <button class="record-btn" id="downloadMusicBtn" disabled>⬇ WAV</button>
-      <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ MP3</button>
-    </div>
-    <div class="progress-bar mini" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div></div>
-    <button class="record-btn" id="musicMp3StopBtn" type="button" style="display:none; margin-top:6px;">⏹ 생성 중단</button>
   </section>
-  </div>
 
   <div class="error" id="loadError"></div>
 
@@ -3307,6 +3329,27 @@ document.getElementById('exportMp3Btn').addEventListener('click', async (e) => {
   }
   downloadAsMp3(mixedBuffer, '믹스결과.mp3', status, e.currentTarget, 'exportMp3Bar', 'exportMp3Fill', 'mix', null, 'exportMp3StopBtn');
 });
+
+// ---- 편집 도구 통합: 음성/배경음악 선택 ----
+let activeTrack = 'voice';
+function setActiveTrack(k){
+  activeTrack = k;
+  document.querySelectorAll('#toolSelect button').forEach(b => b.classList.toggle('active', b.dataset.track === k));
+  ['voice','music'].forEach(t => {
+    document.getElementById('panel_' + t).classList.toggle('active', t === k);
+    const c = document.getElementById('card_' + t);
+    c.classList.toggle('active', t === k);
+    c.classList.toggle('voice-sel', t === 'voice');
+    c.classList.toggle('music-sel', t === 'music');
+  });
+}
+document.getElementById('toolSelect').addEventListener('click', e => {
+  const b = e.target.closest('button[data-track]');
+  if(b) setActiveTrack(b.dataset.track);
+});
+['voice','music'].forEach(t => document.getElementById('card_' + t).addEventListener('pointerdown', () => setActiveTrack(t)));
+document.getElementById('recordBtn').addEventListener('click', () => setActiveTrack('music'));
+setActiveTrack('voice');
 </script>
 </body>
 </html>
