@@ -439,8 +439,6 @@
   body section .drop.music .label{ color:#ffc56b; }
   body section .drop .filename, body section .drop .hint{ color:#dbe6f0; }
   body section .error, body .error{ color:#ff8a7c; }
-  #resetAllBtn{ background:#1f2d3a; color:#f4f8fc; border:1px solid #455c70; border-radius:4px; box-shadow:0 2px 0 #0b141c; }
-  #resetAllBtn:hover{ background:#2b3d4d; color:#fff; border-color:#9db4c9; }
   #mixStatus:empty{ display:none; }
   .mix-btn{ padding:9px 16px; white-space:nowrap; }
   .wave-tools{ display:flex; align-items:center; gap:6px; flex:1; margin:0 12px; min-width:0; flex-wrap:wrap; }
@@ -452,7 +450,6 @@
   .wrap > .error{ color:#7a1f10; }
   h1{ color:#0f1a24; }
   header p{ color:#16293a; }
-  #resetAllBtn{ border-color:#0e1822; }
   .pl-left{ width:240px !important; }
   body section .player-btn.on{ background:#ffb547; color:#131f2c; border-color:#ffd08a; box-shadow:0 0 10px rgba(255,181,71,.55), 0 2px 0 #0b141c; }
   body section .dl-row .record-btn.busy, body section .dl-row .record-btn.busy:disabled, body section .dl-row .record-btn.busy:hover:not(:disabled){ background:#ef4a3a; border-color:#ff8a7c; color:#fff; box-shadow:0 0 10px rgba(239,74,58,.7); filter:none; }
@@ -464,7 +461,6 @@
   <header>
     <h1>배경음악 믹서</h1>
     <p>음성 파일 위에 배경음악을 입혀 하나의 오디오로 내보냅니다.</p>
-    <button class="record-btn" id="resetAllBtn" style="margin-top:10px;" title="전체 초기화">🔄 전체 초기화</button>
   </header>
 
 
@@ -667,6 +663,12 @@
             <button data-mode="longer" title="둘 중 긴 쪽에 맞춤">↔</button>
           </div>
         </div>
+        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 1초 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
+          <div class="segmented" id="duckMode">
+            <button data-mode="off" class="active" title="끔">끔</button>
+            <button data-mode="on" title="켬">켬</button>
+          </div>
+        </div>
         <div class="sw" title="음악이 더 짧을 때"><span class="kl">🔁 음악이 짧으면</span>
           <div class="segmented" id="loopMode">
             <button data-mode="loop" class="active" title="반복 재생">🔁</button>
@@ -743,6 +745,7 @@ let audioCtx = null;
 let voiceBuffer = null, musicBuffer = null;
 let durationMode = 'voice';
 let loopMode = 'loop';
+let autoDuck = 'off';
 let voiceSpeed = 1;
 let musicSpeed = 1;
 
@@ -2550,6 +2553,7 @@ function makePlayer(kind){
   async function play(){
     if(!rawBuffer()) return;
     const processed = await ensureProcessed();
+    stopSourceOnly(); // 연속으로 눌러도 소리가 겹치지 않게
     if(st.pausedAt >= durP() - 0.01) st.pausedAt = 0;
     const ctx = getCtx();
     ctx.resume();
@@ -2804,6 +2808,7 @@ function saveSettings(){
       musicOutroLevel: document.getElementById('musicOutroLevel').value,
       durationMode,
       loopMode,
+      autoDuck,
       voiceSpeed,
       musicSpeed
     }));
@@ -2832,6 +2837,10 @@ function loadSettings(){
     durationMode = s.durationMode;
     document.querySelectorAll('#durationMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === s.durationMode));
   }
+  if(s.autoDuck){
+    autoDuck = s.autoDuck;
+    document.querySelectorAll('#duckMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === s.autoDuck));
+  }
   if(s.loopMode){
     loopMode = s.loopMode;
     document.querySelectorAll('#loopMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === s.loopMode));
@@ -2849,37 +2858,6 @@ function loadSettings(){
 }
 loadSettings();
 
-document.getElementById('resetAllBtn').addEventListener('click', () => {
-  if(!confirm('불러온 음성/배경음악 파일과 믹스 결과를 모두 지우고 처음부터 시작할까요? (설정값은 유지됩니다)')) return;
-  voiceItems = [];
-  musicItems = [];
-  voiceBuffer = null;
-  musicBuffer = null;
-  mixedBuffer = null;
-  voiceSpeedSegments = [];
-  musicSpeedSegments = [];
-  renderSegments('voice');
-  renderSegments('music');
-  ['voiceCutStart','voiceEndOffset','musicOffset','musicEndOffset'].forEach(id => {
-    document.getElementById(id).value = 0;
-  });
-  document.getElementById('loadError').textContent = '';
-  document.getElementById('voiceDur').textContent = '—';
-  document.getElementById('musicDur').textContent = '—';
-  document.getElementById('dropVoice').classList.remove('has-file');
-  document.getElementById('dropMusic').classList.remove('has-file');
-  clearWaveCanvas(document.getElementById('voiceCanvas'));
-  clearWaveCanvas(document.getElementById('musicCanvas'));
-  voiceBaseImageData = null;
-  musicBaseImageData = null;
-  document.getElementById('voiceRuler').innerHTML = '';
-  document.getElementById('musicRuler').innerHTML = '';
-  renderList('voice');
-  renderList('music');
-  updateReadyState();
-  voicePlayerCtl.markDirty();
-  musicPlayerCtl.markDirty();
-});
 
 function resetTrack(track){
   const label = track === 'voice' ? '음성' : '배경음악';
@@ -3292,6 +3270,14 @@ document.getElementById('durationMode').addEventListener('click', e => {
   onSettingsChanged();
   saveSettings();
 });
+document.getElementById('duckMode').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  autoDuck = btn.dataset.mode;
+  [...document.getElementById('duckMode').children].forEach(b => b.classList.toggle('active', b===btn));
+  onSettingsChanged();
+  saveSettings();
+});
 document.getElementById('loopMode').addEventListener('click', e => {
   const btn = e.target.closest('button');
   if(!btn) return;
@@ -3314,6 +3300,35 @@ function readSettings(duration){
   voiceDelay = Math.min(voiceDelay, duration);
   const voiceGainValue = Math.max(0, Number(document.getElementById('voiceVolume').value) || 0) / 100;
   return { voiceGainValue, musicGainValue, fadeIn, fadeOut, voiceDelay, musicIntroLevel, musicOutro, musicOutroLevel, duration };
+}
+
+// 음성에서 말이 1초 이상 쉬는 구간(음성 시작 기준 초) 찾기
+function detectSpeechGaps(buf){
+  const sr = buf.sampleRate, hop = Math.round(sr * 0.01), n = Math.floor(buf.length / hop);
+  if(n < 200) return [];
+  const d = buf.getChannelData(0);
+  const env = new Float32Array(n);
+  for(let i=0;i<n;i++){ let sum = 0; const b0 = i*hop; for(let k=0;k<hop;k++){ const x = d[b0+k]; sum += x*x; } env[i] = Math.sqrt(sum / hop); }
+  const sorted = Array.from(env).sort((a,b)=>a-b);
+  const loud = sorted[Math.floor(sorted.length*0.9)] || 0;
+  if(loud <= 0) return [];
+  const thr = loud * 0.12;
+  const speech = new Uint8Array(n);
+  for(let i=0;i<n;i++) speech[i] = env[i] > thr ? 1 : 0;
+  // 0.8초 미만의 짧은 쉼은 말하는 중으로 취급
+  const minGap = 80;
+  let i = 0; const segs = [];
+  while(i < n){
+    if(speech[i]){ let j = i; while(j < n && speech[j]) j++; segs.push([i, j]); i = j; } else i++;
+  }
+  const merged = [];
+  segs.forEach(sg => { const l = merged[merged.length-1]; if(l && sg[0] - l[1] < minGap) l[1] = sg[1]; else merged.push([sg[0], sg[1]]); });
+  const gaps = [];
+  for(let k=1;k<merged.length;k++){
+    const gs = merged[k-1][1]*0.01, ge = merged[k][0]*0.01;
+    if(ge - gs >= 1.2) gaps.push({ start: gs, end: ge });
+  }
+  return gaps;
 }
 
 function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, trimmedMusicBuffer){
@@ -3358,6 +3373,21 @@ function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, tr
     musicGain.gain.linearRampToValueAtTime(s.musicGainValue, startAt + s.fadeIn);
   } else {
     musicGain.gain.setValueAtTime(s.musicGainValue, startAt);
+  }
+
+  // 말이 1초 이상 쉬는 곳에서는 음악을 '시작 음량'까지 키웠다가, 말이 다시 시작되기 전에 음악 크기로 내림
+  if(autoDuck === 'on'){
+    const voiceStartT = startAt + s.voiceDelay;
+    const winStart = Math.max(voiceStartT, startAt + (hasIntro ? 0 : s.fadeIn)) + 0.3;
+    const winEnd = (hasOutro ? voiceEndTime : (s.fadeOut > 0 ? mixEndTime - s.fadeOut : mixEndTime)) - 0.3;
+    detectSpeechGaps(adjustedVoiceBuffer).forEach(g => {
+      const gs = voiceStartT + g.start, ge = voiceStartT + g.end;
+      if(gs - 0.15 < winStart || ge + 0.0 > winEnd) return;
+      musicGain.gain.setValueAtTime(s.musicGainValue, gs + 0.15);
+      musicGain.gain.linearRampToValueAtTime(s.musicIntroLevel, gs + 0.55);
+      musicGain.gain.setValueAtTime(s.musicIntroLevel, ge - 0.55);
+      musicGain.gain.linearRampToValueAtTime(s.musicGainValue, ge - 0.15);
+    });
   }
 
   let swellEnd = null;
@@ -3705,6 +3735,33 @@ setActiveTrack('voice');
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+})();
+
+// ---- 단축키: 스페이스=재생/정지, ←/→=5초 이동 (선택된 탭 기준) ----
+(function(){
+  let spaceHandled = false;
+  function targets(){
+    if(activeTrack === 'all') return [voicePlayerCtl, musicPlayerCtl];
+    return [activeTrack === 'voice' ? voicePlayerCtl : musicPlayerCtl];
+  }
+  document.addEventListener('keydown', e => {
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target;
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if(document.getElementById('zoomModal').classList.contains('active')) return;
+    if(e.code === 'Space'){
+      const id = activeTrack === 'all' ? 'togetherBtn' : (activeTrack === 'voice' ? 'voicePlayBtn' : 'musicPlayBtn');
+      const b = document.getElementById(id);
+      e.preventDefault(); spaceHandled = true;
+      if(t && t.tagName === 'BUTTON') t.blur();
+      if(b && !b.disabled) b.click();
+    } else if(e.code === 'ArrowLeft' || e.code === 'ArrowRight'){
+      e.preventDefault();
+      const delta = e.code === 'ArrowLeft' ? -5 : 5;
+      targets().forEach(c => { const d = c.getDuration(); if(d > 0) c.seekToFraction(Math.max(0, Math.min(1, (c.getElapsed() + delta) / d))); });
+    }
+  });
+  document.addEventListener('keyup', e => { if(e.code === 'Space' && spaceHandled){ e.preventDefault(); spaceHandled = false; } });
 })();
 </script>
 </body>
