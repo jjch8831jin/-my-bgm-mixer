@@ -242,7 +242,7 @@
   .mix-chip .lb{ font-size: 14pt; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; }
   .mix-chip .segmented{ flex: none; }
   .mix-chip .un{ font-size: 14pt; color: var(--text); }
-  .mix-chip input[type="number"]{ width: 76px; padding: 4px 4px; }
+  .mix-chip input[type="number"]{ width: 104px; padding: 4px 4px; }
   .mix-chip .segmented button{ padding: 3px 9px; font-size: 14pt; }
   .transport{ display: flex; align-items: center; gap: 12px; }
   .play-btn{
@@ -305,7 +305,7 @@
   .auto-bar .progress-fill{ position: absolute; left: 0; top: 0; bottom: 0; height: auto; background: var(--danger); opacity: .35; }
   .auto-bar span{ position: relative; display: flex; align-items: center; justify-content: center; height: 100%; font-size: 12pt; color: var(--text-dim); white-space: nowrap; }
   .seg-form{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; }
-  .seg-form input{ width: 70px; background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 6px; font-size: 14pt; text-align: center; }
+  .seg-form input{ width: 100px; background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 6px; font-size: 14pt; text-align: center; }
   .seg-scroll{ max-height: 150px; overflow-y: auto; }
   .zone{ border-top: 1px solid var(--border); margin-top: 14px; padding-top: 10px; }
   .zone-title{ font-size: 12pt; font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
@@ -317,7 +317,7 @@
   .track-card.active.music-sel{ box-shadow: 0 0 0 2px var(--music); }
   .segmented.big button{ font-size: 14pt; padding: 8px 18px; white-space: nowrap; }
   #toolPanel{ margin-top: 4px; }
-  .seg-scroll .seg-input{ width: 90px; }
+  .seg-scroll .seg-input{ width: 104px; }
   .segmented.big button.active[data-track="voice"]{ background: var(--voice); color: #f5fbf7; }
   .segmented.big button.active[data-track="all"]{ background: #3f5f86; color: #f2f6fb; }
   .segmented.big button.active[data-track="music"]{ background: var(--music); color: #fff8ec; }
@@ -581,17 +581,17 @@
         <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="speed-row" style="margin-top:12px;">
-        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.5" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
+        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)">⚖ 자동맞춤</button>
         <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
       </div>
       <div class="seg-form" id="segForm_voice" style="display:none;">
-        <input type="number" id="segStart_voice" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
-        <input type="number" id="segEnd_voice" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
-        <input type="number" id="segSpeed_voice" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
+        <input type="number" id="segStart_voice" min="0" step="0.01" value="0" title="시작 (초)"><span>~</span>
+        <input type="number" id="segEnd_voice" min="0" step="0.01" value="5" title="끝 (초)"><span>초</span>
+        <input type="number" id="segSpeed_voice" min="0.25" max="3" step="0.01" value="1" title="속도"><span>x</span>
         <button class="record-btn" type="button" id="segOk_voice">추가</button>
         <button class="record-btn" type="button" id="segCancel_voice">취소</button>
       </div>
@@ -617,15 +617,15 @@
         <div class="time" id="musicTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="speed-row" style="margin-top:12px;">
-        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.5" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.05" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
+        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addMusicSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
       </div>
       <div class="seg-form" id="segForm_music" style="display:none;">
-        <input type="number" id="segStart_music" min="0" step="0.5" value="0" title="시작 (초)"><span>~</span>
-        <input type="number" id="segEnd_music" min="0" step="0.5" value="5" title="끝 (초)"><span>초</span>
-        <input type="number" id="segSpeed_music" min="0.25" max="3" step="0.05" value="1" title="속도"><span>x</span>
+        <input type="number" id="segStart_music" min="0" step="0.01" value="0" title="시작 (초)"><span>~</span>
+        <input type="number" id="segEnd_music" min="0" step="0.01" value="5" title="끝 (초)"><span>초</span>
+        <input type="number" id="segSpeed_music" min="0.25" max="3" step="0.01" value="1" title="속도"><span>x</span>
         <button class="record-btn" type="button" id="segOk_music">추가</button>
         <button class="record-btn" type="button" id="segCancel_music">취소</button>
       </div>
@@ -670,7 +670,7 @@
             <button data-mode="longer" title="둘 중 긴 쪽에 맞춤">↔</button>
           </div>
         </div>
-        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 1초 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
+        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 3초 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과와 통합 재생에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
           <div class="segmented" id="duckMode">
             <button data-mode="off" class="active" title="끔">끔</button>
             <button data-mode="on" title="켬">켬</button>
@@ -1018,11 +1018,11 @@ function renderSegments(track){
   if(segments.length === 0){ container.innerHTML = ''; return; }
   container.innerHTML = segments.map(seg => `
     <div class="file-item">
-      <input type="number" class="seg-input" step="0.5" min="0" value="${seg.start}" data-field="start" data-id="${seg.id}" data-track="${track}">
+      <input type="number" class="seg-input" step="0.01" min="0" value="${Number(seg.start).toFixed(2)}" data-field="start" data-id="${seg.id}" data-track="${track}">
       <span>~</span>
-      <input type="number" class="seg-input" step="0.5" min="0" value="${seg.end}" data-field="end" data-id="${seg.id}" data-track="${track}">
+      <input type="number" class="seg-input" step="0.01" min="0" value="${Number(seg.end).toFixed(2)}" data-field="end" data-id="${seg.id}" data-track="${track}">
       <span>초</span>
-      <input type="number" class="seg-input" step="0.05" min="0.25" max="3" value="${seg.speed}" data-field="speed" data-id="${seg.id}" data-track="${track}">
+      <input type="number" class="seg-input" step="0.01" min="0.25" max="3" value="${Number(seg.speed).toFixed(2)}" data-field="speed" data-id="${seg.id}" data-track="${track}">
       <span>x</span>
       <button type="button" data-action="removeSegment" data-id="${seg.id}" data-track="${track}" title="삭제">✕</button>
     </div>
@@ -1870,7 +1870,7 @@ function drawTimeRuler(rulerId, duration){
   });
 }
 
-function rebuild(kind){
+function rebuild(kind, live){
   const items = kind === 'voice' ? voiceItems : musicItems;
   const merged = concatBuffers(items);
   const canvas = document.getElementById(kind === 'voice' ? 'voiceCanvas' : 'musicCanvas');
@@ -1918,8 +1918,8 @@ function rebuild(kind){
   renderList(kind);
   updateReadyState();
   updateCutInfo(kind);
-  if(kind === 'voice') voicePlayerCtl.markDirty();
-  if(kind === 'music') musicPlayerCtl.markDirty();
+  const _ctl = kind === 'voice' ? voicePlayerCtl : musicPlayerCtl;
+  if(live) _ctl.reloadKeepPlaying(live); else _ctl.markDirty();
   scheduleSaveWork(100);
 }
 
@@ -1944,7 +1944,7 @@ async function addFiles(fileList, kind){
       }
     }
     if(loadErrorEl.textContent.includes('불러오는 중')) loadErrorEl.textContent = '';
-    rebuild(kind);
+    rebuild(kind, (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).captureLive());
   } catch(err){
     loadErrorEl.textContent = label + ' 처리 중 오류가 발생했습니다: ' + err.message;
   }
@@ -2469,6 +2469,7 @@ function makePlayer(kind){
     : { prev:'musicPrevBtn', play:'musicPlayBtn', stop:'musicStopBtn', next:'musicNextBtn', fill:'musicProgressFill', time:'musicTimeLabel', durSpan:'musicDur' };
 
   const st = { source:null, processed:null, boundaries:[0], pausedAt:0, playing:false, startCtxTime:0, raf:null, dirty:true, rate:1 };
+  let swapToken = 0;
   function durP(){ return st.processed ? st.processed.duration / st.rate : 0; }
   function hasSegs(){ return (kind === 'voice' ? voiceSpeedSegments : musicSpeedSegments).length > 0; }
 
@@ -2634,6 +2635,7 @@ function makePlayer(kind){
   }
 
   function stop(){
+    swapToken++;
     stopSourceOnly();
     st.playing = false;
     st.pausedAt = 0;
@@ -2693,6 +2695,64 @@ function makePlayer(kind){
     stop();
   }
 
+  // ---- 재생 중 파일 추가: 지금 소리는 그대로 두고, 새 소리가 준비되면 같은 위치에서 바꿔 끼움 ----
+  function pieceInfo(){
+    const { start } = trimRange();
+    const tb = trimmedBuffer();
+    const segs = kind === 'voice' ? voiceSpeedSegments : musicSpeedSegments;
+    const clipped = clipSegmentsToTrim(segs, start, tb.duration);
+    return { start, dur: tb.duration, pieces: buildSpeedPieces(tb.duration, clipped, speedFactor()) };
+  }
+  function bufToOrig(info, fast, bufT){
+    if(fast) return info.start + bufT;
+    let acc = 0;
+    for(const pc of info.pieces){
+      const len = (pc.end - pc.start) / pc.speed;
+      if(bufT <= acc + len) return info.start + pc.start + (bufT - acc) * pc.speed;
+      acc += len;
+    }
+    return info.start + info.dur;
+  }
+  function origToBuf(orig){
+    const info = pieceInfo();
+    const o = Math.max(0, orig - info.start);
+    if(st.fastOk) return o;
+    let acc = 0;
+    for(const pc of info.pieces){
+      if(o <= pc.end) return acc + Math.max(0, o - pc.start) / pc.speed;
+      acc += (pc.end - pc.start) / pc.speed;
+    }
+    return acc;
+  }
+  // 목록을 바꾸기 직전에 호출: 재생 중이면 "지금 원본 위치"를 계산할 수 있는 정보를 돌려줌 (재생 중이 아니면 null)
+  function captureLive(){
+    if(!st.playing || !st.source || !st.processed) return null;
+    const ctx = getCtx();
+    const info = pieceInfo();
+    const fast = !!st.fastOk, rate = st.rate;
+    const t0 = ctx.currentTime, b0 = elapsedNow() * rate;
+    return { source: st.source, orig: at => bufToOrig(info, fast, b0 + (at - t0) * rate) };
+  }
+  // ---- 통합 재생의 "말 쉴 때 음악 키움"용 ----
+  function getBufferPos(){ return st.processed ? { buf: st.processed, t: elapsedNow() * st.rate } : null; }
+  function setLevel(mode){
+    if(!st.gain) return;
+    let v = volNow();
+    if(mode === 'up') v = Math.max(0, Number(document.getElementById('musicIntroLevel').value) || 0) / 100;
+    st.gain.gain.setTargetAtTime(v, getCtx().currentTime, 0.12);
+  }
+  async function reloadKeepPlaying(live){
+    if(!live || !st.playing || st.source !== live.source){ markDirty(); return; }
+    const token = ++swapToken;
+    st.curIdx = 0;
+    st.dirty = true;
+    try{ await ensureProcessed(); }catch(err){ console.warn(err); return; }
+    if(token !== swapToken || !st.playing || st.source !== live.source) return; // 그 사이 멈추거나 다른 조작을 함
+    const orig = live.orig(getCtx().currentTime);
+    st.pausedAt = origToBuf(orig) / st.rate;
+    await play();
+  }
+
   // 속도 변경: 구간별 속도가 없으면 재생 중에도 즉시 반영, 있으면 다시 처리
   function setSpeed(){
     if(hasSegs() || st.dirty || !st.processed || !st.fastOk){ markDirty(); return; }
@@ -2734,7 +2794,7 @@ function makePlayer(kind){
     repBtn.classList.toggle('on', st.repeat);
     if(st.source && st.playing) st.source.loop = loopEff();
   });
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, getBufferPos, setLevel, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
@@ -3395,7 +3455,7 @@ function detectSpeechGaps(buf){
   const gaps = [];
   for(let k=1;k<merged.length;k++){
     const gs = merged[k-1][1]*0.01, ge = merged[k][0]*0.01;
-    if(ge - gs >= 1.2) gaps.push({ start: gs, end: ge });
+    if(ge - gs >= 3) gaps.push({ start: gs, end: ge });
   }
   return gaps;
 }
@@ -3831,6 +3891,52 @@ setActiveTrack('voice');
     }
   });
   document.addEventListener('keyup', e => { if(e.code === 'Space' && spaceHandled){ e.preventDefault(); spaceHandled = false; } });
+})();
+
+// ---- 통합 재생에서도 "말 쉴 때 음악 키움" 적용 ----
+(function(){
+  const gapCache = new WeakMap();
+  let touched = false; // 이 기능이 음악 음량을 바꿔 둔 상태인지
+  function gapsFor(buf){
+    let g = gapCache.get(buf);
+    if(!g){ g = detectSpeechGaps(buf); gapCache.set(buf, g); }
+    return g;
+  }
+  setInterval(() => {
+    const on = autoDuck === 'on' && voicePlayerCtl.isPlaying() && musicPlayerCtl.isPlaying();
+    if(!on){
+      if(touched){ touched = false; musicPlayerCtl.setLevel('base'); }
+      return;
+    }
+    const info = voicePlayerCtl.getBufferPos();
+    if(!info) return;
+    let up = false;
+    for(const g of gapsFor(info.buf)){
+      if(info.t > g.start + 0.15 && info.t < g.end - 0.55){ up = true; break; }
+    }
+    touched = true;
+    musicPlayerCtl.setLevel(up ? 'up' : 'base');
+  }, 60);
+})();
+
+// ---- 시작·끝·속도 칸은 항상 소수 둘째 자리로 표시 (예: 0.9 → 0.90) ----
+(function(){
+  const SEL = '#voiceCutStart,#voiceEndOffset,#voiceSpeedSlider,#musicOffset,#musicEndOffset,#musicSpeedSlider,' +
+              '#segStart_voice,#segEnd_voice,#segSpeed_voice,#segStart_music,#segEnd_music,#segSpeed_music,.seg-input';
+  function fmt(el){
+    if(el.value === '') return;
+    const n = Number(el.value);
+    if(!isFinite(n)) return;
+    const t = n.toFixed(2);
+    if(el.value !== t) el.value = t;
+  }
+  // 위·아래 화살표나 입력을 마치면(칸을 벗어나거나 Enter) 바로 맞춤
+  document.addEventListener('change', e => { if(e.target.matches && e.target.matches(SEL)) fmt(e.target); }, true);
+  // 프로그램이 값을 바꾼 경우(초기화, 막대 이동 등)는 입력 중이 아닐 때 맞춤
+  setInterval(() => {
+    document.querySelectorAll(SEL).forEach(el => { if(document.activeElement !== el) fmt(el); });
+  }, 300);
+  document.querySelectorAll(SEL).forEach(fmt);
 })();
 
 // ---- 작업 내용 자동 저장 / 새로고침 후 복원 (이 브라우저의 IndexedDB에 저장) ----
