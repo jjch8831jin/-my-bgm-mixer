@@ -555,6 +555,7 @@
         <button class="player-btn" id="togetherRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 함께 재생)">🔁</button>
         <label class="mix-chip" title="음성 크기 (%) — 최종 믹싱에도 반영됩니다"><span class="ic">🎙</span><span class="lb">음성 크기</span><input type="number" id="voiceVolume" min="0" max="300" step="1" value="100"><span class="un">%</span></label>
         <label class="mix-chip" title="배경음악 크기 (%) — 5번 믹싱 설정의 음악 크기와 같은 값입니다"><span class="ic">🎵</span><span class="lb">음악 크기</span><input type="number" id="musicVolume2" min="0" max="300" step="1" value="25"><span class="un">%</span></label>
+        <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeed2" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span></label>
       </div>
       <div class="player-line">
         <span class="all-tag">🎙 음성</span>
@@ -2740,6 +2741,22 @@ function makePlayer(kind){
     if(!st.gain) return;
     st.gain.gain.setTargetAtTime(v, getCtx().currentTime, 0.04);
   }
+  // 일시정지 상태에서도 위치를 기억했다가, 다시 처리한 뒤 같은 자리로 돌려놓음
+  function capturePaused(){
+    if(st.playing || !st.processed || st.pausedAt <= 0.05) return null;
+    const o = bufToOrig(pieceInfo(), !!st.fastOk, st.pausedAt * st.rate);
+    return { paused: true, orig: () => o };
+  }
+  async function reloadKeepPaused(cap){
+    if(!cap || st.playing){ markDirty(); return; }
+    const token = ++swapToken;
+    st.curIdx = 0;
+    st.dirty = true;
+    try{ await ensureProcessed(); }catch(err){ console.warn(err); return; }
+    if(token !== swapToken || st.playing) return;
+    st.pausedAt = origToBuf(cap.orig()) / st.rate;
+    updateProgressDisplay();
+  }
   async function reloadKeepPlaying(live){
     if(!live || !st.playing || st.source !== live.source){ markDirty(); return; }
     const token = ++swapToken;
@@ -2793,7 +2810,7 @@ function makePlayer(kind){
     repBtn.classList.toggle('on', st.repeat);
     if(st.source && st.playing) st.source.loop = loopEff();
   });
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, getBufferPos, getInfo, setGain, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
@@ -3376,12 +3393,20 @@ document.getElementById('voiceEndOffset').addEventListener('input', () => {
   updateCutInfo('voice');
 });
 
+let _speedLive = null, _speedTimer = null;
 document.getElementById('voiceSpeedSlider').addEventListener('input', e => {
+  // 다시 처리해야 하는 경우(자동맞춤·구간 속도), 재생 중이면 지금 위치를 기억했다가 같은 자리에서 이어서 재생
+  const reload = voiceAutoSpeed || voiceSpeedSegments.length > 0;
+  if(reload && !_speedLive) _speedLive = voicePlayerCtl.isPlaying() ? voicePlayerCtl.captureLive() : voicePlayerCtl.capturePaused();
   voiceSpeed = Math.round(Number(e.target.value) * 100) / 100;
   document.getElementById('voiceSpeedVal').textContent = voiceSpeed.toFixed(2) + 'x';
   onSettingsChanged();
   saveSettings();
-  if(voiceAutoSpeed) voicePlayerCtl.markDirty(); else voicePlayerCtl.setSpeed();
+  if(!reload){ voicePlayerCtl.setSpeed(); return; }
+  if(_speedLive){
+    clearTimeout(_speedTimer);
+    _speedTimer = setTimeout(() => { const l = _speedLive; _speedLive = null; if(l.paused) voicePlayerCtl.reloadKeepPaused(l); else voicePlayerCtl.reloadKeepPlaying(l); }, 400);
+  } else voicePlayerCtl.markDirty();
 });
 document.getElementById('musicSpeedSlider').addEventListener('input', e => {
   musicSpeed = Math.round(Number(e.target.value) * 100) / 100;
@@ -4002,9 +4027,22 @@ function mixTotalDuration(){
   document.addEventListener('keyup', e => { if(e.code === 'Space' && spaceHandled){ e.preventDefault(); spaceHandled = false; } });
 })();
 
+// ---- 통합 탭 음성 속도 칸 ↔ 음성 탭 속도 칸 (같은 값) ----
+(function(){
+  const a = document.getElementById('voiceSpeed2'), b = document.getElementById('voiceSpeedSlider');
+  a.addEventListener('input', () => {
+    if(a.value === '') return;
+    b.value = a.value;
+    b.dispatchEvent(new Event('input', { bubbles:true }));
+  });
+  b.addEventListener('input', () => { if(document.activeElement !== a) a.value = b.value; });
+  setInterval(() => { if(document.activeElement !== a && a.value !== b.value) a.value = b.value; }, 300);
+  a.value = b.value;
+})();
+
 // ---- 시작·끝·속도 칸은 항상 소수 둘째 자리로 표시 (예: 0.9 → 0.90) ----
 (function(){
-  const SEL = '#voiceCutStart,#voiceEndOffset,#voiceSpeedSlider,#musicOffset,#musicEndOffset,#musicSpeedSlider,' +
+  const SEL = '#voiceCutStart,#voiceEndOffset,#voiceSpeedSlider,#voiceSpeed2,#musicOffset,#musicEndOffset,#musicSpeedSlider,' +
               '#segStart_voice,#segEnd_voice,#segSpeed_voice,#segStart_music,#segEnd_music,#segSpeed_music,.seg-input';
   function fmt(el){
     if(el.value === '') return;
