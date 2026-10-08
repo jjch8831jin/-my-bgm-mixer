@@ -2481,7 +2481,8 @@ function makePlayer(kind){
     const el = document.getElementById(kind === 'voice' ? 'voiceVolume' : 'musicVolume');
     return Math.max(0, Number(el.value) || 0) / 100;
   }
-  function applyVolume(){ if(st.gain) st.gain.gain.value = volNow(); }
+  let fadeTok = 0;
+  function applyVolume(){ if(st.gain && !st.fading) st.gain.gain.value = volNow(); }
   function trimmedBuffer(){ return kind === 'voice' ? getTrimmedVoiceBuffer() : getTrimmedMusicBuffer(); }
 
   function setButtons(){
@@ -2594,6 +2595,7 @@ function makePlayer(kind){
 
   async function play(){
     if(!rawBuffer()) return;
+    st.fading = false; fadeTok++;
     const processed = await ensureProcessed();
     stopSourceOnly(); // 연속으로 눌러도 소리가 겹치지 않게
     if(st.pausedAt >= durP() - 0.01) st.pausedAt = 0;
@@ -2613,6 +2615,7 @@ function makePlayer(kind){
     st.gain = g;
     source.onended = () => {
       if(st.source !== source) return; // 이미 새 재생으로 교체된 경우 무시
+      st.fading = false;
       st.playing = false;
       st.pausedAt = 0;
       st.source = null;
@@ -2633,6 +2636,7 @@ function makePlayer(kind){
 
   function pause(){
     if(!st.playing) return;
+    st.fading = false; fadeTok++;
     st.pausedAt = elapsedNow();
     stopSourceOnly();
     st.playing = false;
@@ -2640,7 +2644,23 @@ function makePlayer(kind){
     updateProgressDisplay();
   }
 
+  // 정지 버튼: 5번의 📉 아웃 시간만큼 서서히 줄인 뒤 멈춤 (줄이는 중에 한 번 더 누르면 즉시 정지)
+  function softStop(){
+    if(!st.playing || !st.gain || st.fading){ stop(); return; }
+    const fo = Math.max(0, Number(document.getElementById('fadeOut').value) || 0);
+    if(fo <= 0.01){ stop(); return; }
+    const now = getCtx().currentTime, g = st.gain.gain;
+    const cur = g.value;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(cur, now);
+    g.linearRampToValueAtTime(0, now + fo);
+    st.fading = true;
+    const tok = ++fadeTok;
+    setTimeout(() => { if(tok === fadeTok && st.fading) stop(); }, fo * 1000 + 40);
+  }
+
   function stop(){
+    st.fading = false; fadeTok++;
     swapToken++;
     stopSourceOnly();
     st.playing = false;
@@ -2743,7 +2763,7 @@ function makePlayer(kind){
   function getBufferPos(){ return st.processed ? { buf: st.processed, t: elapsedNow() * st.rate } : null; }
   function getInfo(){ return st.processed ? { buf: st.processed, rate: st.rate } : null; }
   function setGain(v){
-    if(!st.gain) return;
+    if(!st.gain || st.fading) return;
     st.gain.gain.setTargetAtTime(v, getCtx().currentTime, 0.04);
   }
   // 일시정지 상태에서도 위치를 기억했다가, 다시 처리한 뒤 같은 자리로 돌려놓음
@@ -2799,7 +2819,7 @@ function makePlayer(kind){
   }
 
   document.getElementById(ids.play).addEventListener('click', () => { st.playing ? pause() : play(); });
-  document.getElementById(ids.stop).addEventListener('click', stop);
+  document.getElementById(ids.stop).addEventListener('click', softStop);
   document.getElementById(ids.prev).addEventListener('click', prev);
   document.getElementById(ids.next).addEventListener('click', next);
 
@@ -2815,7 +2835,7 @@ function makePlayer(kind){
     repBtn.classList.toggle('on', st.repeat);
     if(st.source && st.playing) st.source.loop = loopEff();
   });
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, softStop, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
@@ -2906,7 +2926,7 @@ document.getElementById('zoomPlayBtn').addEventListener('click', () => {
   if(!p) return;
   p.isPlaying() ? p.pause() : p.play();
 });
-document.getElementById('zoomStopBtn').addEventListener('click', () => { const p = zoomActivePlayer(); if(p) p.stop(); });
+document.getElementById('zoomStopBtn').addEventListener('click', () => { const p = zoomActivePlayer(); if(p) p.softStop(); });
 document.getElementById('zoomNextBtn').addEventListener('click', () => { const p = zoomActivePlayer(); if(p) p.next(); });
 
 attachScrub('zoomProgressBar', () => { const p = zoomActivePlayer(); return p ? p.getDuration() : 0; }, frac => { const p = zoomActivePlayer(); if(p) return p.seekToFraction(frac); }, 'zoomTimeLabel');
@@ -3940,7 +3960,7 @@ function mixTotalDuration(){
   musicPlayerCtl.onEnd = () => { if(running) musicEnded = true; setTimeout(refresh, 50); };
   document.getElementById('togetherRepeatBtn').addEventListener('click', e => { repeatAll = !repeatAll; e.currentTarget.classList.toggle('on', repeatAll); });
   document.getElementById('togetherStopBtn').addEventListener('click', () => {
-    running = false; setManaged(false); voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume(); resetFlags(); setTimeout(refresh, 50);
+    running = false; setManaged(false); voicePlayerCtl.softStop(); musicPlayerCtl.softStop(); resetFlags(); setTimeout(refresh, 50);
   });
   document.getElementById('togetherPrevBtn').addEventListener('click', () => { voicePlayerCtl.prev(); musicPlayerCtl.prev(); });
   document.getElementById('togetherNextBtn').addEventListener('click', () => { voicePlayerCtl.next(); musicPlayerCtl.next(); });
