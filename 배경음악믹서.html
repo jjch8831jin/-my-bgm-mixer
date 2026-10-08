@@ -597,7 +597,7 @@
         <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
-        <button class="record-btn" id="previewAutoBtn" type="button" title="자동맞춤 미리듣기 — 누르면 맞춘 소리로 재생, 한 번 더 누르면 일시정지, 또 누르면 정지하고 원래대로 돌아갑니다">🎧 미리듣기</button>
+        <button class="record-btn" id="previewAutoBtn" type="button" title="자동맞춤 미리듣기 — 누르면 맞춘 소리로 재생, 다시 누르면 일시정지·이어서 재생 (정지하면 원래대로 돌아갑니다)">▶ 미리듣기</button>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)">⚖ 자동맞춤</button>
         <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
       </div>
@@ -1238,7 +1238,12 @@ document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
 let _autoCache = null;   // 마지막으로 계산한 자동맞춤 결과 (같은 음성·속도면 다시 계산하지 않음)
 let _manualStash = null; // 미리듣기 동안 잠시 빼 둔, 직접 정한 구간 속도
 let previewActive = false, previewOwned = false, previewBusy = false;
-function updatePvBtn(){ document.getElementById('previewAutoBtn').classList.toggle('pv-on', previewActive); }
+function updatePvBtn(){
+  const b = document.getElementById('previewAutoBtn');
+  b.classList.toggle('pv-on', previewActive);
+  const t = (previewActive && (previewBusy || voicePlayerCtl.isPlaying())) ? '⏸ 미리듣기' : '▶ 미리듣기';
+  if(b.textContent !== t) b.textContent = t;
+}
 function endPreview(){
   const owned = previewOwned;
   previewActive = false; previewOwned = false; updatePvBtn();
@@ -1255,8 +1260,9 @@ function endPreview(){
 document.getElementById('previewAutoBtn').addEventListener('click', async () => {
   if(_autoBusy || previewBusy || !voiceBuffer) return;
   if(previewActive){
-    if(voicePlayerCtl.isPlaying()) voicePlayerCtl.pause(); // 한 번 더 누르면 일시정지
-    else endPreview();                                       // 또 누르면 정지(처음으로) + 원래대로
+    if(voicePlayerCtl.isPlaying()) voicePlayerCtl.pause(); // 듣는 중에 누르면 일시정지
+    else voicePlayerCtl.play();                              // 일시정지 중에 누르면 이어서 재생 (정지하려면 음성의 ⏹)
+    updatePvBtn();
     return;
   }
   previewBusy = true;
@@ -1293,12 +1299,13 @@ document.getElementById('previewAutoBtn').addEventListener('click', async () => 
       await voicePlayerCtl.play();
     }
   }catch(err){ console.warn(err); }
-  finally{ previewBusy = false; }
+  finally{ previewBusy = false; updatePvBtn(); }
 });
 // 끝까지 재생되었거나 음성 탭의 ⏹로 멈추면 미리듣기도 끝내고 원래대로 되돌림
 setInterval(() => {
   if(previewActive && !previewBusy && !voicePlayerCtl.isPlaying() && !voicePlayerCtl.isFading() && voicePlayerCtl.getElapsed() < 0.05) endPreview();
-}, 250);
+  updatePvBtn();
+}, 150);
 
 document.addEventListener('input', e => {
   const el = e.target;
