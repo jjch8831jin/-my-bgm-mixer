@@ -295,8 +295,12 @@
     white-space: nowrap; transition: border-color .12s ease, color .12s ease;
   }
   .record-btn:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
-  .record-btn.pv-on{ background: var(--danger); border-color: var(--danger); color: #fff; }
-  .record-btn.pv-on:hover:not(:disabled){ color: #f5fbf7; }
+  .pv-box{ display: inline-flex; align-items: center; gap: 4px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 2px 4px 2px 8px; flex: none; }
+  .pv-box .pv-name{ font-size: 14pt; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .pv-box button{ background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 14pt; line-height: 1.2; padding: 3px 9px; cursor: pointer; }
+  .pv-box button:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
+  .pv-box.pv-on{ background: var(--danger); border-color: var(--danger); }
+  .pv-box.pv-on .pv-name, .pv-box.pv-on button{ color: #fff; border-color: rgba(255,255,255,.6); }
   .record-btn:disabled{ opacity: 1; cursor: not-allowed; color: #22364a; background: #d3e0ed; border-color: #9db4c9; }
   .tool-row{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .tool-row .record-btn{ flex: 1; min-width: 0; padding: 7px 6px; }
@@ -342,6 +346,7 @@
   #toolPanel .pv-row .mix-chip{ padding: 4px 5px; gap: 3px; }
   #toolPanel .pv-row .mix-chip input[type="number"]{ width: 76px; padding: 3px 2px; }
   #toolPanel .pv-row > .record-btn{ padding: 6px 7px; flex: none; white-space: nowrap; }
+  #toolPanel .pv-row > .pv-box{ flex: none; }
   #toolPanel .pv-row .auto-track{ min-width: 0; gap: 6px; }
   #toolPanel .pv-row .auto-track .progress-bar{ min-width: 20px; }
   #toolPanel .pv-row .auto-track .time{ min-width: 0; }
@@ -596,8 +601,7 @@
         <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.01" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
-        <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
-        <button class="record-btn" id="previewAutoBtn" type="button" title="자동맞춤 미리듣기 — 누르면 맞춘 소리로 재생, 다시 누르면 일시정지·이어서 재생 (정지하면 원래대로 돌아갑니다)">▶ 미리듣기</button>
+        <div class="pv-box" id="previewBox" title="자동맞춤 미리듣기 — ▶로 맞춘 소리를 임시로 들어보고, ⏹로 멈추면 원래대로 돌아갑니다"><span class="pv-name">🎧 미리듣기</span><button type="button" id="previewPlayBtn" title="맞춘 소리 재생 / 일시정지">▶</button><button type="button" id="previewStopBtn" title="정지 (처음으로, 원래대로)">⏹</button></div>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)">⚖ 자동맞춤</button>
         <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
       </div>
@@ -1077,7 +1081,6 @@ function confirmSegment(track){
   ['segStart_','segEnd_','segSpeed_'].forEach(pre => document.getElementById(pre + k).addEventListener('keydown', e => { if(e.key === 'Enter') confirmSegment(k); }));
 });
 
-document.getElementById('addVoiceSegmentBtn').addEventListener('click', () => addSegment('voice'));
 document.getElementById('addMusicSegmentBtn').addEventListener('click', () => addSegment('music'));
 
 // 음성 자동 속도 맞춤: 구간별 말하는 빠르기(음절 수/초)를 재서 평균에 맞도록 구간별 속도를 채움 (0.6~1.6배 제한)
@@ -1239,11 +1242,15 @@ let _autoCache = null;   // 마지막으로 계산한 자동맞춤 결과 (같�
 let _manualStash = null; // 미리듣기 동안 잠시 빼 둔, 직접 정한 구간 속도
 let previewActive = false, previewOwned = false, previewBusy = false;
 function updatePvBtn(){
-  const b = document.getElementById('previewAutoBtn');
-  b.classList.toggle('pv-on', previewActive);
-  const t = (previewActive && (previewBusy || voicePlayerCtl.isPlaying())) ? '⏸ 미리듣기' : '▶ 미리듣기';
+  document.getElementById('previewBox').classList.toggle('pv-on', previewActive);
+  const b = document.getElementById('previewPlayBtn');
+  const t = (previewActive && (previewBusy || voicePlayerCtl.isPlaying())) ? '⏸' : '▶';
   if(b.textContent !== t) b.textContent = t;
 }
+document.getElementById('previewStopBtn').addEventListener('click', () => {
+  if(!previewActive || previewBusy) return;
+  voicePlayerCtl.softStop(); // 서서히 줄어든 뒤 멈추면 미리듣기도 끝나고 원래대로 돌아감
+});
 function endPreview(){
   const owned = previewOwned;
   previewActive = false; previewOwned = false; updatePvBtn();
@@ -1257,7 +1264,7 @@ function endPreview(){
   }
   voicePlayerCtl.markDirty(); // 정지 (처음으로)
 }
-document.getElementById('previewAutoBtn').addEventListener('click', async () => {
+document.getElementById('previewPlayBtn').addEventListener('click', async () => {
   if(_autoBusy || previewBusy || !voiceBuffer) return;
   if(previewActive){
     if(voicePlayerCtl.isPlaying()) voicePlayerCtl.pause(); // 듣는 중에 누르면 일시정지
