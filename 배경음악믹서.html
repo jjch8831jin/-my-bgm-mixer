@@ -1064,7 +1064,7 @@ function confirmSegment(track){
 document.getElementById('addVoiceSegmentBtn').addEventListener('click', () => addSegment('voice'));
 document.getElementById('addMusicSegmentBtn').addEventListener('click', () => addSegment('music'));
 
-// 음성 자동 속도 맞춤: 구간별 말하는 빠르기(음절 수/초)를 재서 평균에 맞도록 구간별 속도를 채움 (±20% 제한)
+// 음성 자동 속도 맞춤: 구간별 말하는 빠르기(음절 수/초)를 재서 평균에 맞도록 구간별 속도를 채움 (0.6~1.6배 제한)
 async function computeAutoVoiceSegments(onProgress){
   const buf = voiceBuffer;
   const status = { textContent: '' };
@@ -1111,7 +1111,7 @@ async function computeAutoVoiceSegments(onProgress){
   const valid = rates.filter(r => r !== null).sort((x,y)=>x-y);
   if(valid.length < 2){ return { segs: [], msg: '자동 맞춤을 하기에 음성이 너무 짧습니다.' }; }
   const target = valid[Math.floor(valid.length/2)];
-  let ratios = rates.map(r => r === null ? null : Math.max(0.8, Math.min(1.2, target / Math.max(0.1, r))));
+  let ratios = rates.map(r => r === null ? null : Math.max(0.6, Math.min(1.6, target / Math.max(0.1, r))));
   let prev = 1;
   ratios = ratios.map(r => { if(r === null) return prev; prev = r; return r; });
   const sm2 = ratios.map((r,i) => ((ratios[i-1] ?? r) + r*2 + (ratios[i+1] ?? r)) / 4);
