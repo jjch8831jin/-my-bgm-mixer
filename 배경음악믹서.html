@@ -671,7 +671,7 @@
             <button data-mode="longer" title="둘 중 긴 쪽에 맞춤">↔</button>
           </div>
         </div>
-        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 3초 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과와 통합 재생에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
+        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 5초 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과와 통합 재생에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
           <div class="segmented" id="duckMode">
             <button data-mode="off" class="active" title="끔">끔</button>
             <button data-mode="on" title="켬">켬</button>
@@ -2487,13 +2487,14 @@ function makePlayer(kind){
 
   function setButtons(){
     const has = !!rawBuffer();
-    document.getElementById(ids.play).textContent = st.playing ? '⏸' : '▶';
+    const pl = st.playing && !st.fading;
+    document.getElementById(ids.play).textContent = pl ? '⏸' : '▶';
     document.getElementById(ids.prev).disabled = !has;
     document.getElementById(ids.play).disabled = !has;
     document.getElementById(ids.stop).disabled = !has;
     document.getElementById(ids.next).disabled = !has;
     if(zoomKind === kind){
-      document.getElementById('zoomPlayBtn').textContent = st.playing ? '⏸' : '▶';
+      document.getElementById('zoomPlayBtn').textContent = pl ? '⏸' : '▶';
       document.getElementById('zoomPrevBtn').disabled = !has;
       document.getElementById('zoomPlayBtn').disabled = !has;
       document.getElementById('zoomStopBtn').disabled = !has;
@@ -2556,7 +2557,7 @@ function makePlayer(kind){
 
   function loopEff(){ return !!(st.loopOn || st.repeat); }
   function elapsedNow(){
-    if(!st.playing) return st.pausedAt;
+    if(!st.playing || st.fading) return st.pausedAt;
     const dur = st.processed ? durP() : st.pausedAt;
     const raw = st.pausedAt + (getCtx().currentTime - st.startCtxTime);
     if(raw < 0) return 0; // 음성 지연 대기 중
@@ -2655,6 +2656,8 @@ function makePlayer(kind){
     g.setValueAtTime(cur, now);
     g.linearRampToValueAtTime(0, now + fo);
     st.fading = true;
+    st.pausedAt = 0; // 화면에서는 바로 정지된 것으로 보임 (소리만 서서히 줄어듦)
+    setButtons(); updateProgressDisplay();
     const tok = ++fadeTok;
     setTimeout(() => { if(tok === fadeTok && st.fading) stop(); }, fo * 1000 + 40);
   }
@@ -2670,7 +2673,8 @@ function makePlayer(kind){
   }
 
   function seekTo(t){
-    const wasPlaying = st.playing;
+    const wasPlaying = st.playing && !st.fading;
+    st.fading = false; fadeTok++;
     stopSourceOnly();
     st.pausedAt = Math.max(0, Math.min(st.processed ? durP() : t, t));
     st.playing = false;
@@ -2818,7 +2822,7 @@ function makePlayer(kind){
     return st.processed ? durP() : (rawBuffer() ? rawBuffer().duration : 0);
   }
 
-  document.getElementById(ids.play).addEventListener('click', () => { st.playing ? pause() : play(); });
+  document.getElementById(ids.play).addEventListener('click', () => { (st.playing && !st.fading) ? pause() : play(); });
   document.getElementById(ids.stop).addEventListener('click', softStop);
   document.getElementById(ids.prev).addEventListener('click', prev);
   document.getElementById(ids.next).addEventListener('click', next);
@@ -2835,7 +2839,7 @@ function makePlayer(kind){
     repBtn.classList.toggle('on', st.repeat);
     if(st.source && st.playing) st.source.loop = loopEff();
   });
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, softStop, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, softStop, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing && !st.fading, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
@@ -3504,7 +3508,7 @@ function detectSpeechGaps(buf){
   const gaps = [];
   for(let k=1;k<merged.length;k++){
     const gs = merged[k-1][1]*0.01, ge = merged[k][0]*0.01;
-    if(ge - gs >= 3) gaps.push({ start: gs, end: ge });
+    if(ge - gs >= 5) gaps.push({ start: gs, end: ge });
   }
   return gaps;
 }
