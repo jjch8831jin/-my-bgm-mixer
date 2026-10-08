@@ -442,7 +442,7 @@
   body section .progress-wrap .progress-bar{ flex:1; }
   body section .progress-wrap .time{ min-width:9em; }
   body section .drop .label{ color:#f4f8fc; }
-  body section .drop.voice .label{ color:#6df0a0; }
+  body section .drop.voice .label{ color:#4da3ff; }
   body section .drop.music .label{ color:#ffc56b; }
   body section .drop .filename, body section .drop .hint{ color:#dbe6f0; }
   body section .error, body .error{ color:#ff8a7c; }
@@ -984,7 +984,7 @@ let voiceBaseImageData = null;
 function redrawVoiceMarker(){
   if(!voiceBuffer) return;
   const canvas = document.getElementById('voiceCanvas');
-  const color = getComputedStyle(document.documentElement).getPropertyValue('--voice');
+  const color = '#4da3ff';
   drawWaveform(canvas, voiceBuffer, color);
   drawVoiceOffsetMarker();
   try{ voiceBaseImageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height); }catch(e){ voiceBaseImageData = null; }
@@ -1165,6 +1165,7 @@ async function applyAutoVoice(){
     if(!voiceAutoSpeed) return;
     voiceSpeedSegments = r.segs;
     _voiceAutoKey = { buf, speed: spd, arr: voiceSpeedSegments };
+    scheduleSaveWork(300);
   })();
   try{ await _autoPromise; } finally { _autoPromise = null; }
 }
@@ -1193,6 +1194,7 @@ async function setVoiceAuto(on){
       setAutoBar(100, '완료');
       hideAutoBar();
       updateAutoVoiceUI();
+      scheduleSaveWork(300);
     }
     return;
   }
@@ -1201,6 +1203,7 @@ async function setVoiceAuto(on){
   voicePlayerCtl.markDirty();
   document.getElementById('voiceAutoFill').style.width = '0%';
   document.getElementById('voiceAutoText').textContent = '00:00 / 00:00';
+  scheduleSaveWork(300);
 }
 document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
   if(_autoBusy) return;
@@ -1478,7 +1481,7 @@ function renderZoomCanvas(){
   const data = buffer.getChannelData(0);
   const step = Math.max(1, Math.floor(data.length / cssWidth));
   const mid = cssHeight / 2;
-  const waveColor = getComputedStyle(document.documentElement).getPropertyValue(zoomKind === 'voice' ? '--voice' : '--music').trim();
+  const waveColor = zoomKind === 'voice' ? '#4da3ff' : getComputedStyle(document.documentElement).getPropertyValue('--music').trim();
   ctx.fillStyle = waveColor;
   for(let x=0; x<cssWidth; x++){
     let min = 1.0, max = -1.0;
@@ -1913,6 +1916,7 @@ function rebuild(kind){
   updateCutInfo(kind);
   if(kind === 'voice') voicePlayerCtl.markDirty();
   if(kind === 'music') musicPlayerCtl.markDirty();
+  scheduleSaveWork(100);
 }
 
 async function addFiles(fileList, kind){
@@ -2924,6 +2928,7 @@ function resetTrack(track){
   }
   document.getElementById('loadError').textContent = '';
   updateReadyState();
+  scheduleSaveWork(100);
 }
 
 document.getElementById('resetVoiceBtn').addEventListener('click', () => resetTrack('voice'));
@@ -3792,6 +3797,158 @@ setActiveTrack('voice');
     }
   });
   document.addEventListener('keyup', e => { if(e.code === 'Space' && spaceHandled){ e.preventDefault(); spaceHandled = false; } });
+})();
+
+// ---- 작업 내용 자동 저장 / 새로고침 후 복원 (이 브라우저의 IndexedDB에 저장) ----
+let workReady = false, workTimer = null, workChain = Promise.resolve(), workErrShown = false;
+const workKeys = new WeakMap(); // AudioBuffer → 이미 저장된 키 (소리 데이터는 바뀔 때만 다시 저장)
+let _workDbP = null;
+function workDb(){
+  if(!_workDbP) _workDbP = new Promise((res, rej) => {
+    const r = indexedDB.open('bgmMixerWork', 1);
+    r.onupgradeneeded = () => { if(!r.result.objectStoreNames.contains('work')) r.result.createObjectStore('work'); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => { _workDbP = null; rej(r.error); };
+  });
+  return _workDbP;
+}
+function workGet(key){
+  return workDb().then(db => new Promise((res, rej) => {
+    const q = db.transaction('work').objectStore('work').get(key);
+    q.onsuccess = () => res(q.result);
+    q.onerror = () => rej(q.error);
+  }));
+}
+function workPut(key, val){
+  return workDb().then(db => new Promise((res, rej) => {
+    const tx = db.transaction('work', 'readwrite');
+    tx.objectStore('work').put(val, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error);
+  }));
+}
+function workDelete(key){
+  return workDb().then(db => new Promise((res, rej) => {
+    const tx = db.transaction('work', 'readwrite');
+    tx.objectStore('work').delete(key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  }));
+}
+function workAllKeys(){
+  return workDb().then(db => new Promise((res, rej) => {
+    const q = db.transaction('work').objectStore('work').getAllKeys();
+    q.onsuccess = () => res(q.result);
+    q.onerror = () => rej(q.error);
+  }));
+}
+
+async function doWorkSave(){
+  if(!workReady) return;
+  const val = id => document.getElementById(id).value;
+  const meta = {
+    v: 1, voice: [], music: [],
+    voiceCutStart: val('voiceCutStart'), voiceEndOffset: val('voiceEndOffset'),
+    musicOffset: val('musicOffset'), musicEndOffset: val('musicEndOffset'),
+    voiceSegs: voiceSpeedSegments.map(s => ({ start: s.start, end: s.end, speed: s.speed })),
+    musicSegs: musicSpeedSegments.map(s => ({ start: s.start, end: s.end, speed: s.speed })),
+    voiceAuto: !!voiceAutoSpeed,
+    active: activeTrack
+  };
+  for(const [kind, items] of [['voice', voiceItems.slice()], ['music', musicItems.slice()]]){
+    for(const it of items){
+      let key = workKeys.get(it.buffer);
+      if(!key){
+        key = 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const b = it.buffer, chans = [];
+        for(let c = 0; c < b.numberOfChannels; c++) chans.push(b.getChannelData(c).slice());
+        await workPut('item_' + key, { sampleRate: b.sampleRate, channels: chans });
+        workKeys.set(b, key);
+      }
+      meta[kind].push({ key, name: it.name });
+    }
+  }
+  await workPut('meta', meta);
+  const used = new Set([...meta.voice, ...meta.music].map(e => 'item_' + e.key));
+  const keys = await workAllKeys();
+  for(const k of keys){
+    if(typeof k === 'string' && k.startsWith('item_') && !used.has(k)) await workDelete(k);
+  }
+}
+function flushWork(){
+  if(!workReady) return;
+  clearTimeout(workTimer);
+  workChain = workChain.then(doWorkSave).catch(err => {
+    console.warn('작업 자동 저장 실패', err);
+    if(!workErrShown){
+      workErrShown = true;
+      document.getElementById('loadError').textContent = '작업 자동 저장에 실패했습니다: ' + ((err && err.message) || err);
+    }
+  });
+}
+function scheduleSaveWork(delay){
+  if(!workReady) return;
+  clearTimeout(workTimer);
+  workTimer = setTimeout(flushWork, delay === undefined ? 600 : delay);
+}
+['input', 'change', 'click', 'pointerup'].forEach(ev => document.addEventListener(ev, () => scheduleSaveWork(), true));
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') flushWork(); });
+window.addEventListener('pagehide', flushWork);
+
+(async () => {
+  const errEl = document.getElementById('loadError');
+  try{
+    const meta = await workGet('meta');
+    if(meta && meta.v === 1 && ((meta.voice || []).length || (meta.music || []).length)){
+      errEl.style.color = '#16293a';
+      errEl.textContent = '이전 작업을 불러오는 중…';
+      const ctx = getCtx();
+      for(const kind of ['voice', 'music']){
+        const items = kind === 'voice' ? voiceItems : musicItems;
+        for(const e of (meta[kind] || [])){
+          const rec = await workGet('item_' + e.key);
+          if(!rec || !rec.channels || !rec.channels.length) continue;
+          const b = ctx.createBuffer(rec.channels.length, rec.channels[0].length, rec.sampleRate);
+          rec.channels.forEach((c, i) => b.copyToChannel(c, i));
+          items.push({ id: ++itemIdCounter, name: e.name, buffer: b });
+          workKeys.set(b, e.key);
+        }
+        if(items.length) rebuild(kind);
+      }
+      if(voiceBuffer){
+        document.getElementById('voiceCutStart').value = meta.voiceCutStart ?? 0;
+        document.getElementById('voiceEndOffset').value = meta.voiceEndOffset ?? 0;
+        voiceSpeedSegments = (meta.voiceSegs || []).map(s => ({ id: ++segmentIdCounter, start: s.start, end: s.end, speed: s.speed }));
+        renderSegments('voice');
+        if(meta.voiceAuto){
+          voiceAutoSpeed = true;
+          _voiceAutoKey = { buf: voiceBuffer, speed: voiceSpeed, arr: voiceSpeedSegments };
+          updateAutoVoiceUI();
+        }
+        redrawVoiceMarker();
+        updateCutInfo('voice');
+        voicePlayerCtl.markDirty();
+      }
+      if(musicBuffer){
+        document.getElementById('musicOffset').value = meta.musicOffset ?? 0;
+        document.getElementById('musicEndOffset').value = meta.musicEndOffset ?? 0;
+        musicSpeedSegments = (meta.musicSegs || []).map(s => ({ id: ++segmentIdCounter, start: s.start, end: s.end, speed: s.speed }));
+        renderSegments('music');
+        redrawMusicMarker();
+        updateCutInfo('music');
+        musicPlayerCtl.markDirty();
+      }
+      if(meta.active) setActiveTrack(meta.active);
+      errEl.textContent = '';
+      errEl.style.color = '';
+    }
+  } catch(err){
+    errEl.style.color = '';
+    errEl.textContent = '이전 작업을 불러오지 못했습니다: ' + err.message;
+  }
+  workReady = true;
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 })();
 </script>
 </body>
