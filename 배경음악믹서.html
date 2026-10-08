@@ -2557,8 +2557,10 @@ function makePlayer(kind){
   function elapsedNow(){
     if(!st.playing) return st.pausedAt;
     const dur = st.processed ? durP() : st.pausedAt;
-    if(loopEff() && dur > 0) return (st.pausedAt + (getCtx().currentTime - st.startCtxTime)) % dur;
-    return Math.min(dur, st.pausedAt + (getCtx().currentTime - st.startCtxTime));
+    const raw = st.pausedAt + (getCtx().currentTime - st.startCtxTime);
+    if(raw < 0) return 0; // 음성 지연 대기 중
+    if(loopEff() && dur > 0) return raw % dur;
+    return Math.min(dur, raw);
   }
 
   function updateProgressDisplay(){
@@ -2604,7 +2606,8 @@ function makePlayer(kind){
     st.loopOn = kind === 'music' && activeTrack === 'all' && loopMode === 'loop' && durationMode !== 'music' && mixTotalDuration() > durP() + 0.05;
     source.loop = loopEff();
     const g = ctx.createGain();
-    g.gain.value = volNow();
+    const gp = api.gainProvider ? api.gainProvider() : null;
+    g.gain.value = (gp === null || gp === undefined) ? volNow() : gp;
     source.connect(g);
     g.connect(getMeter(kind));
     st.gain = g;
@@ -2618,9 +2621,11 @@ function makePlayer(kind){
       updateProgressDisplay();
       if(api.onEnd) api.onEnd();
     };
-    source.start(0, (loopEff() ? (st.pausedAt * st.rate) % processed.duration : st.pausedAt * st.rate));
+    // 음성 탭에서 처음부터 재생하면 5번의 ⏳ 음성 지연만큼 기다렸다가 시작 (통합 재생은 자체 타이밍을 사용)
+    const waitSec = (kind === 'voice' && !api.managed && st.pausedAt <= 0.01) ? Math.max(0, Number(document.getElementById('voiceOffset').value) || 0) : 0;
+    source.start(ctx.currentTime + waitSec, (loopEff() ? (st.pausedAt * st.rate) % processed.duration : st.pausedAt * st.rate));
     st.source = source;
-    st.startCtxTime = ctx.currentTime;
+    st.startCtxTime = ctx.currentTime + waitSec;
     st.playing = true;
     setButtons();
     st.raf = requestAnimationFrame(tick);
@@ -3792,6 +3797,22 @@ document.getElementById('recordBtn').addEventListener('click', () => setActiveTr
 setActiveTrack('voice');
 
 // ---- 통합 재생: 음성+배경음악 동시 재생 (5번 믹싱 설정을 그대로 반영) ----
+// 음악 탭 혼자 재생: 5번의 음악 크기·📈 인·📉 아웃 적용
+function musicSoloGain(){
+  const num = id => Math.max(0, Number(document.getElementById(id).value) || 0);
+  const base = num('musicVolume') / 100;
+  const D = musicBuffer ? musicPlayerCtl.getDuration() : 0;
+  if(D <= 0) return base;
+  const t = musicPlayerCtl.getElapsed();
+  const fi = Math.min(num('fadeIn'), D/2), fo = Math.min(num('fadeOut'), D/2);
+  let f = 1;
+  if(fi > 0) f = Math.min(f, t / fi);
+  if(fo > 0) f = Math.min(f, (D - t) / fo);
+  return base * Math.max(0, Math.min(1, f));
+}
+setInterval(() => {
+  if(musicPlayerCtl.isPlaying() && !musicPlayerCtl.managed) musicPlayerCtl.setGain(musicSoloGain());
+}, 30);
 function mixTotalDuration(){
   const vd = voiceBuffer ? voicePlayerCtl.getDuration() : 0;
   const md = musicBuffer ? musicPlayerCtl.getDuration() : 0;
@@ -3862,8 +3883,10 @@ function mixTotalDuration(){
     return prev.v;
   }
 
+  musicPlayerCtl.gainProvider = () => musicPlayerCtl.managed ? musicGainAt(mixT, mixTotalDuration()) : musicSoloGain();
+  function setManaged(on){ voicePlayerCtl.managed = on; musicPlayerCtl.managed = on; }
   function finish(){
-    running = false;
+    running = false; setManaged(false);
     voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume();
     resetFlags();
     setTimeout(refresh, 50);
@@ -3890,7 +3913,7 @@ function mixTotalDuration(){
     const vEl = voicePlayerCtl.getElapsed();
     if(vEl > 0.05){ voiceBegan = true; voiceEnded = false; mixT = vDelay() + vEl; }
     if(mixT >= D - 0.02) resetFlags();
-    running = true; lastWall = performance.now();
+    running = true; setManaged(true); lastWall = performance.now();
     if(musicBuffer && !musicEnded) musicPlayerCtl.play();
     if(voiceBuffer){
       if(voiceBegan && !voiceEnded) voicePlayerCtl.play();
@@ -3900,7 +3923,7 @@ function mixTotalDuration(){
     setTimeout(refresh, 50);
   }
   function pauseAll(){
-    running = false;
+    running = false; setManaged(false);
     voicePlayerCtl.pause(); musicPlayerCtl.pause(); musicPlayerCtl.applyVolume();
     setTimeout(refresh, 50);
   }
@@ -3917,7 +3940,7 @@ function mixTotalDuration(){
   musicPlayerCtl.onEnd = () => { if(running) musicEnded = true; setTimeout(refresh, 50); };
   document.getElementById('togetherRepeatBtn').addEventListener('click', e => { repeatAll = !repeatAll; e.currentTarget.classList.toggle('on', repeatAll); });
   document.getElementById('togetherStopBtn').addEventListener('click', () => {
-    running = false; voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume(); resetFlags(); setTimeout(refresh, 50);
+    running = false; setManaged(false); voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume(); resetFlags(); setTimeout(refresh, 50);
   });
   document.getElementById('togetherPrevBtn').addEventListener('click', () => { voicePlayerCtl.prev(); musicPlayerCtl.prev(); });
   document.getElementById('togetherNextBtn').addEventListener('click', () => { voicePlayerCtl.next(); musicPlayerCtl.next(); });
