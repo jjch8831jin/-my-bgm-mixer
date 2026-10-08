@@ -295,12 +295,17 @@
     white-space: nowrap; transition: border-color .12s ease, color .12s ease;
   }
   .record-btn:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
-  .pv-box{ display: inline-flex; align-items: center; gap: 4px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 2px 4px 2px 8px; flex: none; }
-  .pv-box .pv-name{ font-size: 14pt; font-weight: 600; color: var(--text); white-space: nowrap; }
-  .pv-box button{ background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 14pt; line-height: 1.2; padding: 3px 9px; cursor: pointer; }
-  .pv-box button:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
-  .pv-box.pv-on{ background: var(--danger); border-color: var(--danger); }
+  #toolPanel .mix-chip.chip-blue, body section #toolPanel .mix-chip.chip-blue{ background: #2f6fa8; border-color: #2f6fa8; }
+  #toolPanel .mix-chip.chip-blue .lb, #toolPanel .mix-chip.chip-blue .un, #toolPanel .mix-chip.chip-blue .ic, body section #toolPanel .mix-chip.chip-blue .lb, body section #toolPanel .mix-chip.chip-blue .un, body section #toolPanel .mix-chip.chip-blue .ic{ color: #f4f9ff; }
+  .pv-box{ display: inline-flex; align-items: center; gap: 4px; background: var(--voice); border: 1px solid var(--voice); border-radius: 8px; padding: 2px 4px 2px 8px; flex: none; }
+  .pv-box .pv-name{ font-size: 14pt; font-weight: 600; color: #f5fbf7; white-space: nowrap; }
+  .pv-box button{ background: transparent; border: 1px solid rgba(255,255,255,.6); color: #f5fbf7; border-radius: 6px; font-size: 14pt; line-height: 1.2; padding: 3px 9px; cursor: pointer; }
+  .pv-box button:hover:not(:disabled){ background: rgba(255,255,255,.22); }
+  .pv-box.pv-on{ background: #ef4a3a; border-color: #ff8a7c; box-shadow: 0 0 10px rgba(239,74,58,.7); }
   .pv-box.pv-on .pv-name, .pv-box.pv-on button{ color: #fff; border-color: rgba(255,255,255,.6); }
+  #toolPanel #autoVoiceSpeedBtn{ background: var(--music); border-color: var(--music); color: #fff8ec; }
+  #toolPanel #autoVoiceSpeedBtn:hover:not(:disabled){ background: #b07414; border-color: #b07414; color: #fff8ec; }
+  #toolPanel #autoVoiceSpeedBtn.recording{ background: #ef4a3a; border-color: #ff8a7c; color: #fff; box-shadow: 0 0 10px rgba(239,74,58,.7); }
   .record-btn:disabled{ opacity: 1; cursor: not-allowed; color: #22364a; background: #d3e0ed; border-color: #9db4c9; }
   .tool-row{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .tool-row .record-btn{ flex: 1; min-width: 0; padding: 7px 6px; }
@@ -347,6 +352,7 @@
   #toolPanel .pv-row .mix-chip input[type="number"]{ width: 76px; padding: 3px 2px; }
   #toolPanel .pv-row > .record-btn{ padding: 6px 7px; flex: none; white-space: nowrap; }
   #toolPanel .pv-row > .pv-box{ flex: none; }
+  #toolPanel .pv-row > .pv-box, #toolPanel .pv-row > #autoVoiceSpeedBtn{ align-self: stretch; box-sizing: border-box; }
   #toolPanel .pv-row .auto-track{ min-width: 0; gap: 6px; }
   #toolPanel .pv-row .auto-track .progress-bar{ min-width: 20px; }
   #toolPanel .pv-row .auto-track .time{ min-width: 0; }
@@ -360,6 +366,10 @@
   .track-card2 .drop .label{ margin: 0; }
   .track-card2 .drop .hint{ margin: 0; font-size: 12pt; }
   .track-card2 canvas{ height: 40px; }
+  /* PC 소리 녹음 버튼: 배경음악 불러오기 상자처럼 점선, 테두리·글자는 분홍 */
+  #recordBtn{ border: 2px dashed #ff9fc8; border-radius: var(--radius); background: rgba(255,159,200,0.08); color: #ff9fc8; box-sizing: border-box; }
+  #recordBtn:hover:not(:disabled){ border-color: #ff9fc8; color: #ff9fc8; filter: brightness(1.1); }
+  #recordBtn.recording, body section #recordBtn.recording{ border-style: solid; border-color: #ff8a7c; background: #ef4a3a; color: #fff; }
   .track-card2 .ruler{ height: 16px; margin-top: 0; }
   .track-card2 .ruler-tick{ font-size: 12pt; line-height: 1.1; }
   .track-card2 .wave-label{ margin-bottom: 2px; font-size: 12pt; }
@@ -598,9 +608,9 @@
         <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="speed-row pv-row" style="margin-top:12px;">
-        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.01" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
+        <label class="mix-chip chip-blue" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip chip-blue" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip chip-blue" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
         <div class="pv-box" id="previewBox" title="자동맞춤 미리듣기 — ▶로 맞춘 소리를 임시로 들어보고, ⏹로 멈추면 원래대로 돌아갑니다"><span class="pv-name">🎧 미리듣기</span><button type="button" id="previewPlayBtn" title="맞춘 소리 재생 / 일시정지">▶</button><button type="button" id="previewStopBtn" title="정지 (처음으로, 원래대로)">⏹</button></div>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)">⚖ 자동맞춤</button>
         <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
@@ -634,9 +644,9 @@
         <div class="time" id="musicTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="speed-row" style="margin-top:12px;">
-        <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
-        <label class="mix-chip" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
+        <label class="mix-chip chip-blue" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip chip-blue" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
+        <label class="mix-chip chip-blue" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addMusicSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
       </div>
       <div class="seg-form" id="segForm_music" style="display:none;">
