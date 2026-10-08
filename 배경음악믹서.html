@@ -295,6 +295,8 @@
     white-space: nowrap; transition: border-color .12s ease, color .12s ease;
   }
   .record-btn:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
+  .record-btn.pv-on{ background: var(--voice); border-color: var(--voice); color: #f5fbf7; }
+  .record-btn.pv-on:hover:not(:disabled){ color: #f5fbf7; }
   .record-btn:disabled{ opacity: 1; cursor: not-allowed; color: #22364a; background: #d3e0ed; border-color: #9db4c9; }
   .tool-row{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .tool-row .record-btn{ flex: 1; min-width: 0; padding: 7px 6px; }
@@ -335,6 +337,15 @@
   .tool-row .record-btn:disabled{ opacity: 1; color: #2b3b4f; background: #d3deeb; border-color: #b9c8da; cursor: not-allowed; }
   .tool-row.icon-row .record-btn{ flex: none; font-size: 14pt; padding: 6px 16px; }
   #toolPanel .speed-row > .record-btn{ font-size: 14pt; padding: 6px 14px; }
+  /* 음성 탭 속도 줄: 한 줄에 다 들어가도록 여백만 줄이고, 남는 폭은 자동맞춤 시간바가 맞춰 줄어듦 */
+  #toolPanel .pv-row{ flex-wrap: nowrap; gap: 4px; }
+  #toolPanel .pv-row .mix-chip{ padding: 4px 5px; gap: 3px; }
+  #toolPanel .pv-row .mix-chip input[type="number"]{ width: 76px; padding: 3px 2px; }
+  #toolPanel .pv-row > .record-btn{ padding: 6px 7px; flex: none; white-space: nowrap; }
+  #toolPanel .pv-row .auto-track{ min-width: 0; gap: 6px; }
+  #toolPanel .pv-row .auto-track .progress-bar{ min-width: 20px; }
+  #toolPanel .pv-row .auto-track .time{ min-width: 0; }
+  @media (max-width: 1150px){ #toolPanel .pv-row{ flex-wrap: wrap; } #toolPanel .pv-row .auto-track{ min-width: 180px; } }
   .track-columns{ flex-direction: column; gap: 12px; }
   .track-columns > section.track-card2{ width: 100%; margin-bottom: 0; display: grid; grid-template-columns: 330px 1fr; gap: 6px 18px; align-items: start; padding: 14px 18px; }
   .track-card2 .tc-left{ min-width: 0; }
@@ -581,11 +592,12 @@
         <div class="progress-bar scrubbable" id="voiceProgressBar"><div class="progress-fill" id="voiceProgressFill"></div></div>
         <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
-      <div class="speed-row" style="margin-top:12px;">
+      <div class="speed-row pv-row" style="margin-top:12px;">
         <label class="mix-chip" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="voiceCutStart" min="0" step="0.01" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
+        <button class="record-btn" id="previewAutoBtn" type="button" title="자동맞춤 미리듣기 — 누를 때마다 '맞춘 소리'와 '원래 소리'를 같은 자리에서 번갈아 들어봅니다 (켜져 있으면 맞춘 소리)">🎧 미리듣기</button>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)">⚖ 자동맞춤</button>
         <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
       </div>
@@ -1179,13 +1191,15 @@ function updateAutoVoiceUI(){
   btn.textContent = _autoBusy ? '⚖ 자동맞춤중' : '⚖ 자동맞춤'; btn.title = _autoBusy ? '자동 맞춤 중입니다. 끝나면 처음 모양으로 돌아옵니다.' : (voiceAutoSpeed ? '자동 맞춤이 적용되어 있습니다 (다시 누르면 다시 맞춤, 끄려면 음성 초기화)' : '')|| '자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)';
   btn.classList.toggle('recording', _autoBusy);
   document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
+  const pb = document.getElementById('previewAutoBtn');
+  if(pb) pb.classList.toggle('pv-on', voiceAutoSpeed && !_autoBusy);
 }
 async function setVoiceAuto(on){
   if(on === voiceAutoSpeed || _autoBusy) return;
   voiceAutoSpeed = on;
   if(on){
     _autoBusy = true;
-    voiceSpeedSegments = []; _voiceAutoKey = null;
+    voiceSpeedSegments = []; _voiceAutoKey = null; _manualStash = null;
     renderSegments('voice');
     updateAutoVoiceUI();
     try{
@@ -1219,6 +1233,46 @@ document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
   }
   if(voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
   setVoiceAuto(true);
+});
+
+// ---- 자동맞춤 미리듣기: 같은 자리에서 '맞춘 소리' ↔ '원래 소리'를 번갈아 들어봄 ----
+let _autoCache = null;   // 마지막으로 계산한 자동맞춤 결과 (같은 음성·속도면 다시 계산하지 않음)
+let _manualStash = null; // 자동맞춤을 켜기 전의 직접 정한 구간 속도
+document.getElementById('previewAutoBtn').addEventListener('click', async () => {
+  if(_autoBusy || !voiceBuffer) return;
+  const wasPlaying = voicePlayerCtl.isPlaying();
+  const cap = wasPlaying ? voicePlayerCtl.captureLive() : voicePlayerCtl.capturePaused();
+  if(voiceAutoSpeed){
+    // 맞춘 소리 → 원래 소리
+    _autoCache = { buf: voiceBuffer, speed: voiceSpeed, segs: voiceSpeedSegments };
+    voiceAutoSpeed = false; _voiceAutoKey = null;
+    voiceSpeedSegments = (_manualStash && _manualStash.buf === voiceBuffer) ? _manualStash.segs : [];
+    _manualStash = null;
+  } else {
+    // 원래 소리 → 맞춘 소리
+    _manualStash = voiceSpeedSegments.length ? { buf: voiceBuffer, segs: voiceSpeedSegments } : null;
+    voiceAutoSpeed = true;
+    if(_autoCache && _autoCache.buf === voiceBuffer && _autoCache.speed === voiceSpeed){
+      voiceSpeedSegments = _autoCache.segs;
+      _voiceAutoKey = { buf: voiceBuffer, speed: voiceSpeed, arr: voiceSpeedSegments };
+    } else {
+      voiceSpeedSegments = []; _voiceAutoKey = null;
+      _autoBusy = true; renderSegments('voice'); updateAutoVoiceUI();
+      try{ await applyAutoVoice(); }
+      catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; voiceAutoSpeed = false; voiceSpeedSegments = _manualStash ? _manualStash.segs : []; _manualStash = null; }
+      finally{ _autoBusy = false; setAutoBar(100, '완료'); hideAutoBar(); }
+    }
+  }
+  renderSegments('voice'); updateAutoVoiceUI();
+  scheduleSaveWork(300);
+  // 듣던 자리에서 이어서 재생
+  try{
+    if(wasPlaying){ await voicePlayerCtl.reloadKeepPlaying(cap); }
+    else {
+      if(cap) await voicePlayerCtl.reloadKeepPaused(cap); else voicePlayerCtl.markDirty();
+      await voicePlayerCtl.play();
+    }
+  }catch(err){ console.warn(err); }
 });
 
 document.addEventListener('input', e => {
