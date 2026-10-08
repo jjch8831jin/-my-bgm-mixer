@@ -263,6 +263,7 @@
   }
   .progress-fill{ height: 100%; background: var(--voice); width: 0%; transition: width .15s linear; }
   .progress-fill.music{ background: var(--music); }
+  .progress-bar.scrubbing .progress-fill{ width: var(--scrub-w) !important; transition: none !important; }
   .progress-bar.mini{ display: none; margin-top: 8px; }
   .progress-bar.mini.active{ display: block; }
   #exportMp3Bar{ height: 10px; }
@@ -2734,13 +2735,34 @@ function makePlayer(kind){
   return api;
 }
 
-function attachScrub(barId, durationFn, seekFn){
+function attachScrub(barId, durationFn, seekFn, timeId){
   const bar = document.getElementById(barId);
   if(!bar) return;
+  const timeEl = timeId ? document.getElementById(timeId) : null;
+  const tcDesc = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
   const tooltip = document.createElement('div');
   tooltip.className = 'scrub-tooltip';
   document.body.appendChild(tooltip);
   let dragging = false;
+  let holdToken = 0;
+
+  // 마우스를 따라 막대·시간을 즉시 표시하고, 소리 이동이 끝날 때까지 재생 갱신이 덮어쓰지 못하게 붙잡아 둠
+  function holdShow(frac){
+    const dur = durationFn() || 0;
+    bar.classList.add('scrubbing');
+    bar.style.setProperty('--scrub-w', (frac * 100) + '%');
+    if(timeEl){
+      if(!Object.prototype.hasOwnProperty.call(timeEl, 'textContent')){
+        Object.defineProperty(timeEl, 'textContent', { configurable: true, get(){ return tcDesc.get.call(timeEl); }, set(){} });
+      }
+      tcDesc.set.call(timeEl, fmtTime(frac * dur) + ' / ' + fmtTime(dur));
+    }
+  }
+  function holdEnd(token){
+    if(token !== holdToken) return;
+    bar.classList.remove('scrubbing');
+    if(timeEl) delete timeEl.textContent;
+  }
 
   function fracAt(clientX){
     const rect = bar.getBoundingClientRect();
@@ -2761,17 +2783,26 @@ function attachScrub(barId, durationFn, seekFn){
 
   bar.addEventListener('pointerdown', e => {
     dragging = true;
-    showTooltip(e.clientX, fracAt(e.clientX));
+    holdToken++;
+    const f = fracAt(e.clientX);
+    showTooltip(e.clientX, f);
+    holdShow(f);
   });
   window.addEventListener('pointermove', e => {
     if(!dragging) return;
-    showTooltip(e.clientX, fracAt(e.clientX));
+    const f = fracAt(e.clientX);
+    showTooltip(e.clientX, f);
+    holdShow(f);
   });
   window.addEventListener('pointerup', e => {
     if(!dragging) return;
     dragging = false;
     const frac = fracAt(e.clientX);
-    seekFn(frac);
+    holdShow(frac);
+    const token = holdToken;
+    let result;
+    try{ result = seekFn(frac); }catch(err){ console.warn(err); }
+    Promise.resolve(result).catch(err => console.warn(err)).then(() => holdEnd(token));
     hideTooltip();
   });
 }
@@ -2779,9 +2810,9 @@ function attachScrub(barId, durationFn, seekFn){
 const voicePlayerCtl = makePlayer('voice');
 const musicPlayerCtl = makePlayer('music');
 
-attachScrub('voiceProgressBar', () => voicePlayerCtl.getDuration(), frac => voicePlayerCtl.seekToFraction(frac));
-attachScrub('musicProgressBar', () => musicPlayerCtl.getDuration(), frac => musicPlayerCtl.seekToFraction(frac));
-attachScrub('mixProgressBar', () => (mixedBuffer ? mixedBuffer.duration : 0), frac => seekPreviewToFraction(frac));
+attachScrub('voiceProgressBar', () => voicePlayerCtl.getDuration(), frac => voicePlayerCtl.seekToFraction(frac), 'voiceTimeLabel');
+attachScrub('musicProgressBar', () => musicPlayerCtl.getDuration(), frac => musicPlayerCtl.seekToFraction(frac), 'musicTimeLabel');
+attachScrub('mixProgressBar', () => (mixedBuffer ? mixedBuffer.duration : 0), frac => seekPreviewToFraction(frac), 'timeLabel');
 
 function zoomActivePlayer(){ return zoomKind === 'voice' ? voicePlayerCtl : (zoomKind === 'music' ? musicPlayerCtl : null); }
 
@@ -2794,7 +2825,7 @@ document.getElementById('zoomPlayBtn').addEventListener('click', () => {
 document.getElementById('zoomStopBtn').addEventListener('click', () => { const p = zoomActivePlayer(); if(p) p.stop(); });
 document.getElementById('zoomNextBtn').addEventListener('click', () => { const p = zoomActivePlayer(); if(p) p.next(); });
 
-attachScrub('zoomProgressBar', () => { const p = zoomActivePlayer(); return p ? p.getDuration() : 0; }, frac => { const p = zoomActivePlayer(); if(p) p.seekToFraction(frac); });
+attachScrub('zoomProgressBar', () => { const p = zoomActivePlayer(); return p ? p.getDuration() : 0; }, frac => { const p = zoomActivePlayer(); if(p) return p.seekToFraction(frac); }, 'zoomTimeLabel');
 
 onBusyClick('downloadMusicBtn', async () => {
   const status = barStatus('musicMp3Bar', 'musicMp3Fill');
@@ -3694,8 +3725,8 @@ setActiveTrack('voice');
   document.getElementById('togetherStopBtn').addEventListener('click', () => { voicePlayerCtl.stop(); musicPlayerCtl.stop(); setTimeout(refresh, 50); });
   document.getElementById('togetherPrevBtn').addEventListener('click', () => { voicePlayerCtl.prev(); musicPlayerCtl.prev(); });
   document.getElementById('togetherNextBtn').addEventListener('click', () => { voicePlayerCtl.next(); musicPlayerCtl.next(); });
-  attachScrub('allVoiceBar', () => voicePlayerCtl.getDuration(), f => voicePlayerCtl.seekToFraction(f));
-  attachScrub('allMusicBar', () => musicPlayerCtl.getDuration(), f => musicPlayerCtl.seekToFraction(f));
+  attachScrub('allVoiceBar', () => voicePlayerCtl.getDuration(), f => voicePlayerCtl.seekToFraction(f), 'allVoiceTime');
+  attachScrub('allMusicBar', () => musicPlayerCtl.getDuration(), f => musicPlayerCtl.seekToFraction(f), 'allMusicTime');
   function bars(){
     [['Voice',voicePlayerCtl],['Music',musicPlayerCtl]].forEach(([n,c])=>{
       const d=c.getDuration()||0, e=Math.min(c.getElapsed(), d||0);
