@@ -295,7 +295,7 @@
     white-space: nowrap; transition: border-color .12s ease, color .12s ease;
   }
   .record-btn:hover:not(:disabled){ border-color: var(--music); color: var(--music); }
-  .record-btn.pv-on{ background: var(--voice); border-color: var(--voice); color: #f5fbf7; }
+  .record-btn.pv-on{ background: var(--danger); border-color: var(--danger); color: #fff; }
   .record-btn.pv-on:hover:not(:disabled){ color: #f5fbf7; }
   .record-btn:disabled{ opacity: 1; cursor: not-allowed; color: #22364a; background: #d3e0ed; border-color: #9db4c9; }
   .tool-row{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
@@ -597,7 +597,7 @@
         <label class="mix-chip" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="voiceEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
         <label class="mix-chip" title="음성 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="voiceSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="voiceSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addVoiceSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
-        <button class="record-btn" id="previewAutoBtn" type="button" title="자동맞춤 미리듣기 — 누를 때마다 '맞춘 소리'와 '원래 소리'를 같은 자리에서 번갈아 들어봅니다 (켜져 있으면 맞춘 소리)">🎧 미리듣기</button>
+        <button class="record-btn" id="previewAutoBtn" type="button" title="자동맞춤 미리듣기 — 누르면 맞춘 소리로 재생, 한 번 더 누르면 일시정지, 또 누르면 정지하고 원래대로 돌아갑니다">🎧 미리듣기</button>
         <button class="record-btn" id="autoVoiceSpeedBtn" type="button" title="자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)">⚖ 자동맞춤</button>
         <div class="auto-track" title="자동 맞춤 진행 상황"><div class="progress-bar" id="voiceAutoBar"><div class="progress-fill" id="voiceAutoFill" style="background:var(--danger);"></div></div><span class="time" id="voiceAutoText">00:00 / 00:00</span></div>
       </div>
@@ -1191,11 +1191,10 @@ function updateAutoVoiceUI(){
   btn.textContent = _autoBusy ? '⚖ 자동맞춤중' : '⚖ 자동맞춤'; btn.title = _autoBusy ? '자동 맞춤 중입니다. 끝나면 처음 모양으로 돌아옵니다.' : (voiceAutoSpeed ? '자동 맞춤이 적용되어 있습니다 (다시 누르면 다시 맞춤, 끄려면 음성 초기화)' : '')|| '자동 맞춤 (말이 느린 곳은 빠르게, 빠른 곳은 느리게 자동으로 맞춥니다)';
   btn.classList.toggle('recording', _autoBusy);
   document.getElementById('voiceSegmentList').style.display = voiceAutoSpeed ? 'none' : '';
-  const pb = document.getElementById('previewAutoBtn');
-  if(pb) pb.classList.toggle('pv-on', voiceAutoSpeed && !_autoBusy);
 }
 async function setVoiceAuto(on){
   if(on === voiceAutoSpeed || _autoBusy) return;
+  previewActive = false; previewOwned = false; updatePvBtn(); // ⚖ 자동맞춤을 누르면 미리듣기가 아니라 실제 적용
   voiceAutoSpeed = on;
   if(on){
     _autoBusy = true;
@@ -1235,45 +1234,71 @@ document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
   setVoiceAuto(true);
 });
 
-// ---- 자동맞춤 미리듣기: 같은 자리에서 '맞춘 소리' ↔ '원래 소리'를 번갈아 들어봄 ----
+// ---- 자동맞춤 미리듣기: 맞춘 소리를 임시로 적용해 들어보고, 끝나면 원래대로 되돌림 ----
 let _autoCache = null;   // 마지막으로 계산한 자동맞춤 결과 (같은 음성·속도면 다시 계산하지 않음)
-let _manualStash = null; // 자동맞춤을 켜기 전의 직접 정한 구간 속도
-document.getElementById('previewAutoBtn').addEventListener('click', async () => {
-  if(_autoBusy || !voiceBuffer) return;
-  const wasPlaying = voicePlayerCtl.isPlaying();
-  const cap = wasPlaying ? voicePlayerCtl.captureLive() : voicePlayerCtl.capturePaused();
-  if(voiceAutoSpeed){
-    // 맞춘 소리 → 원래 소리
+let _manualStash = null; // 미리듣기 동안 잠시 빼 둔, 직접 정한 구간 속도
+let previewActive = false, previewOwned = false, previewBusy = false;
+function updatePvBtn(){ document.getElementById('previewAutoBtn').classList.toggle('pv-on', previewActive); }
+function endPreview(){
+  const owned = previewOwned;
+  previewActive = false; previewOwned = false; updatePvBtn();
+  if(owned){
     _autoCache = { buf: voiceBuffer, speed: voiceSpeed, segs: voiceSpeedSegments };
     voiceAutoSpeed = false; _voiceAutoKey = null;
     voiceSpeedSegments = (_manualStash && _manualStash.buf === voiceBuffer) ? _manualStash.segs : [];
     _manualStash = null;
-  } else {
-    // 원래 소리 → 맞춘 소리
-    _manualStash = voiceSpeedSegments.length ? { buf: voiceBuffer, segs: voiceSpeedSegments } : null;
-    voiceAutoSpeed = true;
-    if(_autoCache && _autoCache.buf === voiceBuffer && _autoCache.speed === voiceSpeed){
-      voiceSpeedSegments = _autoCache.segs;
-      _voiceAutoKey = { buf: voiceBuffer, speed: voiceSpeed, arr: voiceSpeedSegments };
-    } else {
-      voiceSpeedSegments = []; _voiceAutoKey = null;
-      _autoBusy = true; renderSegments('voice'); updateAutoVoiceUI();
-      try{ await applyAutoVoice(); }
-      catch(err){ document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message; voiceAutoSpeed = false; voiceSpeedSegments = _manualStash ? _manualStash.segs : []; _manualStash = null; }
-      finally{ _autoBusy = false; setAutoBar(100, '완료'); hideAutoBar(); }
-    }
+    renderSegments('voice'); updateAutoVoiceUI();
+    scheduleSaveWork(300);
   }
-  renderSegments('voice'); updateAutoVoiceUI();
-  scheduleSaveWork(300);
-  // 듣던 자리에서 이어서 재생
+  voicePlayerCtl.markDirty(); // 정지 (처음으로)
+}
+document.getElementById('previewAutoBtn').addEventListener('click', async () => {
+  if(_autoBusy || previewBusy || !voiceBuffer) return;
+  if(previewActive){
+    if(voicePlayerCtl.isPlaying()) voicePlayerCtl.pause(); // 한 번 더 누르면 일시정지
+    else endPreview();                                       // 또 누르면 정지(처음으로) + 원래대로
+    return;
+  }
+  previewBusy = true;
   try{
+    const wasPlaying = voicePlayerCtl.isPlaying();
+    const cap = wasPlaying ? voicePlayerCtl.captureLive() : voicePlayerCtl.capturePaused();
+    previewActive = true; updatePvBtn();
+    if(!voiceAutoSpeed){
+      previewOwned = true;
+      _manualStash = voiceSpeedSegments.length ? { buf: voiceBuffer, segs: voiceSpeedSegments } : null;
+      voiceAutoSpeed = true;
+      if(_autoCache && _autoCache.buf === voiceBuffer && _autoCache.speed === voiceSpeed){
+        voiceSpeedSegments = _autoCache.segs;
+        _voiceAutoKey = { buf: voiceBuffer, speed: voiceSpeed, arr: voiceSpeedSegments };
+      } else {
+        voiceSpeedSegments = []; _voiceAutoKey = null;
+        _autoBusy = true; renderSegments('voice'); updateAutoVoiceUI();
+        try{ await applyAutoVoice(); }
+        catch(err){
+          document.getElementById('loadError').textContent = '자동 속도 맞춤 실패: ' + err.message;
+          voiceAutoSpeed = false; voiceSpeedSegments = _manualStash ? _manualStash.segs : []; _manualStash = null;
+          previewActive = false; previewOwned = false; updatePvBtn();
+        }
+        finally{ _autoBusy = false; setAutoBar(100, '완료'); hideAutoBar(); }
+      }
+      renderSegments('voice'); updateAutoVoiceUI();
+      scheduleSaveWork(300);
+    }
+    if(!previewActive) return;
+    // 듣던 자리에서 이어서 재생
     if(wasPlaying){ await voicePlayerCtl.reloadKeepPlaying(cap); }
     else {
       if(cap) await voicePlayerCtl.reloadKeepPaused(cap); else voicePlayerCtl.markDirty();
       await voicePlayerCtl.play();
     }
   }catch(err){ console.warn(err); }
+  finally{ previewBusy = false; }
 });
+// 끝까지 재생되었거나 음성 탭의 ⏹로 멈추면 미리듣기도 끝내고 원래대로 되돌림
+setInterval(() => {
+  if(previewActive && !previewBusy && !voicePlayerCtl.isPlaying() && !voicePlayerCtl.isFading() && voicePlayerCtl.getElapsed() < 0.05) endPreview();
+}, 250);
 
 document.addEventListener('input', e => {
   const el = e.target;
@@ -2898,7 +2923,7 @@ function makePlayer(kind){
     repBtn.classList.toggle('on', st.repeat);
     if(st.source && st.playing) st.source.loop = loopEff();
   });
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, softStop, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing && !st.fading, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, softStop, isFading: () => !!st.fading, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing && !st.fading, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
@@ -3452,7 +3477,6 @@ document.getElementById('musicEndOffset').addEventListener('input', () => {
 document.getElementById('voiceOffset').addEventListener('input', () => {
   onSettingsChanged();
   saveSettings();
-  voicePlayerCtl.markDirty();
 });
 document.getElementById('musicIntroLevel').addEventListener('input', () => {
   onSettingsChanged();
@@ -3908,6 +3932,7 @@ function mixTotalDuration(){
   const btn = document.getElementById('togetherBtn');
   let running = false, mixT = 0, lastWall = 0;
   let voiceBegan = false, voiceEnded = false, musicEnded = false;
+  let lastD = 0, dChangeAt = 0, prevUsedD = 0;
   const gapCache = new WeakMap();
   function gapsFor(buf){ let g = gapCache.get(buf); if(!g){ g = detectSpeechGaps(buf); gapCache.set(buf, g); } return g; }
   function numVal(id){ return Math.max(0, Number(document.getElementById(id).value) || 0); }
@@ -3979,7 +4004,12 @@ function mixTotalDuration(){
     if(!running) return;
     const now = performance.now();
     const dt = (now - lastWall) / 1000; lastWall = now;
-    const D = mixTotalDuration();
+    const D0 = mixTotalDuration();
+    // 재생 중에 길이 설정(끝 연장 등)을 바꿔 지금 위치보다 짧아져도, 값이 0.6초 동안 안 바뀔 때까지는 멈추지 않고 기다림
+    if(D0 !== lastD){ lastD = D0; dChangeAt = now; }
+    let D = D0;
+    if(D0 <= mixT + 0.02 && now - dChangeAt < 600) D = prevUsedD;
+    prevUsedD = D;
     if(voicePlayerCtl.isPlaying()) mixT = vDelay() + voicePlayerCtl.getElapsed();
     else mixT += dt;
     if(!voiceBegan && voiceBuffer && mixT >= vDelay()){ voiceBegan = true; voicePlayerCtl.play(); }
@@ -3997,6 +4027,7 @@ function mixTotalDuration(){
     if(vEl > 0.05){ voiceBegan = true; voiceEnded = false; mixT = vDelay() + vEl; }
     if(mixT >= D - 0.02) resetFlags();
     running = true; setManaged(true); lastWall = performance.now();
+    lastD = D; dChangeAt = 0; prevUsedD = D;
     if(musicBuffer && !musicEnded) musicPlayerCtl.play();
     if(voiceBuffer){
       if(voiceBegan && !voiceEnded) voicePlayerCtl.play();
