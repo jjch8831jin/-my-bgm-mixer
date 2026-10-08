@@ -2600,7 +2600,7 @@ function makePlayer(kind){
     source.buffer = processed;
     source.playbackRate.value = st.rate;
     // 통합 재생에서 음악이 음성보다 짧고 '반복'이면 음성이 끝날 때까지 반복
-    st.loopOn = kind === 'music' && activeTrack === 'all' && loopMode === 'loop' && durationMode !== 'music' && voicePlayerCtl.getDuration() > durP() + 0.05;
+    st.loopOn = kind === 'music' && activeTrack === 'all' && loopMode === 'loop' && durationMode !== 'music' && mixTotalDuration() > durP() + 0.05;
     source.loop = loopEff();
     const g = ctx.createGain();
     g.gain.value = volNow();
@@ -2735,11 +2735,10 @@ function makePlayer(kind){
   }
   // ---- 통합 재생의 "말 쉴 때 음악 키움"용 ----
   function getBufferPos(){ return st.processed ? { buf: st.processed, t: elapsedNow() * st.rate } : null; }
-  function setLevel(mode){
+  function getInfo(){ return st.processed ? { buf: st.processed, rate: st.rate } : null; }
+  function setGain(v){
     if(!st.gain) return;
-    let v = volNow();
-    if(mode === 'up') v = Math.max(0, Number(document.getElementById('musicIntroLevel').value) || 0) / 100;
-    st.gain.gain.setTargetAtTime(v, getCtx().currentTime, 0.12);
+    st.gain.gain.setTargetAtTime(v, getCtx().currentTime, 0.04);
   }
   async function reloadKeepPlaying(live){
     if(!live || !st.playing || st.source !== live.source){ markDirty(); return; }
@@ -2794,7 +2793,7 @@ function makePlayer(kind){
     repBtn.classList.toggle('on', st.repeat);
     if(st.source && st.playing) st.source.loop = loopEff();
   });
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, getBufferPos, setLevel, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, getBufferPos, getInfo, setGain, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
@@ -3767,25 +3766,134 @@ document.getElementById('toolSelect').addEventListener('click', e => {
 document.getElementById('recordBtn').addEventListener('click', () => setActiveTrack('music'));
 setActiveTrack('voice');
 
-// ---- 통합 재생: 음성+배경음악 동시 재생/일시정지 ----
+// ---- 통합 재생: 음성+배경음악 동시 재생 (5번 믹싱 설정을 그대로 반영) ----
+function mixTotalDuration(){
+  const vd = voiceBuffer ? voicePlayerCtl.getDuration() : 0;
+  const md = musicBuffer ? musicPlayerCtl.getDuration() : 0;
+  const delay = Math.max(0, Number(document.getElementById('voiceOffset').value) || 0);
+  const ext = Math.max(0, Number(document.getElementById('musicOutro').value) || 0);
+  const vTotal = delay + vd + ext;
+  return durationMode === 'voice' ? vTotal : (durationMode === 'music' ? md : Math.max(vTotal, md));
+}
 (function(){
   const btn = document.getElementById('togetherBtn');
+  let running = false, mixT = 0, lastWall = 0;
+  let voiceBegan = false, voiceEnded = false, musicEnded = false;
+  const gapCache = new WeakMap();
+  function gapsFor(buf){ let g = gapCache.get(buf); if(!g){ g = detectSpeechGaps(buf); gapCache.set(buf, g); } return g; }
+  function numVal(id){ return Math.max(0, Number(document.getElementById(id).value) || 0); }
   function anyPlaying(){ return voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying(); }
-  function refresh(){ btn.textContent = anyPlaying() ? '⏸' : '▶'; }
+  function refresh(){ btn.textContent = (running || anyPlaying()) ? '⏸' : '▶'; }
+  function vDelay(){ return numVal('voiceOffset'); }
+  function resetFlags(){ mixT = 0; voiceBegan = false; voiceEnded = false; musicEnded = false; }
+
+  // 믹싱(buildGraph)과 같은 규칙으로, 믹스 시각 T의 음악 음량을 계산
+  function musicGainAt(T, D){
+    const base = numVal('musicVolume') / 100;
+    const intro = numVal('musicIntroLevel') / 100;
+    const outroLvl = numVal('musicOutroLevel') / 100;
+    const fadeIn = Math.min(numVal('fadeIn'), D/2), fadeOut = Math.min(numVal('fadeOut'), D/2);
+    const delay = Math.min(vDelay(), D);
+    const vd = voiceBuffer ? voicePlayerCtl.getDuration() : 0;
+    const voiceEnd = delay + vd;
+    const hasIntro = delay > 0.05, hasOutro = D - voiceEnd > 0.05;
+    const ev = [{ t:0, v:0, ramp:false }];
+    const set = (t, v) => ev.push({ t, v, ramp:false });
+    const ramp = (t, v) => ev.push({ t, v, ramp:true });
+    if(hasIntro){
+      const duckTr = Math.min(1.5, delay), duckStart = Math.max(0, delay - duckTr);
+      const introFadeEnd = Math.min(fadeIn, duckStart);
+      if(fadeIn > 0 && introFadeEnd > 0) ramp(introFadeEnd, intro); else set(0, intro);
+      set(duckStart, intro); ramp(delay, base);
+    } else if(fadeIn > 0){ ramp(fadeIn, base); } else { set(0, base); }
+    if(autoDuck === 'on'){
+      const info = voiceBuffer ? voicePlayerCtl.getInfo() : null;
+      if(info){
+        const winStart = Math.max(delay, hasIntro ? 0 : fadeIn) + 0.3;
+        const winEnd = (hasOutro ? voiceEnd : (fadeOut > 0 ? D - fadeOut : D)) - 0.3;
+        gapsFor(info.buf).forEach(g => {
+          const gs = delay + g.start / info.rate, ge = delay + g.end / info.rate;
+          if(gs - 0.15 < winStart || ge > winEnd) return;
+          set(gs + 0.15, base); ramp(gs + 0.55, intro); set(ge - 0.55, intro); ramp(ge - 0.15, base);
+        });
+      }
+    }
+    let swellEnd = null;
+    if(hasOutro){
+      swellEnd = voiceEnd + Math.min(1.5, D - voiceEnd);
+      set(voiceEnd, base); ramp(swellEnd, outroLvl);
+    }
+    if(fadeOut > 0){
+      const baseline = hasOutro ? outroLvl : base;
+      const fs = Math.max(0, D - fadeOut, swellEnd || 0);
+      set(fs, baseline); ramp(D, 0);
+    }
+    const idx = ev.map((e, i) => i);
+    idx.sort((a, b) => ev[a].t - ev[b].t || a - b);
+    let prev = null, next = null;
+    for(const i of idx){ if(ev[i].t <= T) prev = ev[i]; else { next = ev[i]; break; } }
+    if(!prev) return 0;
+    if(next && next.ramp && next.t > prev.t) return prev.v + (next.v - prev.v) * (T - prev.t) / (next.t - prev.t);
+    return prev.v;
+  }
+
+  function finish(){
+    running = false;
+    voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume();
+    resetFlags();
+    setTimeout(refresh, 50);
+    if(repeatAll) setTimeout(() => { if(repeatAll && !running) start(); }, 30);
+  }
+  function tick(){
+    if(!running) return;
+    const now = performance.now();
+    const dt = (now - lastWall) / 1000; lastWall = now;
+    const D = mixTotalDuration();
+    if(voicePlayerCtl.isPlaying()) mixT = vDelay() + voicePlayerCtl.getElapsed();
+    else mixT += dt;
+    if(!voiceBegan && voiceBuffer && mixT >= vDelay()){ voiceBegan = true; voicePlayerCtl.play(); }
+    if(mixT >= D - 0.02){ finish(); return; }
+    if(musicPlayerCtl.isPlaying()) musicPlayerCtl.setGain(musicGainAt(mixT, D));
+  }
+  async function start(){
+    if(!voiceBuffer && !musicBuffer) return;
+    try{
+      if(voiceBuffer) await voicePlayerCtl.prepare();
+      if(musicBuffer) await musicPlayerCtl.prepare();
+    }catch(err){ console.warn(err); return; }
+    const D = mixTotalDuration();
+    const vEl = voicePlayerCtl.getElapsed();
+    if(vEl > 0.05){ voiceBegan = true; voiceEnded = false; mixT = vDelay() + vEl; }
+    if(mixT >= D - 0.02) resetFlags();
+    running = true; lastWall = performance.now();
+    if(musicBuffer && !musicEnded) musicPlayerCtl.play();
+    if(voiceBuffer){
+      if(voiceBegan && !voiceEnded) voicePlayerCtl.play();
+      else if(!voiceBegan && mixT >= vDelay()){ voiceBegan = true; voicePlayerCtl.play(); }
+    }
+    setTimeout(() => { if(running && musicPlayerCtl.isPlaying()) musicPlayerCtl.setGain(musicGainAt(mixT, D)); }, 20);
+    setTimeout(refresh, 50);
+  }
+  function pauseAll(){
+    running = false;
+    voicePlayerCtl.pause(); musicPlayerCtl.pause(); musicPlayerCtl.applyVolume();
+    setTimeout(refresh, 50);
+  }
   btn.addEventListener('click', () => {
-    if(anyPlaying()){ voicePlayerCtl.pause(); musicPlayerCtl.pause(); }
-    else { voicePlayerCtl.play(); musicPlayerCtl.play(); }
+    if(running || anyPlaying()) pauseAll(); else start();
     setTimeout(refresh, 50);
   });
-  // 길이 기준(음성/음악/긴 쪽)을 통합 재생에도 적용
+  // 길이 기준·끝 연장·음성 지연 등은 mixTotalDuration()과 musicGainAt()이 매번 읽어서 반영
   let repeatAll = false;
-  function maybeRestart(){
-    if(repeatAll && !anyPlaying()) setTimeout(() => { if(repeatAll && !anyPlaying()){ voicePlayerCtl.play(); musicPlayerCtl.play(); } }, 30);
-  }
-  voicePlayerCtl.onEnd = () => { if(durationMode === 'voice' || musicPlayerCtl.isLooping()){ musicPlayerCtl.stop(); } setTimeout(refresh, 50); maybeRestart(); };
-  musicPlayerCtl.onEnd = () => { if(durationMode === 'music'){ voicePlayerCtl.stop(); } setTimeout(refresh, 50); maybeRestart(); };
+  voicePlayerCtl.onEnd = () => {
+    if(running){ voiceEnded = true; mixT = Math.max(mixT, vDelay() + voicePlayerCtl.getDuration()); }
+    setTimeout(refresh, 50);
+  };
+  musicPlayerCtl.onEnd = () => { if(running) musicEnded = true; setTimeout(refresh, 50); };
   document.getElementById('togetherRepeatBtn').addEventListener('click', e => { repeatAll = !repeatAll; e.currentTarget.classList.toggle('on', repeatAll); });
-  document.getElementById('togetherStopBtn').addEventListener('click', () => { voicePlayerCtl.stop(); musicPlayerCtl.stop(); setTimeout(refresh, 50); });
+  document.getElementById('togetherStopBtn').addEventListener('click', () => {
+    running = false; voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume(); resetFlags(); setTimeout(refresh, 50);
+  });
   document.getElementById('togetherPrevBtn').addEventListener('click', () => { voicePlayerCtl.prev(); musicPlayerCtl.prev(); });
   document.getElementById('togetherNextBtn').addEventListener('click', () => { voicePlayerCtl.next(); musicPlayerCtl.next(); });
   attachScrub('allVoiceBar', () => voicePlayerCtl.getDuration(), f => voicePlayerCtl.seekToFraction(f), 'allVoiceTime');
@@ -3797,6 +3905,7 @@ setActiveTrack('voice');
       document.getElementById('all'+n+'Time').textContent=fmtTime(e)+' / '+fmtTime(d);
     });
   }
+  setInterval(tick, 30);
   setInterval(()=>{ refresh(); bars(); }, 150);
 })();
 
@@ -3891,32 +4000,6 @@ setActiveTrack('voice');
     }
   });
   document.addEventListener('keyup', e => { if(e.code === 'Space' && spaceHandled){ e.preventDefault(); spaceHandled = false; } });
-})();
-
-// ---- 통합 재생에서도 "말 쉴 때 음악 키움" 적용 ----
-(function(){
-  const gapCache = new WeakMap();
-  let touched = false; // 이 기능이 음악 음량을 바꿔 둔 상태인지
-  function gapsFor(buf){
-    let g = gapCache.get(buf);
-    if(!g){ g = detectSpeechGaps(buf); gapCache.set(buf, g); }
-    return g;
-  }
-  setInterval(() => {
-    const on = autoDuck === 'on' && voicePlayerCtl.isPlaying() && musicPlayerCtl.isPlaying();
-    if(!on){
-      if(touched){ touched = false; musicPlayerCtl.setLevel('base'); }
-      return;
-    }
-    const info = voicePlayerCtl.getBufferPos();
-    if(!info) return;
-    let up = false;
-    for(const g of gapsFor(info.buf)){
-      if(info.t > g.start + 0.15 && info.t < g.end - 0.55){ up = true; break; }
-    }
-    touched = true;
-    musicPlayerCtl.setLevel(up ? 'up' : 'base');
-  }, 60);
 })();
 
 // ---- 시작·끝·속도 칸은 항상 소수 둘째 자리로 표시 (예: 0.9 → 0.90) ----
