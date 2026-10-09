@@ -2648,8 +2648,9 @@ function makePlayer(kind){
   function trimRange(){ return kind === 'voice' ? getVoiceTrimRange() : getMusicTrimRange(); }
   function speedFactor(){ return kind === 'voice' ? voiceSpeed : musicSpeed; }
   function volNow(){
-    const el = document.getElementById(kind === 'voice' ? 'voiceVolume' : 'musicVolume');
-    return Math.max(0, Number(el.value) || 0) / 100;
+    const id = kind === 'voice' ? 'voiceVolume' : 'musicVolume';
+    const v = (api.managed ? profVal('all', id) : profVal(kind, id));
+    return Math.max(0, Number(v) || 0) / 100;
   }
   let fadeTok = 0;
   function applyVolume(){ if(st.gain && !st.fading) st.gain.gain.value = volNow(); }
@@ -3158,9 +3159,10 @@ function applyProfile(k){
     document.querySelectorAll('#' + id + ' button').forEach(b => b.classList.toggle('active', b.dataset.mode === o[v]));
   });
   if(window.__syncFaders) window.__syncFaders();
-  if(masterGainNode) masterGainNode.gain.value = readMaster();
-  try{ voicePlayerCtl.applyVolume(); musicPlayerCtl.applyVolume(); }catch(e){}
+  if(masterGainNode){ try{ masterGainNode.gain.setTargetAtTime(readMaster(), masterGainNode.context.currentTime, 0.03); }catch(e){ masterGainNode.gain.value = readMaster(); } }
 }
+// 탭 하나의 설정값 (그 탭이 지금 열려 있으면 화면 값, 아니면 저장된 값)
+function profVal(tab, id){ return (profiles && activeTrack !== tab && profiles[tab] && profiles[tab][id] !== undefined) ? profiles[tab][id] : document.getElementById(id).value; }
 // 최종 믹싱(6번)은 항상 '통합' 탭의 값을 사용
 function mixVal(id){ return (profiles && activeTrack !== 'all' && profiles.all[id] !== undefined) ? profiles.all[id] : document.getElementById(id).value; }
 function mixMode(name){
@@ -4046,7 +4048,7 @@ applyProfile('voice');
 // ---- 통합 재생: 음성+배경음악 동시 재생 (5번 믹싱 설정을 그대로 반영) ----
 // 음악 탭 혼자 재생: 5번의 음악 크기·📈 인·📉 아웃 적용
 function musicSoloGain(){
-  const num = id => Math.max(0, Number(document.getElementById(id).value) || 0);
+  const num = id => Math.max(0, Number(profVal('music', id)) || 0);
   const base = num('musicVolume') / 100;
   const D = musicBuffer ? musicPlayerCtl.getDuration() : 0;
   if(D <= 0) return base;
