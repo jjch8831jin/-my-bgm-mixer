@@ -246,11 +246,14 @@
   .console .swrow input[type="number"]{ width:50px; }
   .console .cg{ flex:1 1 auto; }
   .console .cg-vol{ flex:1 0 auto; min-width:auto; }
-  .console .cg-time, .console .cg-mode, .console .cg-meter{ flex:0 0 192px; }
+  .console .cg-meter{ flex:0 0 192px; }
+  .console .cg-time, .console .cg-mode{ flex:0 1 192px; min-width:0; }
+  .console .cg-time{ min-width:146px; }
+  .console .cg-mode{ min-width:186px; }
   .cg-vol{ justify-content:space-around; }
   .cg-time{ justify-content:center; }
   .cg-mode{ align-items:center; }
-  .cg-mode .sw{ width:176px; }
+  .cg-mode .sw{ width:100%; }
   .mt{ display:flex; flex-direction:column; align-items:center; gap:4px; width:34px; }
   .mt .sl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
   .mt .bar{ position:relative; width:18px; height:174px; margin:0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
