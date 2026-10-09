@@ -1,0 +1,13 @@
+{
+  "name": "배경음악 믹서",
+  "short_name": "배경음악믹서",
+  "start_url": "./배경음악믹서.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1c1917",
+  "theme_color": "#1c1917",
+  "icons": [
+    { "src": "bgm-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "bgm-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
