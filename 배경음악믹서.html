@@ -248,6 +248,15 @@
   .console .swrow input[type="number"]{ width:50px; }
   .console .cg{ flex:1 1 auto; }
   .console .cg-vol{ flex:1 0 auto; min-width:auto; }
+  /* 배경음악 탭: 시작/끝/구간 속도 줄 숨김, 제목 표시, 속도 칸은 통합 버튼 옆 */
+  #panel_music .speed-row, #panel_music .seg-form{ display:none !important; }
+  #panel_music .pl-mid{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:8px; }
+  #panel_music .pl-mid .track-title{ font-size:14pt; color:#f4f8fc; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; min-height:1.2em; }
+  #toolSelect .seg-speed{ display:none; align-items:center; justify-content:center; gap:2px; width:97px; box-sizing:border-box; padding:0 5px; background:#455c70; color:#f4f8fc; border-left:1px solid #6f8aa0; margin:0; border-radius:0; }
+  #toolPanel.is-music #toolSelect .seg-speed{ display:flex; }
+  #toolSelect .seg-speed .ic{ font-size:13pt; line-height:1; }
+  #toolSelect .seg-speed input[type="number"]{ width:58px !important; padding:2px 0 2px 3px !important; font-size:13pt !important; height:28px; box-sizing:border-box; }
+  #toolSelect .seg-speed input[type="number"]::-webkit-inner-spin-button{ opacity:1; height:24px; cursor:pointer; }
   .console .cg-meter{ flex:0 0 192px; }
   .console .cg-set{ flex:0 0 auto; align-self:stretch; display:flex; flex-direction:column; justify-content:space-between; padding:8px 10px 10px; }
   .cg-set .row{ display:flex; align-items:center; justify-content:space-between; gap:14px; height:34px; }
@@ -605,6 +614,7 @@
         <button type="button" data-track="voice" class="active" title="음성">🎙 음성</button>
         <button type="button" data-track="music" title="배경음악">🎵 배경음악</button>
         <button type="button" data-track="all" title="통합 (음성+배경음악 동시 재생)">▶ 통합</button>
+        <label class="seg-speed" title="배경음악 재생 속도 (x)"><span class="ic">⚡</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.01" value="1" aria-label="배경음악 재생 속도"><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
       </div>
     </div>
     <div class="tool-panel" id="panel_all">
@@ -675,13 +685,12 @@
           <button class="player-btn" id="musicNextBtn" disabled title="다음 트랙">⏭</button>
           <button class="player-btn" id="musicRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 재생)">🔁</button>
         </div></div>
-        <div class="progress-bar scrubbable" id="musicProgressBar"><div class="progress-fill" id="musicProgressFill"></div></div>
+        <div class="pl-mid"><div class="track-title" id="musicTrackTitle"></div><div class="progress-bar scrubbable" id="musicProgressBar"><div class="progress-fill" id="musicProgressFill"></div></div></div>
         <div class="time" id="musicTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="speed-row" style="margin-top:12px;">
         <label class="mix-chip chip-blue" title="삭제 구간 시작 (초)"><span class="ic">⏮</span><span class="lb">시작</span><input type="number" id="musicOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
         <label class="mix-chip chip-blue" title="삭제 구간 끝 (초)"><span class="ic">⏭</span><span class="lb">끝</span><input type="number" id="musicEndOffset" min="0" step="0.01" value="0"><span class="un">초</span></label>
-        <label class="mix-chip chip-blue" title="배경음악 재생 속도"><span class="ic">⚡</span><span class="lb">속도</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.01" value="1"><span class="un">x</span><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
         <button class="record-btn" id="addMusicSegmentBtn" type="button" title="구간 속도 추가 (특정 부분만 속도를 다르게)">＋ 구간 속도</button>
       </div>
       <div class="seg-form" id="segForm_music" style="display:none;">
@@ -3962,6 +3971,7 @@ function setActiveTrack(k){
   activeTrack = k;
   document.querySelectorAll('#toolSelect button').forEach(b => b.classList.toggle('active', b.dataset.track === k));
   document.getElementById('panel_all').classList.toggle('active', k === 'all');
+  document.getElementById('toolPanel').classList.toggle('is-music', k === 'music');
   ['voice','music'].forEach(t => {
     document.getElementById('panel_' + t).classList.toggle('active', t === k);
     const c = document.getElementById('card_' + t);
@@ -4212,6 +4222,22 @@ function mixTotalDuration(){
   requestAnimationFrame(frame);
 })();
 
+
+// ---- 배경음악 탭: 재생 중인 음악 제목 ----
+(function(){
+  const el = document.getElementById('musicTrackTitle'); let last = null;
+  function cur(){
+    if(!musicItems.length) return '';
+    if(musicItems.length === 1) return musicItems[0].name;
+    let pos = 0;
+    try{ pos = musicPlayerCtl.getElapsed() * (musicSpeed > 0 ? musicSpeed : 1) + getMusicTrimRange().start; }catch(e){}
+    let acc = 0;
+    for(const it of musicItems){ acc += it.buffer.duration; if(pos < acc - 0.001) return it.name; }
+    return musicItems[musicItems.length - 1].name;
+  }
+  setInterval(() => { const t = cur(); if(t !== last){ last = t; el.textContent = t; el.title = t; } }, 200);
+})();
+
 // ---- 단축키: 스페이스=재생/정지, ←/→=5초 이동 (선택된 탭 기준) ----
 (function(){
   let spaceHandled = false;
@@ -4413,7 +4439,7 @@ window.addEventListener('pagehide', flushWork);
       if(musicBuffer){
         document.getElementById('musicOffset').value = meta.musicOffset ?? 0;
         document.getElementById('musicEndOffset').value = meta.musicEndOffset ?? 0;
-        musicSpeedSegments = (meta.musicSegs || []).map(s => ({ id: ++segmentIdCounter, start: s.start, end: s.end, speed: s.speed }));
+        musicSpeedSegments = [];
         renderSegments('music');
         redrawMusicMarker();
         updateCutInfo('music');
