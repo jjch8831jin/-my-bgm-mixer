@@ -3308,8 +3308,6 @@ async function openFilesFor(kind){
   document.getElementById(kind === 'voice' ? 'voiceInput' : 'musicInput').click();
 }
 
-// 폰(터치 화면)에서는 한 번에 한 파일씩 고름 — 여러 개 선택 모드에서는 일부 저장소 앱(네이버 박스 등)이 목록에서 빠짐
-try{ if(window.matchMedia && matchMedia('(pointer:coarse)').matches){ ['voiceInput','musicInput'].forEach(id => document.getElementById(id).removeAttribute('multiple')); } }catch(e){}
 document.getElementById('dropVoice').addEventListener('click', () => openFilesFor('voice'));
 document.getElementById('dropMusic').addEventListener('click', () => openFilesFor('music'));
 
