@@ -195,7 +195,7 @@
   .cg-time{ grid-template-columns:auto !important; }
   .strip{ display:flex; flex-direction:column; align-items:center; gap:4px; width:84px; }
   .strip .sl,.knob .kl,.sw .kl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
-  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:140px; height:28px; padding:0; margin:56px -56px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
+  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:176px; height:28px; padding:0; margin:74px -74px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
   .sn{ font-size:14pt; color:#f4f8fc; white-space:nowrap; }
   .console input[type="number"]{ width:64px; padding:3px 4px; font-size:14pt; background:#f4f8fc; color:#131f2c; border:1px solid #8fa9c2; border-radius:6px; text-align:center; }
   .cg-time{ display:grid; grid-template-columns:repeat(2,auto); gap:8px 14px; align-content:center; }
@@ -247,9 +247,18 @@
   .console .cg{ flex:1 1 auto; }
   .console .cg-vol{ flex:1 0 auto; min-width:auto; }
   .console .cg-meter{ flex:0 0 192px; }
-  .console .cg-time, .console .cg-mode{ flex:0 1 192px; min-width:0; }
-  .console .cg-time{ min-width:146px; }
-  .console .cg-mode{ min-width:186px; }
+  .console .cg-set{ flex:0 0 auto; align-self:stretch; display:flex; flex-direction:column; justify-content:space-between; padding:8px 10px 10px; }
+  .cg-set .row{ display:flex; align-items:center; justify-content:space-between; gap:14px; height:34px; }
+  .cg-set .row:first-child{ margin-top:-6px; }
+  .cg-set .row:last-child{ margin-bottom:-2px; }
+  .cg-set .kl{ font-size:12pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
+  .cg-set .ctl{ width:156px; flex:0 0 156px; display:flex; align-items:center; }
+  .cg-set .ctl > .segmented{ width:156px !important; flex:0 0 156px; }
+  .cg-set .ctl > .ks{ width:156px; gap:4px; }
+  .cg-set .ctl > .ks input{ flex:1 1 auto; width:auto !important; min-width:0; }
+  .cg-set .ctl > .swrow{ width:156px; gap:4px; }
+  .cg-set .ctl > .swrow .segmented{ flex:1 1 auto; width:auto !important; }
+  .cg-set .ctl > .swrow input[type=number]{ width:44px !important; }
   .cg-vol{ justify-content:space-around; }
   .cg-time{ justify-content:center; }
   .cg-mode{ align-items:center; }
@@ -704,30 +713,22 @@
         <div class="strip" title="페이드 인 (초)"><span class="sl">📈 인</span><input type="range" class="fader" data-num="fadeIn" data-def="2" min="0" max="30" step="0.5" value="2" aria-label="페이드 인 (초)"><span class="sn"><input type="number" id="fadeIn" min="0" step="0.5" value="2" aria-label="페이드 인 (초)">초</span></div>
         <div class="strip" title="페이드 아웃 (초)"><span class="sl">📉 아웃</span><input type="range" class="fader" data-num="fadeOut" data-def="3" min="0" max="30" step="0.5" value="3" aria-label="페이드 아웃 (초)"><span class="sn"><input type="number" id="fadeOut" min="0" step="0.5" value="3" aria-label="페이드 아웃 (초)">초</span></div>
       </div>
-      <div class="cg cg-time">
-        <div class="knob" title="음성 시작 지연 (초)"><span class="kl">⏳ 음성 지연</span><span class="ks"><button type="button" data-st="-0.5" data-t="voiceOffset">−</button><input type="number" id="voiceOffset" min="0" step="0.5" value="0" aria-label="음성 시작 지연 (초)"><button type="button" data-st="0.5" data-t="voiceOffset">＋</button></span></div>
-        <div class="knob" title="음성 종료 후 연장 (초)"><span class="kl">➕ 끝 연장</span><span class="ks"><button type="button" data-st="-0.5" data-t="musicOutro">−</button><input type="number" id="musicOutro" min="0" step="0.5" value="0" aria-label="음성 종료 후 연장 (초)"><button type="button" data-st="0.5" data-t="musicOutro">＋</button></span></div>
-      </div>
-      <div class="cg cg-mode">
-        <div class="sw" title="믹스 길이 기준"><span class="kl">📏 길이</span>
-          <div class="segmented" id="durationMode">
+      <div class="cg cg-set">
+        <div class="row" title="믹스 길이 기준"><span class="kl">📏 길이</span><div class="ctl"><div class="segmented" id="durationMode">
             <button data-mode="voice" class="active" title="음성 길이에 맞춤">🎙</button>
             <button data-mode="music" title="음악 길이에 맞춤">🎵</button>
             <button data-mode="longer" title="둘 중 긴 쪽에 맞춤">↔</button>
-          </div>
-        </div>
-        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 설정한 초(오른쪽 칸) 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과와 통합 재생에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
-          <div class="swrow"><div class="segmented" id="duckMode">
+          </div></div></div>
+        <div class="row" title="음성 시작 지연 (초)"><span class="kl">⏳ 음성 지연</span><div class="ctl"><span class="ks"><button type="button" data-st="-0.5" data-t="voiceOffset">−</button><input type="number" id="voiceOffset" min="0" step="0.5" value="0" aria-label="음성 시작 지연 (초)"><button type="button" data-st="0.5" data-t="voiceOffset">＋</button></span></div></div>
+        <div class="row" title="음성 종료 후 연장 (초)"><span class="kl">➕ 끝 연장</span><div class="ctl"><span class="ks"><button type="button" data-st="-0.5" data-t="musicOutro">−</button><input type="number" id="musicOutro" min="0" step="0.5" value="0" aria-label="음성 종료 후 연장 (초)"><button type="button" data-st="0.5" data-t="musicOutro">＋</button></span></div></div>
+        <div class="row" title="음성이 말하는 동안은 음악 크기로, 말이 설정한 초(오른쪽 칸) 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과와 통합 재생에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span><div class="ctl"><div class="swrow"><div class="segmented" id="duckMode">
             <button data-mode="off" class="active" title="끔">끔</button>
             <button data-mode="on" title="켬">켬</button>
-          </div><span class="sn" title="말이 이 시간(초) 이상 쉬면 음악을 키움"><input type="number" id="duckGap" min="1" step="0.5" value="5" aria-label="말 쉼 기준 (초)">초</span></div>
-        </div>
-        <div class="sw" title="음악이 더 짧을 때"><span class="kl">🔁 음악이 짧으면</span>
-          <div class="segmented" id="loopMode">
+          </div><span class="sn" title="말이 이 시간(초) 이상 쉬면 음악을 키움"><input type="number" id="duckGap" min="1" step="0.5" value="5" aria-label="말 쉼 기준 (초)">초</span></div></div></div>
+        <div class="row" title="음악이 더 짧을 때"><span class="kl">🔁 음악이 짧으면</span><div class="ctl"><div class="segmented" id="loopMode">
             <button data-mode="loop" class="active" title="반복 재생">🔁</button>
             <button data-mode="once" title="한 번만 재생">1</button>
-          </div>
-        </div>
+          </div></div></div>
       </div>
       <div class="cg cg-meter" title="재생 중 소리 크기">
         <div class="mts">
