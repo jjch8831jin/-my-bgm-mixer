@@ -3289,8 +3289,10 @@ document.getElementById('resetMusicBtn').addEventListener('click', () => resetTr
 
 
 async function openFilesFor(kind){
-  const dirHandle = await getSavedDirHandle(kind);
-  if(window.showOpenFilePicker){
+  // 폰·태블릿에서는 고급 파일 선택 창(showOpenFilePicker)을 쓰지 않고 기본 파일 선택 창을 씀 — 그래야 네이버 박스 같은 앱이 목록에 나옴
+  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const dirHandle = isMobileUA ? null : await getSavedDirHandle(kind);
+  if(window.showOpenFilePicker && !isMobileUA){
     try{
       const opts = {
         multiple: true,
