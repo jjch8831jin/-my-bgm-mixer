@@ -189,13 +189,13 @@
   .segmented button:last-child{ border-right: none; }
   .segmented button.active{ background: var(--music-dim); color: #5a3c0e; }
 
-  .console{ display:flex; flex-wrap:wrap; gap:8px; background:#1f2d3a; border:1px solid #0e1822; border-radius:10px; padding:10px; color:#f4f8fc; }
+  .console{ display:flex; flex-wrap:nowrap; overflow-x:auto; gap:8px; background:#1f2d3a; border:1px solid #0e1822; border-radius:10px; padding:10px; color:#f4f8fc; }
   .console .cg{ background:#2b3d4d; border:1px solid #455c70; border-radius:8px; padding:8px 6px; }
   .cg-vol{ display:flex; gap:4px; }
   .cg-time{ grid-template-columns:auto !important; }
   .strip{ display:flex; flex-direction:column; align-items:center; gap:4px; width:84px; }
   .strip .sl,.knob .kl,.sw .kl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
-  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:100px; height:28px; padding:0; margin:36px -36px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
+  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:140px; height:28px; padding:0; margin:56px -56px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
   .sn{ font-size:14pt; color:#f4f8fc; white-space:nowrap; }
   .console input[type="number"]{ width:64px; padding:3px 4px; font-size:14pt; background:#f4f8fc; color:#131f2c; border:1px solid #8fa9c2; border-radius:6px; text-align:center; }
   .cg-time{ display:grid; grid-template-columns:repeat(2,auto); gap:8px 14px; align-content:center; }
@@ -227,23 +227,29 @@
   .console .fader::-moz-range-track{ height:6px; background:#0b141c; border-radius:3px; }
   .console .fader::-moz-range-thumb{ width:16px; height:34px; border-radius:3px; border:1px solid #0b141c; background:linear-gradient(90deg,#d9e2ea 0 42%,#ffb547 42% 58%,#d9e2ea 58%); }
   .console input[type="number"]::-webkit-inner-spin-button{ opacity:1; height:30px; cursor:pointer; }
-  .console .strip .sn input[type="number"]{ width:60px; }
-  .console .strip{ width:78px; }
-  .cg-meter{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
-  .mts{ display:flex; gap:4px; }
-  .mg{ display:flex; align-items:center; gap:3px; }
-  .console .mg input[type="number"]{ width:60px; }
+  .console .strip .sn input[type="number"]{ width:54px; }
+  .console .strip{ width:auto; flex:1 1 0; min-width:76px; }
+  .cg-meter{ display:flex; flex-direction:row; align-items:flex-start; justify-content:center; gap:4px; }
+  .mts{ display:flex; gap:2px; }
+  .console .mstrip{ width:60px; flex:0 0 60px; min-width:0; }
+  .console .mstrip .fader{ width:154px; margin:90px -63px 22px -63px; }
+  .mrow{ display:flex; align-items:center; gap:1px; margin-top:36px; }
+  .mi{ font-size:14pt; line-height:1; }
+  .console .mstrip input[type="number"]{ width:38px; height:24px; padding:0 1px; box-sizing:border-box; }
+  .console .mstrip input[type="number"]::-webkit-inner-spin-button{ display:none; }
   .swrow{ display:flex; align-items:center; gap:4px; }
   .swrow .segmented{ flex:1; }
-  .console .swrow input[type="number"]{ width:52px; }
+  .console .swrow input[type="number"]{ width:50px; }
   .console .cg{ flex:1 1 auto; }
+  .console .cg-vol{ flex:1 1 0; min-width:0; }
+  .console .cg-time, .console .cg-mode, .console .cg-meter{ flex:0 0 192px; }
   .cg-vol{ justify-content:space-around; }
   .cg-time{ justify-content:center; }
   .cg-mode{ align-items:center; }
-  .cg-mode .sw{ width:190px; }
-  .mt{ display:flex; flex-direction:column; align-items:center; gap:4px; width:38px; }
+  .cg-mode .sw{ width:176px; }
+  .mt{ display:flex; flex-direction:column; align-items:center; gap:4px; width:36px; }
   .mt .sl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
-  .mt .bar{ position:relative; width:18px; height:62px; margin:34px 0 0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
+  .mt .bar{ position:relative; width:18px; height:140px; margin:34px 0 0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
   .mt .fill{ position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(to top,#2fbf5b 0,#2fbf5b 60%,#f2d33c 78%,#ef4a3a 100%); background-size:100% 140px; background-position:bottom; }
   .mt .pk{ position:absolute; left:0; right:0; height:2px; bottom:0; background:#fff; }
   .mt .db{ font-size:12pt; color:#f4f8fc; height:34px; line-height:34px; margin-top:0; white-space:nowrap; }
@@ -722,7 +728,7 @@
           <div class="mt"><span class="sl">🎵</span><div class="bar"><div class="fill" data-m="music"></div><div class="pk" data-p="music"></div></div><span class="db" data-d="music">−∞</span></div>
           <div class="mt"><span class="sl">합계</span><div class="bar"><div class="fill" data-m="master"></div><div class="pk" data-p="master"></div></div><span class="db" data-d="master">−∞</span></div>
         </div>
-        <div class="mg" title="합계 크기 (믹싱 결과와 통합 재생에 적용)"><span class="sl">🔊</span><input type="number" id="masterVol" min="0" max="300" step="1" value="100" aria-label="합계 크기 (%)"><span class="sn">%</span></div>
+        <div class="strip mstrip" title="합계 크기 (더블클릭: 100%) — 믹싱 결과와 통합 재생에 적용"><span class="sl" style="visibility:hidden">🔊</span><input type="range" class="fader vol" data-num="masterVol" data-def="100" min="0" max="200" step="0.5" value="100" aria-label="합계 크기"><div class="mrow"><span class="mi">🔊</span><input type="number" id="masterVol" min="0" max="300" step="1" value="100" aria-label="합계 크기 (%)"></div></div>
       </div>
     </div>
   </section>
