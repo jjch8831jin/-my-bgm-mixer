@@ -4403,6 +4403,7 @@ function mixTotalDuration(){
     o.box.classList.remove('marq'); o.box.style.removeProperty('--loop'); o.box.style.removeProperty('--dur');
     o.span.textContent = o.text;
     if(!o.text) return;
+    if(o.lyric && o.span.offsetWidth <= w) return; // 가사 한 줄이 칸에 다 들어가면 한 번만 보이고 가만히 있음
     const gap = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
     o.span.textContent = o.text + gap;
     const unit = o.span.offsetWidth;
