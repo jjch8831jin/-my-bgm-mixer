@@ -190,20 +190,20 @@
   .segmented button.active{ background: var(--music-dim); color: #5a3c0e; }
 
   .console{ display:flex; flex-wrap:wrap; gap:8px; background:#1f2d3a; border:1px solid #0e1822; border-radius:10px; padding:10px; color:#f4f8fc; }
-  .console .cg{ background:#2b3d4d; border:1px solid #455c70; border-radius:8px; padding:8px 8px; }
-  .cg-vol{ display:flex; gap:8px; }
+  .console .cg{ background:#2b3d4d; border:1px solid #455c70; border-radius:8px; padding:8px 6px; }
+  .cg-vol{ display:flex; gap:4px; }
   .cg-time{ grid-template-columns:auto !important; }
   .strip{ display:flex; flex-direction:column; align-items:center; gap:4px; width:84px; }
   .strip .sl,.knob .kl,.sw .kl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
-  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:140px; height:28px; padding:0; margin:56px -56px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
+  .console .fader{ -webkit-appearance:auto; appearance:auto; writing-mode:horizontal-tb; direction:ltr; width:100px; height:28px; padding:0; margin:36px -36px; transform:rotate(-90deg); accent-color:#ffb547; cursor:pointer; background:transparent; }
   .sn{ font-size:14pt; color:#f4f8fc; white-space:nowrap; }
   .console input[type="number"]{ width:64px; padding:3px 4px; font-size:14pt; background:#f4f8fc; color:#131f2c; border:1px solid #8fa9c2; border-radius:6px; text-align:center; }
   .cg-time{ display:grid; grid-template-columns:repeat(2,auto); gap:8px 14px; align-content:center; }
   .knob{ display:flex; flex-direction:column; gap:3px; }
   .ks{ display:flex; align-items:center; gap:4px; }
-  .ks button{ width:34px; height:34px; padding:0; font-size:14pt; background:#455c70; color:#fff; border:1px solid #6f8aa0; border-radius:6px; cursor:pointer; }
+  .ks button{ width:30px; height:34px; padding:0; font-size:14pt; background:#455c70; color:#fff; border:1px solid #6f8aa0; border-radius:6px; cursor:pointer; }
   .ks button:hover{ background:#5a7690; }
-  .ks input{ width:66px; }
+  .ks input{ width:56px; }
   .cg-mode{ display:flex; flex-direction:column; justify-content:center; gap:10px; }
   .sw{ display:flex; flex-direction:column; gap:3px; }
   .console .segmented button{ filter:none; text-shadow:none; background:#455c70; color:#fff !important; border:1px solid #6f8aa0; font-size:14pt; padding:3px 11px; opacity:1; }
@@ -227,12 +227,23 @@
   .console .fader::-moz-range-track{ height:6px; background:#0b141c; border-radius:3px; }
   .console .fader::-moz-range-thumb{ width:16px; height:34px; border-radius:3px; border:1px solid #0b141c; background:linear-gradient(90deg,#d9e2ea 0 42%,#ffb547 42% 58%,#d9e2ea 58%); }
   .console input[type="number"]::-webkit-inner-spin-button{ opacity:1; height:30px; cursor:pointer; }
-  .console .strip .sn input[type="number"]{ width:62px; }
-  .console .strip{ width:88px; }
-  .cg-meter{ display:flex; gap:4px; }
-  .mt{ display:flex; flex-direction:column; align-items:center; gap:4px; width:44px; }
+  .console .strip .sn input[type="number"]{ width:60px; }
+  .console .strip{ width:78px; }
+  .cg-meter{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+  .mts{ display:flex; gap:4px; }
+  .mg{ display:flex; align-items:center; gap:3px; }
+  .console .mg input[type="number"]{ width:60px; }
+  .swrow{ display:flex; align-items:center; gap:4px; }
+  .swrow .segmented{ flex:1; }
+  .console .swrow input[type="number"]{ width:52px; }
+  .console .cg{ flex:1 1 auto; }
+  .cg-vol{ justify-content:space-around; }
+  .cg-time{ justify-content:center; }
+  .cg-mode{ align-items:center; }
+  .cg-mode .sw{ width:190px; }
+  .mt{ display:flex; flex-direction:column; align-items:center; gap:4px; width:38px; }
   .mt .sl{ font-size:14pt; color:#f4f8fc; white-space:nowrap; line-height:1.2; }
-  .mt .bar{ position:relative; width:18px; height:140px; margin:34px 0 0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
+  .mt .bar{ position:relative; width:18px; height:62px; margin:34px 0 0; background:#0b141c; border:1px solid #455c70; border-radius:3px; overflow:hidden; }
   .mt .fill{ position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(to top,#2fbf5b 0,#2fbf5b 60%,#f2d33c 78%,#ef4a3a 100%); background-size:100% 140px; background-position:bottom; }
   .mt .pk{ position:absolute; left:0; right:0; height:2px; bottom:0; background:#fff; }
   .mt .db{ font-size:12pt; color:#f4f8fc; height:34px; line-height:34px; margin-top:0; white-space:nowrap; }
@@ -684,11 +695,6 @@
         <div class="knob" title="음성 시작 지연 (초)"><span class="kl">⏳ 음성 지연</span><span class="ks"><button type="button" data-st="-0.5" data-t="voiceOffset">−</button><input type="number" id="voiceOffset" min="0" step="0.5" value="0" aria-label="음성 시작 지연 (초)"><button type="button" data-st="0.5" data-t="voiceOffset">＋</button></span></div>
         <div class="knob" title="음성 종료 후 연장 (초)"><span class="kl">➕ 끝 연장</span><span class="ks"><button type="button" data-st="-0.5" data-t="musicOutro">−</button><input type="number" id="musicOutro" min="0" step="0.5" value="0" aria-label="음성 종료 후 연장 (초)"><button type="button" data-st="0.5" data-t="musicOutro">＋</button></span></div>
       </div>
-      <div class="cg cg-meter" title="재생 중 소리 크기">
-        <div class="mt"><span class="sl">🎙</span><div class="bar"><div class="fill" data-m="voice"></div><div class="pk" data-p="voice"></div></div><span class="db" data-d="voice">−∞</span></div>
-        <div class="mt"><span class="sl">🎵</span><div class="bar"><div class="fill" data-m="music"></div><div class="pk" data-p="music"></div></div><span class="db" data-d="music">−∞</span></div>
-        <div class="mt"><span class="sl">합계</span><div class="bar"><div class="fill" data-m="master"></div><div class="pk" data-p="master"></div></div><span class="db" data-d="master">−∞</span></div>
-      </div>
       <div class="cg cg-mode">
         <div class="sw" title="믹스 길이 기준"><span class="kl">📏 길이</span>
           <div class="segmented" id="durationMode">
@@ -697,11 +703,11 @@
             <button data-mode="longer" title="둘 중 긴 쪽에 맞춤">↔</button>
           </div>
         </div>
-        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 5초 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과와 통합 재생에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
-          <div class="segmented" id="duckMode">
+        <div class="sw" title="음성이 말하는 동안은 음악 크기로, 말이 설정한 초(오른쪽 칸) 이상 쉬는 곳에서는 시작 음량까지 음악을 자동으로 키웠다 줄입니다 (믹싱 결과와 통합 재생에 적용)"><span class="kl">🎚 말 쉴 때 음악 키움</span>
+          <div class="swrow"><div class="segmented" id="duckMode">
             <button data-mode="off" class="active" title="끔">끔</button>
             <button data-mode="on" title="켬">켬</button>
-          </div>
+          </div><span class="sn" title="말이 이 시간(초) 이상 쉬면 음악을 키움"><input type="number" id="duckGap" min="1" step="0.5" value="5" aria-label="말 쉼 기준 (초)">초</span></div>
         </div>
         <div class="sw" title="음악이 더 짧을 때"><span class="kl">🔁 음악이 짧으면</span>
           <div class="segmented" id="loopMode">
@@ -709,6 +715,14 @@
             <button data-mode="once" title="한 번만 재생">1</button>
           </div>
         </div>
+      </div>
+      <div class="cg cg-meter" title="재생 중 소리 크기">
+        <div class="mts">
+          <div class="mt"><span class="sl">🎙</span><div class="bar"><div class="fill" data-m="voice"></div><div class="pk" data-p="voice"></div></div><span class="db" data-d="voice">−∞</span></div>
+          <div class="mt"><span class="sl">🎵</span><div class="bar"><div class="fill" data-m="music"></div><div class="pk" data-p="music"></div></div><span class="db" data-d="music">−∞</span></div>
+          <div class="mt"><span class="sl">합계</span><div class="bar"><div class="fill" data-m="master"></div><div class="pk" data-p="master"></div></div><span class="db" data-d="master">−∞</span></div>
+        </div>
+        <div class="mg" title="합계 크기 (믹싱 결과와 통합 재생에 적용)"><span class="sl">🔊</span><input type="number" id="masterVol" min="0" max="300" step="1" value="100" aria-label="합계 크기 (%)"><span class="sn">%</span></div>
       </div>
     </div>
   </section>
@@ -796,12 +810,22 @@ function getCtx(){
 
 // ---- 레벨 미터 ----
 const meterNodes = {};
+let masterGainNode = null;
+function readMaster(){ const v = Number(document.getElementById('masterVol').value); return (isFinite(v) ? Math.max(0, v) : 100) / 100; }
+function getMasterGain(){
+  if(masterGainNode) return masterGainNode;
+  const ctx = getCtx();
+  masterGainNode = ctx.createGain();
+  masterGainNode.gain.value = readMaster();
+  masterGainNode.connect(getMeter('master'));
+  return masterGainNode;
+}
 function getMeter(name){
   if(meterNodes[name]) return meterNodes[name];
   const ctx = getCtx();
   const an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0;
   if(name === 'master'){ an.connect(ctx.destination); }
-  else { an.connect(getMeter('master')); }
+  else { an.connect(getMasterGain()); }
   meterNodes[name] = an;
   return an;
 }
@@ -3090,6 +3114,8 @@ function saveSettings(){
       durationMode,
       loopMode,
       autoDuck,
+      duckGap: document.getElementById('duckGap').value,
+      masterVol: document.getElementById('masterVol').value,
       voiceSpeed,
       musicSpeed
     }));
@@ -3126,6 +3152,8 @@ function loadSettings(){
     loopMode = s.loopMode;
     document.querySelectorAll('#loopMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === s.loopMode));
   }
+  if(s.duckGap !== undefined) document.getElementById('duckGap').value = s.duckGap;
+  if(s.masterVol !== undefined) document.getElementById('masterVol').value = s.masterVol;
   if(s.voiceSpeed !== undefined){
     voiceSpeed = Number(s.voiceSpeed);
     document.getElementById('voiceSpeedSlider').value = voiceSpeed;
@@ -3506,6 +3534,11 @@ document.getElementById('musicIntroLevel').addEventListener('input', () => {
   onSettingsChanged();
   saveSettings();
 });
+document.getElementById('duckGap').addEventListener('input', () => { onSettingsChanged(); saveSettings(); });
+document.getElementById('masterVol').addEventListener('input', () => {
+  if(masterGainNode) masterGainNode.gain.value = readMaster();
+  onSettingsChanged(); saveSettings();
+});
 document.getElementById('musicOutro').addEventListener('input', () => {
   onSettingsChanged();
   saveSettings();
@@ -3592,6 +3625,7 @@ function readSettings(duration){
 }
 
 // 음성에서 말이 1초 이상 쉬는 구간(음성 시작 기준 초) 찾기
+function duckGapSec(){ const v = Number(document.getElementById('duckGap').value); return (isFinite(v) && v >= 1) ? v : 5; }
 function detectSpeechGaps(buf){
   const sr = buf.sampleRate, hop = Math.round(sr * 0.01), n = Math.floor(buf.length / hop);
   if(n < 200) return [];
@@ -3615,12 +3649,13 @@ function detectSpeechGaps(buf){
   const gaps = [];
   for(let k=1;k<merged.length;k++){
     const gs = merged[k-1][1]*0.01, ge = merged[k][0]*0.01;
-    if(ge - gs >= 5) gaps.push({ start: gs, end: ge });
+    if(ge - gs >= duckGapSec()) gaps.push({ start: gs, end: ge });
   }
   return gaps;
 }
 
 function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, trimmedMusicBuffer){
+  const masterG = ctx.createGain(); masterG.gain.value = readMaster(); masterG.connect(destination); destination = masterG;
   const s = readSettings(duration);
 
   const voiceSource = ctx.createBufferSource();
@@ -3958,7 +3993,7 @@ function mixTotalDuration(){
   let voiceBegan = false, voiceEnded = false, musicEnded = false;
   let lastD = 0, dChangeAt = 0, prevUsedD = 0;
   const gapCache = new WeakMap();
-  function gapsFor(buf){ let g = gapCache.get(buf); if(!g){ g = detectSpeechGaps(buf); gapCache.set(buf, g); } return g; }
+  function gapsFor(buf){ const thr = duckGapSec(); let c = gapCache.get(buf); if(!c || c.thr !== thr){ c = { thr, g: detectSpeechGaps(buf) }; gapCache.set(buf, c); } return c.g; }
   function numVal(id){ return Math.max(0, Number(document.getElementById(id).value) || 0); }
   function anyPlaying(){ return voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying(); }
   function refresh(){ btn.textContent = (running || anyPlaying()) ? '⏸' : '▶'; }
