@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>배경음악 믹서</title>
+<meta name="theme-color" content="#1c1917">
+<link rel="manifest" href="bgm-manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="bgm-favicon-32.png">
+<link rel="apple-touch-icon" href="bgm-apple-touch-icon.png">
 <style>
   :root{
     --bg: #d9e4f0;
@@ -4557,6 +4561,8 @@ window.addEventListener('pagehide', flushWork);
   workReady = true;
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 })();
+// 폰 홈 화면 앱 설치용 (파일을 저장하지 않는 최소 서비스워커)
+try{ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./bgm-sw.js').catch(()=>{}); }catch(e){}
 </script>
 </body>
 </html>
