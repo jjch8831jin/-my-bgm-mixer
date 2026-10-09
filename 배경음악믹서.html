@@ -252,14 +252,14 @@
   #panel_music .speed-row, #panel_music .seg-form{ display:none !important; }
   /* 재생 중인 제목 (초록, 길면 옆으로 움직임) */
   .pl-mid{ position:relative; flex:1 1 auto; min-width:0; }
-  .track-title{ position:absolute; top:50%; transform:translateY(calc(-50% - 54px)); overflow:hidden; white-space:nowrap; text-align:center; font-size:14pt; line-height:1.2; height:1.2em; color:#7dffa8; pointer-events:none; -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); }
-  #panel_voice .track-title{ left:150px; right:150px; }
-  #panel_music .track-title{ left:245px; right:245px; }
-  .track-title > span, .all-titles .tx > span{ display:inline-block; }
-  .marq{ text-align:left; }
-  .marq > span{ animation:marq var(--dur,9s) linear infinite alternate; }
-  @keyframes marq{ 0%,12%{ transform:translateX(0); } 88%,100%{ transform:translateX(var(--shift,0px)); } }
-  #toolPanel .section-head{ flex-wrap:nowrap; }
+  .head-title{ display:none; flex:1 1 0; min-width:0; margin-left:16px; height:30px; align-items:center; }
+  #toolPanel.is-voice .head-title, #toolPanel.is-music .head-title{ display:flex; }
+  .head-title .tx{ display:none; flex:1 1 auto; min-width:0; overflow:hidden; white-space:nowrap; text-align:center; font-size:14pt; line-height:1.2; color:#7dffa8; -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); }
+  #toolPanel.is-voice #voiceTrackTitle, #toolPanel.is-music #musicTrackTitle{ display:block; }
+  .head-title .tx > span, .all-titles .tx > span{ display:inline-block; }
+  .marq{ text-align:left !important; }
+  .marq > span{ animation:marqL var(--dur,14s) linear infinite; }
+  @keyframes marqL{ from{ transform:translateX(0); } to{ transform:translateX(var(--loop,0px)); } }
   .all-titles{ display:none; flex:1 1 0; min-width:0; margin-left:16px; align-items:center; height:30px; }
   #toolPanel.is-all .all-titles{ display:flex; }
   .all-titles .half{ flex:1 1 0; min-width:0; display:flex; align-items:center; gap:6px; padding:0 10px; font-size:14pt; line-height:1.2; color:#7dffa8; white-space:nowrap; overflow:hidden; }
@@ -629,6 +629,7 @@
         <button type="button" data-track="all" title="통합 (음성+배경음악 동시 재생)">▶ 통합</button>
         <label class="seg-speed" title="배경음악 재생 속도 (x)"><span class="ic">⚡</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.01" value="1" aria-label="배경음악 재생 속도"><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
       </div>
+      <div class="head-title" id="headTitle"><div class="tx" id="voiceTrackTitle"><span></span></div><div class="tx" id="musicTrackTitle"><span></span></div></div>
       <div class="all-titles" id="allTitles"><div class="half"><span class="ti">🎙</span><div class="tx"><span id="allVoiceTitle"></span></div></div><div class="half"><span class="ti">🎵</span><div class="tx"><span id="allMusicTitle"></span></div></div></div>
     </div>
     <div class="tool-panel" id="panel_all">
@@ -662,7 +663,7 @@
           <button class="player-btn" id="voiceNextBtn" disabled title="다음 트랙">⏭</button>
           <button class="player-btn" id="voiceRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 재생)">🔁</button>
         </div></div>
-        <div class="pl-mid"><div class="track-title" id="voiceTrackTitle"><span></span></div><div class="progress-bar scrubbable" id="voiceProgressBar"><div class="progress-fill" id="voiceProgressFill"></div></div></div>
+        <div class="pl-mid"><div class="progress-bar scrubbable" id="voiceProgressBar"><div class="progress-fill" id="voiceProgressFill"></div></div></div>
         <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="speed-row pv-row" style="margin-top:12px;">
@@ -698,7 +699,7 @@
           <button class="player-btn" id="musicNextBtn" disabled title="다음 트랙">⏭</button>
           <button class="player-btn" id="musicRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 재생)">🔁</button>
         </div></div>
-        <div class="pl-mid"><div class="track-title" id="musicTrackTitle"><span></span></div><div class="progress-bar scrubbable" id="musicProgressBar"><div class="progress-fill" id="musicProgressFill"></div></div></div>
+        <div class="pl-mid"><div class="progress-bar scrubbable" id="musicProgressBar"><div class="progress-fill" id="musicProgressFill"></div></div></div>
         <div class="time" id="musicTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
       </div>
       <div class="speed-row" style="margin-top:12px;">
@@ -3986,6 +3987,7 @@ function setActiveTrack(k){
   document.getElementById('panel_all').classList.toggle('active', k === 'all');
   document.getElementById('toolPanel').classList.toggle('is-music', k === 'music');
   document.getElementById('toolPanel').classList.toggle('is-all', k === 'all');
+  document.getElementById('toolPanel').classList.toggle('is-voice', k === 'voice');
   ['voice','music'].forEach(t => {
     document.getElementById('panel_' + t).classList.toggle('active', t === k);
     const c = document.getElementById('card_' + t);
@@ -4269,13 +4271,16 @@ function mixTotalDuration(){
   slots.forEach(o => { o.text = null; o.w = -1; });
   function fit(o){
     const w = o.box.clientWidth;
-    if(!w) { o.w = -1; return; }
+    if(!w){ o.w = -1; return; }
     o.w = w;
-    o.box.classList.remove('marq'); o.box.style.removeProperty('--shift'); o.box.style.removeProperty('--dur');
-    const over = o.span.offsetWidth - w;
-    if(over > 2){
-      o.box.style.setProperty('--shift', (-over - 8) + 'px');
-      o.box.style.setProperty('--dur', Math.max(6, Math.round(over / 30) + 5) + 's');
+    o.box.classList.remove('marq'); o.box.style.removeProperty('--loop'); o.box.style.removeProperty('--dur');
+    o.span.textContent = o.text;
+    if(o.span.offsetWidth > w + 2){
+      const gap = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
+      o.span.textContent = o.text + gap + o.text + gap;
+      const cyc = o.span.offsetWidth / 2;
+      o.box.style.setProperty('--loop', (-cyc) + 'px');
+      o.box.style.setProperty('--dur', Math.max(10, Math.round(cyc / 35)) + 's');
       void o.box.offsetWidth;
       o.box.classList.add('marq');
     }
