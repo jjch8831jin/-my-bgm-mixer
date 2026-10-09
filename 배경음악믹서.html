@@ -850,7 +850,7 @@ function getCtx(){
 // ---- 레벨 미터 ----
 const meterNodes = {};
 let masterGainNode = null;
-function readMaster(){ const v = Number(document.getElementById('masterVol').value); return (isFinite(v) ? Math.max(0, v) : 100) / 100; }
+function readMaster(forMix){ const v = Number(forMix ? mixVal('masterVol') : document.getElementById('masterVol').value); return (isFinite(v) ? Math.max(0, v) : 100) / 100; }
 function getMasterGain(){
   if(masterGainNode) return masterGainNode;
   const ctx = getCtx();
@@ -3132,16 +3132,48 @@ onBusyClick('downloadMusicMp3Btn', async (e) => {
 
 
 function onSettingsChanged(){
+  if(activeTrack !== 'all') return;
   if(voiceBuffer && musicBuffer){
     resetMixState('설정이 변경되었습니다 — 다시 믹싱해주세요.');
   }
 }
 
 const SETTINGS_KEY = 'bgmMixerSettings';
+// ---- 탭(음성/배경음악/통합)마다 따로 기억하는 믹싱 설정 ----
+const PROF_IDS = ['musicVolume','voiceVolume','fadeIn','fadeOut','voiceOffset','musicOutro','musicIntroLevel','musicOutroLevel','duckGap','masterVol'];
+let profiles = null, pendingProfiles = null;
+function snapshotProfile(){
+  const o = {};
+  PROF_IDS.forEach(id => { o[id] = document.getElementById(id).value; });
+  o.durationMode = durationMode; o.loopMode = loopMode; o.autoDuck = autoDuck;
+  return o;
+}
+function applyProfile(k){
+  const o = profiles[k]; if(!o) return;
+  PROF_IDS.forEach(id => { if(o[id] !== undefined) document.getElementById(id).value = o[id]; });
+  document.getElementById('musicVolume2').value = document.getElementById('musicVolume').value;
+  document.getElementById('voiceVolume3').value = document.getElementById('voiceVolume').value;
+  [['durationMode','durationMode'],['loopMode','loopMode'],['autoDuck','duckMode']].forEach(([v,id]) => {
+    if(!o[v]) return;
+    if(v === 'durationMode') durationMode = o[v]; else if(v === 'loopMode') loopMode = o[v]; else autoDuck = o[v];
+    document.querySelectorAll('#' + id + ' button').forEach(b => b.classList.toggle('active', b.dataset.mode === o[v]));
+  });
+  if(window.__syncFaders) window.__syncFaders();
+  if(masterGainNode) masterGainNode.gain.value = readMaster();
+  try{ voicePlayerCtl.applyVolume(); musicPlayerCtl.applyVolume(); }catch(e){}
+}
+// 최종 믹싱(6번)은 항상 '통합' 탭의 값을 사용
+function mixVal(id){ return (profiles && activeTrack !== 'all' && profiles.all[id] !== undefined) ? profiles.all[id] : document.getElementById(id).value; }
+function mixMode(name){
+  if(profiles && activeTrack !== 'all' && profiles.all[name]) return profiles.all[name];
+  return name === 'durationMode' ? durationMode : (name === 'loopMode' ? loopMode : autoDuck);
+}
 
 function saveSettings(){
   try{
+    if(profiles) profiles[activeTrack] = snapshotProfile();
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      profiles,
       musicVolume: document.getElementById('musicVolume').value,
       voiceVolume: document.getElementById('voiceVolume').value,
       fadeIn: document.getElementById('fadeIn').value,
@@ -3168,6 +3200,7 @@ function loadSettings(){
     if(!raw) return;
     s = JSON.parse(raw);
   } catch(e){ return; }
+  if(s.profiles && s.profiles.voice && s.profiles.music && s.profiles.all) pendingProfiles = s.profiles;
   if(s.musicVolume !== undefined){
     document.getElementById('musicVolume').value = s.musicVolume;
     document.getElementById('musicVolume2').value = s.musicVolume;
@@ -3649,22 +3682,22 @@ document.getElementById('loopMode').addEventListener('click', e => {
 });
 
 function readSettings(duration){
-  const musicGainValue = Number(document.getElementById('musicVolume').value) / 100;
-  let fadeIn = Number(document.getElementById('fadeIn').value) || 0;
-  let fadeOut = Number(document.getElementById('fadeOut').value) || 0;
-  let voiceDelay = Math.max(0, Number(document.getElementById('voiceOffset').value) || 0);
-  const musicIntroLevel = Math.max(0, Number(document.getElementById('musicIntroLevel').value) || 0) / 100;
-  const musicOutro = Math.max(0, Number(document.getElementById('musicOutro').value) || 0);
-  const musicOutroLevel = Math.max(0, Number(document.getElementById('musicOutroLevel').value) || 0) / 100;
+  const musicGainValue = Number(mixVal('musicVolume')) / 100;
+  let fadeIn = Number(mixVal('fadeIn')) || 0;
+  let fadeOut = Number(mixVal('fadeOut')) || 0;
+  let voiceDelay = Math.max(0, Number(mixVal('voiceOffset')) || 0);
+  const musicIntroLevel = Math.max(0, Number(mixVal('musicIntroLevel')) || 0) / 100;
+  const musicOutro = Math.max(0, Number(mixVal('musicOutro')) || 0);
+  const musicOutroLevel = Math.max(0, Number(mixVal('musicOutroLevel')) || 0) / 100;
   fadeIn = Math.min(fadeIn, duration/2);
   fadeOut = Math.min(fadeOut, duration/2);
   voiceDelay = Math.min(voiceDelay, duration);
-  const voiceGainValue = Math.max(0, Number(document.getElementById('voiceVolume').value) || 0) / 100;
+  const voiceGainValue = Math.max(0, Number(mixVal('voiceVolume')) || 0) / 100;
   return { voiceGainValue, musicGainValue, fadeIn, fadeOut, voiceDelay, musicIntroLevel, musicOutro, musicOutroLevel, duration };
 }
 
 // 음성에서 말이 1초 이상 쉬는 구간(음성 시작 기준 초) 찾기
-function duckGapSec(){ const v = Number(document.getElementById('duckGap').value); return (isFinite(v) && v >= 1) ? v : 5; }
+function duckGapSec(){ const v = Number(mixVal('duckGap')); return (isFinite(v) && v >= 1) ? v : 5; }
 function detectSpeechGaps(buf){
   const sr = buf.sampleRate, hop = Math.round(sr * 0.01), n = Math.floor(buf.length / hop);
   if(n < 200) return [];
@@ -3694,7 +3727,7 @@ function detectSpeechGaps(buf){
 }
 
 function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, trimmedMusicBuffer){
-  const masterG = ctx.createGain(); masterG.gain.value = readMaster(); masterG.connect(destination); destination = masterG;
+  const masterG = ctx.createGain(); masterG.gain.value = readMaster(true); masterG.connect(destination); destination = masterG;
   const s = readSettings(duration);
 
   const voiceSource = ctx.createBufferSource();
@@ -3706,7 +3739,7 @@ function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, tr
 
   const musicSource = ctx.createBufferSource();
   musicSource.buffer = trimmedMusicBuffer;
-  musicSource.loop = (loopMode === 'loop');
+  musicSource.loop = (mixMode('loopMode') === 'loop');
   if(musicSource.loop){
     musicSource.loopStart = 0;
     musicSource.loopEnd = trimmedMusicBuffer.duration;
@@ -3739,7 +3772,7 @@ function buildGraph(ctx, destination, startAt, adjustedVoiceBuffer, duration, tr
   }
 
   // 말이 1초 이상 쉬는 곳에서는 음악을 '시작 음량'까지 키웠다가, 말이 다시 시작되기 전에 음악 크기로 내림
-  if(autoDuck === 'on'){
+  if(mixMode('autoDuck') === 'on'){
     const voiceStartT = startAt + s.voiceDelay;
     const winStart = Math.max(voiceStartT, startAt + (hasIntro ? 0 : s.fadeIn)) + 0.3;
     const winEnd = (hasOutro ? voiceEndTime : (s.fadeOut > 0 ? mixEndTime - s.fadeOut : mixEndTime)) - 0.3;
@@ -3807,11 +3840,11 @@ async function performMix(){
       mixStatus.textContent = '배경음악 속도 처리 중… ' + pct + '%';
     });
     mixStatus.textContent = '믹싱 중…';
-    const voiceDelay = Math.max(0, Number(document.getElementById('voiceOffset').value) || 0);
-    const musicOutro = Math.max(0, Number(document.getElementById('musicOutro').value) || 0);
+    const voiceDelay = Math.max(0, Number(mixVal('voiceOffset')) || 0);
+    const musicOutro = Math.max(0, Number(mixVal('musicOutro')) || 0);
     const sampleRate = getCtx().sampleRate;
-    const duration = durationMode === 'voice' ? voiceDelay + adjustedVoice.duration + musicOutro
-      : durationMode === 'music' ? adjustedMusic.duration
+    const duration = mixMode('durationMode') === 'voice' ? voiceDelay + adjustedVoice.duration + musicOutro
+      : mixMode('durationMode') === 'music' ? adjustedMusic.duration
       : Math.max(voiceDelay + adjustedVoice.duration + musicOutro, adjustedMusic.duration);
     const offlineCtx = new OfflineAudioContext(2, Math.ceil(duration * sampleRate), sampleRate);
     buildGraph(offlineCtx, offlineCtx.destination, 0, adjustedVoice, duration, adjustedMusic);
@@ -3982,7 +4015,10 @@ onBusyClick('exportMp3Btn', async (e) => {
 // ---- 편집 도구 통합: 음성/배경음악 선택 ----
 let activeTrack = 'voice';
 function setActiveTrack(k){
+  const oldTrack = activeTrack;
+  if(profiles && oldTrack !== k) profiles[oldTrack] = snapshotProfile();
   activeTrack = k;
+  if(profiles && oldTrack !== k){ applyProfile(k); saveSettings(); }
   document.querySelectorAll('#toolSelect button').forEach(b => b.classList.toggle('active', b.dataset.track === k));
   document.getElementById('panel_all').classList.toggle('active', k === 'all');
   document.getElementById('toolPanel').classList.toggle('is-music', k === 'music');
@@ -4003,6 +4039,9 @@ document.getElementById('toolSelect').addEventListener('click', e => {
 ['voice','music'].forEach(t => document.getElementById('card_' + t).addEventListener('pointerdown', () => setActiveTrack(t)));
 document.getElementById('recordBtn').addEventListener('click', () => setActiveTrack('music'));
 setActiveTrack('voice');
+profiles = pendingProfiles || { voice: snapshotProfile(), music: snapshotProfile(), all: snapshotProfile() };
+['voice','music','all'].forEach(t => { const d = snapshotProfile(); PROF_IDS.concat(['durationMode','loopMode','autoDuck']).forEach(key => { if(profiles[t][key] === undefined) profiles[t][key] = d[key]; }); });
+applyProfile('voice');
 
 // ---- 통합 재생: 음성+배경음악 동시 재생 (5번 믹싱 설정을 그대로 반영) ----
 // 음악 탭 혼자 재생: 5번의 음악 크기·📈 인·📉 아웃 적용
@@ -4024,10 +4063,10 @@ setInterval(() => {
 function mixTotalDuration(){
   const vd = voiceBuffer ? voicePlayerCtl.getDuration() : 0;
   const md = musicBuffer ? musicPlayerCtl.getDuration() : 0;
-  const delay = Math.max(0, Number(document.getElementById('voiceOffset').value) || 0);
-  const ext = Math.max(0, Number(document.getElementById('musicOutro').value) || 0);
+  const delay = Math.max(0, Number(mixVal('voiceOffset')) || 0);
+  const ext = Math.max(0, Number(mixVal('musicOutro')) || 0);
   const vTotal = delay + vd + ext;
-  return durationMode === 'voice' ? vTotal : (durationMode === 'music' ? md : Math.max(vTotal, md));
+  return mixMode('durationMode') === 'voice' ? vTotal : (mixMode('durationMode') === 'music' ? md : Math.max(vTotal, md));
 }
 (function(){
   const btn = document.getElementById('togetherBtn');
@@ -4036,7 +4075,7 @@ function mixTotalDuration(){
   let lastD = 0, dChangeAt = 0, prevUsedD = 0;
   const gapCache = new WeakMap();
   function gapsFor(buf){ const thr = duckGapSec(); let c = gapCache.get(buf); if(!c || c.thr !== thr){ c = { thr, g: detectSpeechGaps(buf) }; gapCache.set(buf, c); } return c.g; }
-  function numVal(id){ return Math.max(0, Number(document.getElementById(id).value) || 0); }
+  function numVal(id){ return Math.max(0, Number(mixVal(id)) || 0); }
   function anyPlaying(){ return voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying(); }
   function refresh(){ btn.textContent = (running || anyPlaying()) ? '⏸' : '▶'; }
   function vDelay(){ return numVal('voiceOffset'); }
@@ -4061,7 +4100,7 @@ function mixTotalDuration(){
       if(fadeIn > 0 && introFadeEnd > 0) ramp(introFadeEnd, intro); else set(0, intro);
       set(duckStart, intro); ramp(delay, base);
     } else if(fadeIn > 0){ ramp(fadeIn, base); } else { set(0, base); }
-    if(autoDuck === 'on'){
+    if(mixMode('autoDuck') === 'on'){
       const info = voiceBuffer ? voicePlayerCtl.getInfo() : null;
       if(info){
         const winStart = Math.max(delay, hasIntro ? 0 : fadeIn) + 0.3;
@@ -4209,7 +4248,7 @@ function mixTotalDuration(){
     v3.value=v1.value;
     faders.forEach(f=>{ const n=document.getElementById(f.dataset.num); if(document.activeElement!==f && Number(f.value)!==Number(n2f(f,n.value))) f.value=n2f(f,n.value); });
   }
-  sync(); setInterval(sync,300);
+  window.__syncFaders=sync; sync(); setInterval(sync,300);
 })();
 
 // ---- 레벨 미터 갱신 ----
@@ -4275,15 +4314,17 @@ function mixTotalDuration(){
     o.w = w;
     o.box.classList.remove('marq'); o.box.style.removeProperty('--loop'); o.box.style.removeProperty('--dur');
     o.span.textContent = o.text;
-    if(o.span.offsetWidth > w + 2){
-      const gap = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
-      o.span.textContent = o.text + gap + o.text + gap;
-      const cyc = o.span.offsetWidth / 2;
-      o.box.style.setProperty('--loop', (-cyc) + 'px');
-      o.box.style.setProperty('--dur', Math.max(10, Math.round(cyc / 35)) + 's');
-      void o.box.offsetWidth;
-      o.box.classList.add('marq');
-    }
+    if(!o.text) return;
+    const gap = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
+    o.span.textContent = o.text + gap;
+    const unit = o.span.offsetWidth;
+    if(!(unit > 0)) return;
+    const n = Math.ceil(w / unit) + 1;
+    o.span.textContent = (o.text + gap).repeat(n);
+    o.box.style.setProperty('--loop', (-unit) + 'px');
+    o.box.style.setProperty('--dur', Math.max(5, Math.round(unit / 35)) + 's');
+    void o.box.offsetWidth;
+    o.box.classList.add('marq');
   }
   function tick(){
     const names = { voice: curName('voice'), music: curName('music') };
