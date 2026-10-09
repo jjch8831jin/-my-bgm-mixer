@@ -4326,6 +4326,14 @@ function mixTotalDuration(){
   function loadLyr(){ try{ return JSON.parse(localStorage.getItem(LYR_KEY) || '{}') || {}; }catch(e){ return {}; } }
   function saveLyr(all){ try{ localStorage.setItem(LYR_KEY, JSON.stringify(all)); }catch(e){} }
   function lyrLines(L){ return (L && L.text ? String(L.text).split(/\r?\n/).map(x => x.trim()).filter(Boolean) : []); }
+  // 줄 앞에 시간(0:25, 0:25.5, [00:25.30])이 있으면 그 시간에 맞춰 보여 줌
+  const TIME_RE = /^\[?\s*(\d{1,3}):(\d{1,2}(?:[.,]\d+)?)\s*\]?\s*(.*)$/;
+  function lyrTimed(lines){
+    const out = [];
+    lines.forEach(l => { const m = TIME_RE.exec(l); if(m && m[3].trim()) out.push({ t: Number(m[1]) * 60 + Number(m[2].replace(',', '.')), text: m[3].trim() }); });
+    out.sort((a, b) => a.t - b.t);
+    return out;
+  }
   function shown(kind){
     const i = curInfo(kind);
     if(!i) return { text:'', lyric:false, name:'' };
@@ -4334,11 +4342,21 @@ function mixTotalDuration(){
     const L = loadLyr()[name], lines = lyrLines(L);
     if(!lines.length) return { text:name, lyric:false, name, has:false };
     const dur = i.item.buffer.duration;
+    const SEP = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
+    const timed = lyrTimed(lines);
+    if(timed.length){
+      const en = (Number(L.end) > 0) ? Number(L.end) : dur;
+      if(i.t < en && i.t >= timed[0].t){
+        let k = 0; for(let x = 0; x < timed.length; x++){ if(timed[x].t <= i.t) k = x; else break; }
+        return { text: name + SEP + '♪ ' + timed[k].text, lyric:true, name, has:true };
+      }
+      return { text:name, lyric:false, name, has:true };
+    }
     const st = Math.max(0, Number(L.start) || 0);
     const en = (Number(L.end) > st) ? Number(L.end) : dur;
     if(i.t >= st && i.t < en){
       const idx = Math.min(lines.length - 1, Math.floor((i.t - st) / (en - st) * lines.length));
-      return { text:lines[idx], lyric:true, name, has:true };
+      return { text: name + SEP + '♪ ' + lines[idx], lyric:true, name, has:true };
     }
     return { text:name, lyric:false, name, has:true };
   }
@@ -4380,10 +4398,11 @@ function mixTotalDuration(){
     const w = o.box.clientWidth;
     if(!w){ o.w = -1; return; }
     o.w = w;
+    const keep = o.keepProg; o.keepProg = null;
+    o.span.style.removeProperty('animation-delay');
     o.box.classList.remove('marq'); o.box.style.removeProperty('--loop'); o.box.style.removeProperty('--dur');
     o.span.textContent = o.text;
     if(!o.text) return;
-    if(o.lyric && o.span.offsetWidth <= w) return; // 가사 한 줄이 칸에 다 들어가면 움직이지 않음
     const gap = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
     o.span.textContent = o.text + gap;
     const unit = o.span.offsetWidth;
@@ -4391,7 +4410,9 @@ function mixTotalDuration(){
     const n = Math.ceil(w / unit) + 1;
     o.span.textContent = (o.text + gap).repeat(n);
     o.box.style.setProperty('--loop', (-unit) + 'px');
-    o.box.style.setProperty('--dur', Math.max(5, Math.round(unit / 35)) + 's');
+    const durSec = Math.max(5, Math.round(unit / 35));
+    o.box.style.setProperty('--dur', durSec + 's');
+    if(keep != null) o.span.style.animationDelay = (-keep * durSec) + 's'; // 가사 줄이 바뀌어도 흐르던 자리를 이어감
     void o.box.offsetWidth;
     o.box.classList.add('marq');
   }
@@ -4400,6 +4421,8 @@ function mixTotalDuration(){
     slots.forEach(o => {
       const d = sh[o.kind], t = d.text;
       if(t !== o.text || d.lyric !== o.lyric){
+        o.keepProg = null;
+        if(o.lyric && d.lyric){ try{ const an = o.span.getAnimations()[0]; if(an){ const dd = an.effect.getComputedTiming().duration; o.keepProg = ((an.currentTime % dd) / dd); } }catch(e){} }
         o.text = t; o.lyric = d.lyric; o.span.textContent = t;
         o.box.title = o.kind === 'music' && d.name ? d.name + (d.has ? ' — 눌러서 가사 수정' : ' — 눌러서 가사 넣기') : d.name;
         o.w = -1;
