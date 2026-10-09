@@ -4348,7 +4348,7 @@ function mixTotalDuration(){
       const en = (Number(L.end) > 0) ? Number(L.end) : dur;
       if(i.t < en && i.t >= timed[0].t){
         let k = 0; for(let x = 0; x < timed.length; x++){ if(timed[x].t <= i.t) k = x; else break; }
-        return { text: name + SEP + '♪ ' + timed[k].text, lyric:true, name, has:true };
+        return { text: timed[k].text, lyric:true, name, has:true };
       }
       return { text:name, lyric:false, name, has:true };
     }
@@ -4356,7 +4356,7 @@ function mixTotalDuration(){
     const en = (Number(L.end) > st) ? Number(L.end) : dur;
     if(i.t >= st && i.t < en){
       const idx = Math.min(lines.length - 1, Math.floor((i.t - st) / (en - st) * lines.length));
-      return { text: name + SEP + '♪ ' + lines[idx], lyric:true, name, has:true };
+      return { text: lines[idx], lyric:true, name, has:true };
     }
     return { text:name, lyric:false, name, has:true };
   }
