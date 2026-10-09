@@ -261,6 +261,16 @@
   .head-title .tx{ display:none; flex:1 1 auto; min-width:0; overflow:hidden; white-space:nowrap; text-align:center; font-size:14pt; line-height:1.2; color:#7dffa8; -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); }
   #toolPanel.is-voice #voiceTrackTitle, #toolPanel.is-music #musicTrackTitle{ display:block; }
   .head-title .tx > span, .all-titles .tx > span{ display:inline-block; }
+  .lyr-back{ position:fixed; inset:0; background:rgba(10,16,24,.62); display:flex; align-items:center; justify-content:center; z-index:9999; padding:12px; }
+  .lyr-box{ width:min(760px,100%); max-height:96vh; overflow:auto; background:#1f2d3a; border:1px solid #6f8aa0; border-radius:14px; padding:16px 20px; color:#f4f8fc; font-size:14pt; box-shadow:0 12px 40px rgba(0,0,0,.5); box-sizing:border-box; }
+  .lyr-head{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .lyr-head .nm{ color:#7dffa8; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lyr-box button{ font:inherit; font-size:14pt; color:#f4f8fc; background:#455c70; border:1px solid #6f8aa0; border-radius:8px; padding:6px 16px; cursor:pointer; }
+  .lyr-box button.ok{ background:#ffb347; color:#1c1917; font-weight:700; border-color:#ffb347; padding:6px 26px; }
+  .lyr-box textarea{ width:100%; box-sizing:border-box; height:min(210px,36vh); background:#16212c; border:1px solid #455c70; border-radius:8px; padding:10px 14px; color:#f4f8fc; font:inherit; font-size:14pt; line-height:1.7; resize:vertical; }
+  .lyr-opt{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:12px 0 4px; font-size:12pt; color:#c9d6e2; }
+  .lyr-opt input{ width:84px; background:#16212c; border:1px solid #6f8aa0; border-radius:6px; padding:2px 8px; color:#fff; font-size:14pt; }
+  .lyr-btns{ display:flex; gap:10px; margin-top:14px; }
   .marq{ text-align:left !important; }
   .marq > span{ animation:marqL var(--dur,14s) linear infinite; }
   @keyframes marqL{ from{ transform:translateX(0); } to{ transform:translateX(var(--loop,0px)); } }
@@ -4300,14 +4310,63 @@ function mixTotalDuration(){
     const t = frac * (buf.duration - del);
     return (del > 0 && t >= r.start) ? t + del : t;
   }
-  function curName(kind){
+  function curInfo(kind){
     const items = kind === 'voice' ? voiceItems : musicItems;
-    if(!items.length) return '';
-    if(items.length === 1) return items[0].name;
+    if(!items.length) return null;
     let pos = 0; try{ pos = origPos(kind); }catch(e){}
+    if(items.length === 1) return { item: items[0], t: pos };
     let acc = 0;
-    for(const it of items){ acc += it.buffer.duration; if(pos < acc - 0.001) return it.name; }
-    return items[items.length - 1].name;
+    for(const it of items){ if(pos < acc + it.buffer.duration - 0.001) return { item: it, t: pos - acc }; acc += it.buffer.duration; }
+    const last = items[items.length - 1];
+    return { item: last, t: pos - (acc - last.buffer.duration) };
+  }
+  function curName(kind){ const i = curInfo(kind); return i ? i.item.name : ''; }
+  // ---- 가사 (곡 파일 이름별로 저장) ----
+  const LYR_KEY = 'bgmMixerLyrics';
+  function loadLyr(){ try{ return JSON.parse(localStorage.getItem(LYR_KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function saveLyr(all){ try{ localStorage.setItem(LYR_KEY, JSON.stringify(all)); }catch(e){} }
+  function lyrLines(L){ return (L && L.text ? String(L.text).split(/\r?\n/).map(x => x.trim()).filter(Boolean) : []); }
+  function shown(kind){
+    const i = curInfo(kind);
+    if(!i) return { text:'', lyric:false, name:'' };
+    const name = i.item.name;
+    if(kind !== 'music') return { text:name, lyric:false, name };
+    const L = loadLyr()[name], lines = lyrLines(L);
+    if(!lines.length) return { text:name, lyric:false, name, has:false };
+    const dur = i.item.buffer.duration;
+    const st = Math.max(0, Number(L.start) || 0);
+    const en = (Number(L.end) > st) ? Number(L.end) : dur;
+    if(i.t >= st && i.t < en){
+      const idx = Math.min(lines.length - 1, Math.floor((i.t - st) / (en - st) * lines.length));
+      return { text:lines[idx], lyric:true, name, has:true };
+    }
+    return { text:name, lyric:false, name, has:true };
+  }
+  function openLyr(){
+    const i = curInfo('music');
+    if(!i) return;
+    const name = i.item.name, all = loadLyr(), L = all[name] || {};
+    const back = document.createElement('div'); back.className = 'lyr-back';
+    back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b>🎵 가사</b><span class="nm"></span><button type="button" data-x title="닫기">✕</button></div>' +
+      '<textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
+      '<div class="lyr-opt">노래 시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 노래 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
+      '<div class="lyr-btns"><button type="button" data-del>🗑 지우기</button><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div>';
+    document.body.appendChild(back);
+    back.querySelector('.nm').textContent = name;
+    const ta = back.querySelector('textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
+    ta.value = L.text || ''; si.value = L.start || 0; ei.value = L.end || Math.round(i.item.buffer.duration);
+    const close = () => { back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const onKey = e => { if(e.key === 'Escape'){ e.preventDefault(); close(); } };
+    document.addEventListener('keydown', onKey, true);
+    back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
+    back.querySelector('[data-x]').addEventListener('click', close);
+    back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[name]; saveLyr(a); close(); tick(); });
+    back.querySelector('[data-ok]').addEventListener('click', () => {
+      const a = loadLyr(), txt = ta.value.trim();
+      if(txt) a[name] = { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) }; else delete a[name];
+      saveLyr(a); close(); tick();
+    });
+    ta.focus();
   }
   const slots = [
     { kind:'voice', span:document.querySelector('#voiceTrackTitle > span'), box:document.getElementById('voiceTrackTitle') },
@@ -4315,7 +4374,8 @@ function mixTotalDuration(){
     { kind:'voice', span:document.getElementById('allVoiceTitle'), box:document.querySelector('#allVoiceTitle').parentElement },
     { kind:'music', span:document.getElementById('allMusicTitle'), box:document.querySelector('#allMusicTitle').parentElement }
   ];
-  slots.forEach(o => { o.text = null; o.w = -1; });
+  slots.forEach(o => { o.text = null; o.w = -1; o.lyric = false; });
+  slots.filter(o => o.kind === 'music').forEach(o => { o.box.style.cursor = 'pointer'; o.box.addEventListener('click', openLyr); });
   function fit(o){
     const w = o.box.clientWidth;
     if(!w){ o.w = -1; return; }
@@ -4323,6 +4383,7 @@ function mixTotalDuration(){
     o.box.classList.remove('marq'); o.box.style.removeProperty('--loop'); o.box.style.removeProperty('--dur');
     o.span.textContent = o.text;
     if(!o.text) return;
+    if(o.lyric && o.span.offsetWidth <= w) return; // 가사 한 줄이 칸에 다 들어가면 움직이지 않음
     const gap = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
     o.span.textContent = o.text + gap;
     const unit = o.span.offsetWidth;
@@ -4335,10 +4396,14 @@ function mixTotalDuration(){
     o.box.classList.add('marq');
   }
   function tick(){
-    const names = { voice: curName('voice'), music: curName('music') };
+    const sh = { voice: shown('voice'), music: shown('music') };
     slots.forEach(o => {
-      const t = names[o.kind];
-      if(t !== o.text){ o.text = t; o.span.textContent = t; o.box.title = t; o.w = -1; }
+      const d = sh[o.kind], t = d.text;
+      if(t !== o.text || d.lyric !== o.lyric){
+        o.text = t; o.lyric = d.lyric; o.span.textContent = t;
+        o.box.title = o.kind === 'music' && d.name ? d.name + (d.has ? ' — 눌러서 가사 수정' : ' — 눌러서 가사 넣기') : d.name;
+        o.w = -1;
+      }
       if(o.box.clientWidth && o.box.clientWidth !== o.w) fit(o);
     });
   }
