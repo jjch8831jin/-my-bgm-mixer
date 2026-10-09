@@ -266,7 +266,6 @@
   .all-titles .half + .half{ border-left:1px solid #455c70; }
   .all-titles .tx{ flex:1 1 auto; min-width:0; overflow:hidden; -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 10px),transparent 100%); mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 10px),transparent 100%); }
   #toolSelect .seg-speed{ display:none; align-items:center; justify-content:center; gap:2px; width:97px; box-sizing:border-box; padding:0 5px; background:#455c70; color:#f4f8fc; border-left:1px solid #6f8aa0; margin:0; border-radius:0; }
-  #toolPanel.is-music #toolSelect .seg-speed{ display:flex; }
   #toolSelect .seg-speed .ic{ font-size:13pt; line-height:1; }
   #toolSelect .seg-speed input[type="number"]{ width:58px !important; padding:2px 0 2px 3px !important; font-size:13pt !important; height:28px; box-sizing:border-box; }
   #toolSelect .seg-speed input[type="number"]::-webkit-inner-spin-button{ opacity:1; height:24px; cursor:pointer; }
@@ -3232,7 +3231,8 @@ function loadSettings(){
     document.getElementById('voiceSpeedVal').textContent = voiceSpeed.toFixed(2) + 'x';
   }
   if(s.musicSpeed !== undefined){
-    musicSpeed = Number(s.musicSpeed);
+    musicSpeed = 1; // 배경음악 속도칸 없앰 — 항상 1.0
+    s.musicSpeed = 1; musicSpeed = Number(s.musicSpeed);
     document.getElementById('musicSpeedSlider').value = musicSpeed;
     document.getElementById('musicSpeedVal').textContent = musicSpeed.toFixed(2) + 'x';
   }
