@@ -4526,6 +4526,13 @@ function mixTotalDuration(){
       e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){} if(!e.repeat) doStamp();
     };
     document.addEventListener('keydown', onSpace, true);
+    const onAlt = e => {
+      if(curTab !== 'sync' || e.key !== 'Alt') return;
+      e.preventDefault(); e.stopPropagation(); if(!e.repeat) syUndo();
+    };
+    const onAltUp = e => { if(curTab === 'sync' && e.key === 'Alt'){ e.preventDefault(); e.stopPropagation(); } };
+    document.addEventListener('keydown', onAlt, true);
+    document.addEventListener('keyup', onAltUp, true);
     // ---- 기능 줄 (시간 바·재생·속도) ----
     const sk = back.querySelector('[data-sk]'), ct = back.querySelector('[data-ct]'), dt = back.querySelector('[data-dt]');
     let dragging = false;
@@ -4549,7 +4556,7 @@ function mixTotalDuration(){
       back.querySelector('[data-rp]').addEventListener('click', () => adj(0.01));
     }
     const timer = setInterval(() => { barUpd(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
-    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
