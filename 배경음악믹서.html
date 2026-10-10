@@ -4588,7 +4588,7 @@ function mixTotalDuration(){
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
-      '<div class="lyr-btns"><button type="button" data-imgadd title="동영상·이미지 추가">🖼 <span class="lg">동·이미지 </span>추가</button><button type="button" data-imgdel>이미지 삭제</button><button type="button" data-del>🗑 글 지우기</button><button type="button" data-vexp title="선택한 소리(음성/배경음악/통합)로 16:9 영상 파일 만들기">🎬 영상</button><button type="button" data-bsave title="이 곡의 가사·시간·사진·동영상을 파일로 저장">💾 백업</button><button type="button" data-ball title="모든 곡을 한 파일로 저장">📦 전체</button><button type="button" data-bload title="저장해 둔 .bgmx 파일 불러오기">📂 불러오기</button><input type="file" accept="image/*,video/*" multiple data-imgf style="display:none"><input type="file" accept=".bgmx" data-bf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
+      '<div class="lyr-btns"><button type="button" data-imgadd title="동영상·이미지 추가">🖼 <span class="lg">동·이미지 </span>추가</button><button type="button" data-imgdel>이미지 삭제</button><button type="button" data-del>🗑 글 지우기</button><button type="button" data-vexp title="선택한 소리(음성/배경음악/통합)로 16:9 영상 파일 만들기">🎬 영상</button><button type="button" data-bsave title="이 곡의 가사·시간·사진·동영상을 파일로 저장">💾 백업</button><button type="button" data-ball title="모든 곡을 한 파일로 저장">📦 전체</button><button type="button" data-bload title="저장해 둔 .bgmx 파일 불러오기">📂 불러오기</button><input type="file" accept="image/*,video/*" multiple data-imgf style="display:none"><input type="file" accept=".bgmx,image/*,video/*,.mp4" multiple data-bf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
     document.body.appendChild(back);
     // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
     const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
@@ -5052,7 +5052,11 @@ function mixTotalDuration(){
     const bf = back.querySelector('[data-bf]');
     back.querySelector('[data-bload]').addEventListener('click', () => bf.click());
     bf.addEventListener('change', async () => {
-      const f = bf.files && bf.files[0]; bf.value = ''; if(!f) return;
+      const all = Array.from(bf.files || []); bf.value = ''; if(!all.length) return;
+      const media = all.filter(x => /^(image|video)\//.test(x.type) || /\.(mp4|mov|m4v|webm|mkv|jpe?g|png|gif|webp|bmp)$/i.test(x.name));
+      const f = all.find(x => /\.bgmx$/i.test(x.name));
+      if(media.length && !f){ putImages(media.map(x => (x.type ? x : new File([x], x.name, { type: /\.(mp4|m4v)$/i.test(x.name) ? 'video/mp4' : (/\.mov$/i.test(x.name) ? 'video/quicktime' : (/\.webm$/i.test(x.name) ? 'video/webm' : 'image/jpeg')) })))); return; }
+      if(!f){ alert('불러올 수 있는 파일이 아닙니다. (.bgmx 백업 파일, 사진, 동영상 mp4)'); return; }
       try{
         busyMsg('불러오는 중…'); const songs = await readBgmx(f); busyMsg('');
         if(!songs.length){ alert('들어 있는 곡이 없습니다.'); return; }
