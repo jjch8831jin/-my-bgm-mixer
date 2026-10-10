@@ -4397,7 +4397,12 @@ function mixTotalDuration(){
     { kind:'music', span:document.getElementById('allMusicTitle'), box:document.querySelector('#allMusicTitle').parentElement }
   ];
   slots.forEach(o => { o.text = null; o.w = -1; o.lyric = false; });
-  slots.filter(o => o.kind === 'music').forEach(o => { o.box.style.cursor = 'pointer'; o.box.addEventListener('click', openLyr); });
+  slots.filter(o => o.kind === 'music').forEach(o => {
+    // 통합 탭은 🎵 아이콘·여백을 포함한 음악 칸 전체를 눌러도 열리게
+    const hit = (o.box.closest && o.box.closest('.all-titles .half')) || o.box;
+    hit.style.cursor = 'pointer';
+    hit.addEventListener('click', openLyr);
+  });
   function fit(o){
     const w = o.box.clientWidth;
     if(!w){ o.w = -1; return; }
