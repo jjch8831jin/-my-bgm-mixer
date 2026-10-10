@@ -295,7 +295,7 @@
   .lyr-box .lyr-tabs button{ background:transparent; border-color:#455c70; color:#c9d6e2; padding:4px 14px; }
   .lyr-box .lyr-tabs button.on{ background:#455c70; border-color:#6f8aa0; color:#ffb347; }
   .lyr-view{ position:relative; flex:1; min-height:0; overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
-  .lyr-ln{ padding:8px 16px; border-radius:10px; color:#f4f8fc; line-height:1.5; text-align:center; }
+  .lyr-ln{ padding:8px 44px 8px 16px; border-radius:10px; color:#f4f8fc; line-height:1.5; text-align:center; }
   .lyr-sp{ flex:none; }
   .lyr-view{ text-align:center; }
   .lyr-ln.on{ background:#2b4a3a; color:#7dffa8; font-weight:700; }
@@ -308,7 +308,10 @@
   .sy-row.now .tx2{ color:#7dffa8; font-weight:700; }
   .sy-bar{ display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap; }
   .sy-bar .tm2{ color:#fff; font-size:14pt; min-width:8em; }
-  .lyr-box button.stamp{ flex:1; min-width:200px; font-size:18pt; font-weight:700; background:#ffb347; color:#1c1917; border-color:#ffb347; padding:16px 10px; border-radius:14px; }
+  .lyr-box .sy-one button{ height:44px; padding:0 16px; display:flex; align-items:center; justify-content:center; white-space:nowrap; }
+  .lyr-box .sy-one button.stamp{ flex:1; min-width:0; font-size:14pt; font-weight:700; background:#ffb347; color:#1c1917; border-color:#ffb347; }
+  .lyr-box .sy-one button.ok{ padding:0 22px; }
+  @media (max-width:600px){ .lyr-box .sy-one .lg{ display:none; } .lyr-box .sy-one{ gap:8px; } .lyr-box .sy-one button{ padding:0 10px; } .lyr-box .sy-one button.ok{ padding:0 14px; } }
   .lyr-box button.stamp:disabled{ opacity:.4; }
   .lyr-empty{ color:#c9d6e2; font-size:12pt; padding:14px; }
   .lyr-btns{ display:flex; gap:10px; margin-top:14px; }
@@ -4415,7 +4418,7 @@ function mixTotalDuration(){
       '<span class="fs" data-fs title="글자 크기"><button type="button" data-fm>−</button><b data-fv title="숫자를 눌러 직접 입력"></b><button type="button" data-fp>+</button></span>' +
       '<button type="button" class="rb" data-x title="닫기">✕</button></div>' +
       '<div data-pane="view"><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar"><button type="button" class="stamp" data-stamp>▶ 이 줄 시작! (스페이스)</button></div><div class="sy-bar"><button type="button" data-undo>↶ 한 줄 되돌리기</button><span style="flex:1"></span><button type="button" class="ok" data-fin>끝내기</button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>끝내기</button></div></div>' +
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-btns"><button type="button" data-del>🗑 지우기</button><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
