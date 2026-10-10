@@ -293,9 +293,9 @@
   .lyr-box button.rb{ width:44px; height:44px; padding:0; border-radius:50%; background:#fff; border:1px solid #a8a29e; font-size:14pt; display:flex; align-items:center; justify-content:center; }
   .lyr-box .lyr-bar .bg button:nth-child(1){ background:#047857; border-color:#047857; color:#fff; } .lyr-box .lyr-bar .bg button.playing{ background:#c2410c; border-color:#c2410c; color:#fff; } .lyr-box .lyr-bar .bg button:nth-child(2){ background:#b91c1c; border-color:#b91c1c; color:#fff; }
   .lyr-box button.rb:active{ transform:scale(.88); background:#f3ecd6; }
-  .lyr-bar .rate{ display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #f59e0b; border-radius:12px; padding:3px 6px; }
-  .lyr-bar .rate b{ min-width:4.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; }
-  .lyr-box .lyr-bar .rate button{ width:32px; height:32px; padding:0; border-radius:8px; background:#f59e0b; border-color:#f59e0b; color:#000; font-weight:800; }
+  .lyr-bar .rate{ display:flex; align-items:center; gap:3px; background:#fff; border:1px solid #f59e0b; border-radius:6px; padding:2px 3px; }
+  .lyr-bar .rate b{ min-width:4.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:7pt; }
+  .lyr-box .lyr-bar .rate button{ width:16px; height:16px; padding:0; border-radius:4px; font-size:7pt; line-height:1; background:#f59e0b; border-color:#f59e0b; color:#000; font-weight:800; }
   .lyr-bar .fs{ display:flex; align-items:center; gap:6px; background:none; border:0; }
   .lyr-box .lyr-bar .bg button[data-nx]{ background:#1e3a8a; border-color:#1e3a8a; color:#fff; } .lyr-box .lyr-bar .bg button[data-nx]:disabled{ opacity:.35; }
   .lyr-bar .fs b{ min-width:3.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; cursor:pointer; }
@@ -391,6 +391,8 @@
   .lyr-thumbs .th img{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
   .lyr-box .lyr-thumbs .th button{ position:absolute; top:2px; right:2px; width:22px; height:22px; padding:0; border-radius:50%; font-size:10pt; line-height:1; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-weight:800; }
   .lyr-box.haspic.ended .lyr-view{ visibility:hidden; }
+  .lyr-box.onlypic .lyr-view, .lyr-box.onlypic .lyr-hl{ visibility:hidden; }
+  .lyr-box.onlypic:not(.ui-show) .lyr-head, .lyr-box.onlypic:not(.ui-show) .lyr-bar{ opacity:0; pointer-events:none; }
   .lyr-head, .lyr-bar{ transition:opacity .25s ease; }
   .lyr-box.autohide:not(.ui-show) .lyr-head, .lyr-box.autohide:not(.ui-show) .lyr-bar{ opacity:0; pointer-events:none; }
   .lyr-box .lyr-btns button[data-imgadd]{ background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
@@ -4737,11 +4739,13 @@ function mixTotalDuration(){
       const cur = curInfo(kind); if(!cur) return;
       let pl = false, el = 0, dur = 0; try{ pl = ctl.isPlaying(); el = ctl.getElapsed() || 0; dur = ctl.getDuration() || 0; }catch(e){}
       // 통합: 음성·음악 중 하나라도 재생 중이면 계속, 더 긴 쪽이 끝날 때까지 사진·동영상 진행
+      const ownPl = pl;
       if(activeTrack === 'all'){ try{ const g = window.__tg.time(); pl = g.run; el = g.t; dur = g.D; }catch(e){} }
       if(pl){ if(ended){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; applyAuto(); } }
       else if(wasPl && dur > 0 && lastEl >= dur - 1.0 && el < 0.3){ ended = true; imgBx.classList.add('ended'); applyAuto(); }
       if(!pl && ended && el > 0.5){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; applyAuto(); }
       wasPl = pl; lastEl = el;
+      imgBx.classList.toggle('onlypic', hasPic && !ended && activeTrack === 'all' && pl && !ownPl);
       const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, activeTrack === 'all' ? el : cur.t) / 10) % pics.length;
       if(want !== picIdx){ picIdx = want; showBg(want); }
       syncVideo((activeTrack === 'all' ? (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying()) : pl) && !ended);
