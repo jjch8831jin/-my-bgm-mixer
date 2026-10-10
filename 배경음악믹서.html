@@ -4628,7 +4628,7 @@ function mixTotalDuration(){
     swBtn.disabled = !curInfo(other);
     swBtn.addEventListener('click', () => { if(!curInfo(other)) return; close(); openLyr(other); });
     back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
-    back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); close(); tick(); });
+    back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
       const a = loadLyr(), txt = ta.value.trim(), k = keyOf(kind, name);
       if(txt) a[k] = { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) }; else delete a[k];
