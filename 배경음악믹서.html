@@ -310,6 +310,7 @@
   .lyr-ln > span{ display:inline-block; transform-origin:center; transition:transform .3s ease, text-shadow .3s ease; }
   .lyr-sp{ flex:none; }
   .lyr-view{ text-align:center; }
+  .lyr-picbox + .lyr-view{ min-height:calc(4.5em + 64px); }
   .lyr-ln{ position:relative; z-index:1; }
   .lyr-ln.on{ color:#9a3412; font-weight:700; }
   .lyr-hl{ position:absolute; left:8px; right:8px; top:0; height:0; background:#ffe9c7; border-radius:10px; opacity:0; z-index:0; pointer-events:none; }
@@ -339,8 +340,8 @@
   .lyr-empty{ color:#44403c; font-size:12pt; padding:14px; }
   .lyr-voice, .lyr-voice .lyr-box{ background:#e3f0fa; }
   .lyr-voice .lyr-view, .lyr-voice .sy-list, .lyr-voice .lyr-box textarea{ background:#f6fbff; border-color:#b6d0e4; }
-  .lyr-picbox{ flex:none; display:none; justify-content:center; margin-bottom:8px; }
-  .lyr-picbox img{ max-width:100%; max-height:34vh; object-fit:contain; border-radius:8px; border:1px solid #d6d3c4; background:#fff; }
+  .lyr-picbox{ flex:0 1 58%; min-height:0; display:none; justify-content:center; align-items:center; margin-bottom:8px; }
+  .lyr-picbox img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; border:1px solid #d6d3c4; }
   .lyr-btns img[data-thumb]{ height:56px; max-width:120px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:none; }
   .lyr-box .lyr-btns button[data-imgadd]{ background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
   .lyr-box .lyr-btns button[data-imgdel]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
@@ -4486,11 +4487,12 @@ function mixTotalDuration(){
     const ta = back.querySelector('textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
     const picBox = back.querySelector('.lyr-picbox'), picImg = picBox.querySelector('img'), thumb = back.querySelector('[data-thumb]');
+    let hasPic = false;
     function setPic(){
       const u = loadImgs()[keyOf(kind, name)];
-      const veil = kind === 'voice' ? 'rgba(246,251,255,.42)' : 'rgba(255,253,245,.42)';
-      if(u){ thumb.src = u; thumb.style.display = 'block'; view.style.backgroundImage = 'linear-gradient(' + veil + ',' + veil + '), url("' + u + '")'; view.style.backgroundSize = 'cover'; view.style.backgroundPosition = 'center'; view.style.backgroundRepeat = 'no-repeat'; }
-      else { thumb.removeAttribute('src'); thumb.style.display = 'none'; view.style.backgroundImage = ''; }
+      if(u){ picImg.src = u; thumb.src = u; picBox.style.display = 'flex'; thumb.style.display = 'block'; }
+      else { picImg.removeAttribute('src'); thumb.removeAttribute('src'); picBox.style.display = 'none'; thumb.style.display = 'none'; }
+      hasPic = !!u; try{ lastIdx = -2; upd(); }catch(e){}
       back.querySelector('[data-imgdel]').disabled = !u;
     }
     setPic();
@@ -4539,7 +4541,7 @@ function mixTotalDuration(){
             if(first){ void hl.offsetWidth; requestAnimationFrame(() => hl && hl.classList.add('mv')); }
           } else hl.style.opacity = '0';
         }
-        if(el && c.has) view.scrollTo({ top: el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4, behavior:'smooth' });
+        if(el && c.has) view.scrollTo({ top: hasPic ? el.offsetTop - (view.clientHeight - el.offsetHeight) / 2 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4, behavior:'smooth' });
       }
     }
     // ---- 시간 맞추기 ----
