@@ -295,10 +295,12 @@
   .lyr-box .lyr-tabs button{ background:transparent; border-color:#455c70; color:#c9d6e2; padding:4px 14px; }
   .lyr-box .lyr-tabs button.on{ background:#455c70; border-color:#6f8aa0; color:#ffb347; }
   .lyr-view{ position:relative; flex:1; min-height:0; overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
-  .lyr-ln{ padding:8px 44px 8px 16px; border-radius:10px; color:#f4f8fc; line-height:1.5; text-align:center; }
+  .lyr-ln{ padding:8px calc(8% + 28px) 8px 8%; margin:2px 0; border-radius:10px; color:#b8c6d3; line-height:1.5; text-align:center; transition:color .3s ease, background-color .3s ease; }
+  .lyr-ln > span{ display:inline-block; transform-origin:center; transition:transform .3s ease, text-shadow .3s ease; }
   .lyr-sp{ flex:none; }
   .lyr-view{ text-align:center; }
   .lyr-ln.on{ background:#2b4a3a; color:#7dffa8; font-weight:700; }
+  .lyr-ln.on > span{ transform:scale(1.18); text-shadow:0 0 12px rgba(125,255,168,.8), 0 0 26px rgba(125,255,168,.45); }
   .sy-list{ position:relative; flex:1; min-height:0; overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
   .sy-row{ display:flex; gap:14px; align-items:baseline; padding:6px 14px; border-radius:10px; color:#f4f8fc; line-height:1.5; }
   .sy-row .tm{ min-width:5.2em; color:#7dffa8; font-size:14pt; }
@@ -4455,13 +4457,9 @@ function mixTotalDuration(){
       const c = lyrCalc(kind, cur), key = name + '|' + c.items.join('\n');
       if(key !== shownKey){
         shownKey = key; lastIdx = -2; view.textContent = ''; lns = [];
-        const sp1 = document.createElement('div'); sp1.className = 'lyr-sp'; view.appendChild(sp1);
         if(!c.has){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '저장된 가사가 없습니다. "입력"에서 붙여넣어 주세요.'; view.appendChild(e); }
-        else c.items.forEach(t => { const d = document.createElement('div'); d.className = 'lyr-ln'; d.textContent = t; view.appendChild(d); lns.push(d); });
-        const sp2 = document.createElement('div'); sp2.className = 'lyr-sp'; view.appendChild(sp2);
+        else c.items.forEach(t => { const d = document.createElement('div'); d.className = 'lyr-ln'; const sp = document.createElement('span'); sp.textContent = t; d.appendChild(sp); view.appendChild(d); lns.push(d); });
       }
-      const spH = Math.max(0, view.clientHeight / 2 - 28) + 'px';
-      view.querySelectorAll('.lyr-sp').forEach(e => { if(e.style.height !== spH) e.style.height = spH; });
       if(c.idx !== lastIdx){
         lastIdx = c.idx;
         const ls = lns;
