@@ -144,7 +144,8 @@
     background: var(--panel-2); border-radius: 6px; margin-bottom: 4px; font-size: 14pt;
   }
   .file-item.pl{ cursor:pointer; }
-  .file-item.pl.cur{ background:#dbeafe; border-radius:6px; }
+  .file-item.pl.cur{ background:#1e3a8a; color:#fff; border-radius:6px; box-shadow:inset 3px 0 0 #60a5fa; }
+  .file-item.pl.cur .file-item-dur{ color:#bfdbfe; }
   .file-item-name{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file-item-dur{ color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .file-item button{
@@ -295,9 +296,10 @@
   .lyr-bar .rate{ display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #f59e0b; border-radius:12px; padding:3px 6px; }
   .lyr-bar .rate b{ min-width:4.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; }
   .lyr-box .lyr-bar .rate button{ width:32px; height:32px; padding:0; border-radius:8px; background:#f59e0b; border-color:#f59e0b; color:#000; font-weight:800; }
-  .lyr-bar .fs{ display:flex; align-items:center; background:#dbeafe; border:1px solid #1d4ed8; border-radius:999px; overflow:hidden; }
+  .lyr-bar .fs{ display:flex; align-items:center; gap:6px; background:none; border:0; }
+  .lyr-box .lyr-bar .bg button[data-nx]{ background:#1e3a8a; border-color:#1e3a8a; color:#fff; } .lyr-box .lyr-bar .bg button[data-nx]:disabled{ opacity:.35; }
   .lyr-bar .fs b{ min-width:3.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; cursor:pointer; }
-  .lyr-box .lyr-bar .fs button{ width:44px; height:44px; padding:0; border:0; border-radius:0; background:transparent; color:#1e3a8a; font-weight:800; }
+  .lyr-box .lyr-bar .fs button{ width:44px; height:44px; padding:0; border:1px solid #1e3a8a; border-radius:50%; background:#fff; color:#1e3a8a; font-weight:800; font-size:14pt; display:flex; align-items:center; justify-content:center; }
   .lyr-box .lyr-tabs button{ background:#fff; border-color:#a8a29e; color:#44403c; padding:4px 14px; font-weight:700; }
   .lyr-box .trk{ display:inline-flex; gap:8px; align-items:center; }
   .lyr-box .trk button{ padding:4px 14px; font-weight:700; border-radius:8px; background:#fff; border:1px solid #1e3a8a; color:#1e3a8a; }
@@ -4641,7 +4643,7 @@ function mixTotalDuration(){
     back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
       '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="trk trkH" data-trkbox title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span><button type="button" data-sw></button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
       '<div class="lyr-bar"><span class="bt" data-ct>00:00</span><input type="range" class="sk" data-sk min="0" max="1000" value="0" step="1"><span class="bt" data-dt>00:00</span>' +
-      '<span class="bg"><button type="button" class="rb" data-pl title="재생">▶</button><button type="button" class="rb" data-st2 title="정지(처음으로)">■</button></span>' +
+      '<span class="bg"><button type="button" class="rb" data-pl title="재생">▶</button><button type="button" class="rb" data-st2 title="정지(처음으로)">■</button><button type="button" class="rb" data-nx title="다음곡">⏭</button></span>' +
       (kind === 'voice' ? '<span class="rate" title="속도 조절"><button type="button" data-rm>−</button><b data-rv>1.00x</b><button type="button" data-rp>+</button></span>' : '') +
       '<span class="fs" data-fs title="글자 크기"><button type="button" data-fm>−</button><b data-fv title="숫자를 눌러 직접 입력"></b><button type="button" data-fp>+</button></span>' +
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span>' +
@@ -4726,7 +4728,12 @@ function mixTotalDuration(){
     back.addEventListener('touchstart', () => { lastTouch = Date.now(); if(imgBx.classList.contains('autohide')) showUi(3500); }, { passive:true });
     async function refreshPics(){ await migrateImgs(); const k = keyOf(kind, name); lastNameKey = k; const a = await getImgs(k); if(k === lastNameKey){ pics = a; ended = false; imgBx.classList.remove('ended'); renderPics(); } }
     let lastEl = 0, wasPl = false;
+    function nxState(){
+      const last = (c, items) => { let i = -1; try{ i = c.getCurIdx(); }catch(e){} return Math.max(i, 0) >= items.length - 1; };
+      nxBtn.disabled = activeTrack === 'all' ? (last(voicePlayerCtl, voiceItems) && last(musicPlayerCtl, musicItems)) : last(ctl, kind === 'voice' ? voiceItems : musicItems);
+    }
     function picTick(){
+      try{ nxState(); }catch(e){}
       const cur = curInfo(kind); if(!cur) return;
       let pl = false, el = 0, dur = 0; try{ pl = ctl.isPlaying(); el = ctl.getElapsed() || 0; dur = ctl.getDuration() || 0; }catch(e){}
       // 통합: 음성·음악 중 하나라도 재생 중이면 계속, 더 긴 쪽이 끝날 때까지 사진·동영상 진행
@@ -4879,6 +4886,8 @@ function mixTotalDuration(){
     const plBtn = back.querySelector('[data-pl]');
     function plShow(on){ plBtn.textContent = on ? '⏸' : '▶'; plBtn.title = on ? '일시정지' : '재생'; plBtn.classList.toggle('playing', on); }
     plBtn.addEventListener('click', () => { if(activeTrack === 'all'){ document.getElementById('togetherBtn').click(); return; } if(ctl.isPlaying()){ ctl.pause(); plShow(false); } else { ctl.play(); plShow(true); } });
+    const nxBtn = back.querySelector('[data-nx]');
+    nxBtn.addEventListener('click', () => { if(activeTrack === 'all') document.getElementById('togetherNextBtn').click(); else ctl.next(); setTimeout(() => { try{ upd(); }catch(e){} }, 150); });
     back.querySelector('[data-st2]').addEventListener('click', () => { if(activeTrack === 'all') document.getElementById('togetherStopBtn').click(); else ctl.stop(); });
     if(kind === 'voice'){
       const adj = d => { const sl = document.getElementById('voiceSpeedSlider'); sl.value = (Math.max(0.5, Math.min(2.5, Math.round(((Number(sl.value) || 1) + d) * 100) / 100))).toFixed(2); sl.dispatchEvent(new Event('input', { bubbles:true })); barUpd(); };
