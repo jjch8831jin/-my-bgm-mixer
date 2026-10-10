@@ -317,7 +317,9 @@
   .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(3em + 58px); background:transparent; border-color:transparent; }
   .lyr-box.haspic .lyr-ln{ color:#fff; text-shadow:-2px -2px 0 #1c1917, 2px -2px 0 #1c1917, -2px 2px 0 #1c1917, 2px 2px 0 #1c1917, 0 -2px 0 #1c1917, 0 2px 0 #1c1917, -2px 0 0 #1c1917, 2px 0 0 #1c1917; font-weight:700; }
   .lyr-box.haspic .lyr-ln.on, .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#fff; }
-  .lyr-box.haspic .lyr-hl{ display:none; }
+  .lyr-box.haspic .lyr-hl{ background:rgba(255,160,40,.50); }
+  .lyr-voice .lyr-box.haspic .lyr-hl{ background:rgba(70,140,255,.50); }
+  .lyr-box.haspic.ended .lyr-hl{ visibility:hidden; }
   .lyr-ln{ position:relative; z-index:1; }
   .lyr-ln.on{ color:#9a3412; font-weight:700; }
   .lyr-hl{ position:absolute; left:8px; right:8px; top:0; height:0; background:#ffe9c7; border-radius:10px; opacity:0; z-index:0; pointer-events:none; }
@@ -355,6 +357,8 @@
   .lyr-thumbs .th img{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
   .lyr-box .lyr-thumbs .th button{ position:absolute; top:2px; right:2px; width:22px; height:22px; padding:0; border-radius:50%; font-size:10pt; line-height:1; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-weight:800; }
   .lyr-box.haspic.ended .lyr-view{ visibility:hidden; }
+  .lyr-head, .lyr-bar{ transition:opacity .25s ease; }
+  .lyr-box.autohide:not(.ui-show) .lyr-head, .lyr-box.autohide:not(.ui-show) .lyr-bar{ opacity:0; pointer-events:none; }
   .lyr-box .lyr-btns button[data-imgadd]{ background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
   .lyr-box .lyr-btns button[data-imgdel]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
   @media (max-width:600px){ .lyr-btns{ gap:5px !important; } .lyr-box .lyr-btns button{ font-size:10.5pt; padding:6px 7px; white-space:nowrap; } .lyr-box .lyr-btns button.ok{ padding:6px 12px; } .lyr-btns img[data-thumb]{ display:none !important; } }
@@ -4521,7 +4525,7 @@ function mixTotalDuration(){
       if(bgFront) bgFront.style.opacity = '0'; bgFront = nxt;
     }
     function renderPics(){
-      hasPic = pics.length > 0; imgBx.classList.toggle('haspic', hasPic); picIdx = -2;
+      hasPic = pics.length > 0; imgBx.classList.toggle('haspic', hasPic); picIdx = -2; try{ applyAuto(); }catch(e){}
       thumbsEl.textContent = '';
       pics.forEach((u, x) => {
         const w = document.createElement('div'); w.className = 'th'; const im = document.createElement('img'); im.src = u; im.alt = '';
@@ -4534,14 +4538,25 @@ function mixTotalDuration(){
       if(!hasPic) showBg(-1);
       try{ lastIdx = -2; upd(); picTick(); }catch(e){}
     }
+    let uiTimer = null;
+    function applyAuto(){ const on = hasPic && curTab === 'view' && !ended; imgBx.classList.toggle('autohide', on); if(!on) imgBx.classList.remove('ui-show'); }
+    function showUi(ms){ imgBx.classList.add('ui-show'); clearTimeout(uiTimer); if(ms) uiTimer = setTimeout(() => imgBx.classList.remove('ui-show'), ms); }
+    let lastTouch = 0;
+    back.addEventListener('mousemove', e => {
+      if(!imgBx.classList.contains('autohide') || Date.now() - lastTouch < 1500) return;
+      const bar = back.querySelector('.lyr-bar'), r = bar.getBoundingClientRect();
+      if(e.clientY <= r.bottom + 12){ showUi(0); } else { clearTimeout(uiTimer); uiTimer = setTimeout(() => imgBx.classList.remove('ui-show'), 250); }
+    });
+    back.addEventListener('mouseleave', () => { if(Date.now() - lastTouch < 1500) return; clearTimeout(uiTimer); uiTimer = setTimeout(() => imgBx.classList.remove('ui-show'), 250); });
+    back.addEventListener('touchstart', () => { lastTouch = Date.now(); if(imgBx.classList.contains('autohide')) showUi(3500); }, { passive:true });
     async function refreshPics(){ await migrateImgs(); const k = keyOf(kind, name); lastNameKey = k; const a = await getImgs(k); if(k === lastNameKey){ pics = a; ended = false; imgBx.classList.remove('ended'); renderPics(); } }
     let lastEl = 0, wasPl = false;
     function picTick(){
       const cur = curInfo(kind); if(!cur) return;
       let pl = false, el = 0, dur = 0; try{ pl = ctl.isPlaying(); el = ctl.getElapsed() || 0; dur = ctl.getDuration() || 0; }catch(e){}
-      if(pl){ if(ended){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; } }
-      else if(wasPl && dur > 0 && lastEl >= dur - 1.0 && el < 0.3){ ended = true; imgBx.classList.add('ended'); }
-      if(!pl && ended && el > 0.5){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; }
+      if(pl){ if(ended){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; applyAuto(); } }
+      else if(wasPl && dur > 0 && lastEl >= dur - 1.0 && el < 0.3){ ended = true; imgBx.classList.add('ended'); applyAuto(); }
+      if(!pl && ended && el > 0.5){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; applyAuto(); }
       wasPl = pl; lastEl = el;
       const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, cur.t) / 10) % pics.length;
       if(want !== picIdx){ picIdx = want; showBg(want); }
@@ -4551,7 +4566,7 @@ function mixTotalDuration(){
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
-      curTab = k;
+      curTab = k; try{ applyAuto(); }catch(e){}
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
     let shownKey = null, lastIdx = -2, curTab = 'view', hl = null;
