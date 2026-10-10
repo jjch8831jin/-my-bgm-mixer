@@ -4177,7 +4177,7 @@ function setActiveTrack(k){
 // 음성/배경음악/통합을 누르면 그 소리만 바로 재생 (통합 = 믹싱 설정대로)
 function autoPlayFor(k){
   try{
-    if(window.__tg) window.__tg.pause();
+    if(window.__tg) window.__tg.reset();
     if(k === 'voice'){ if(voiceBuffer) voicePlayerCtl.play(); }
     else if(k === 'music'){ if(musicBuffer) musicPlayerCtl.play(); }
     else if(window.__tg) window.__tg.start();
@@ -4332,7 +4332,7 @@ function mixTotalDuration(){
     voicePlayerCtl.pause(); musicPlayerCtl.pause(); musicPlayerCtl.applyVolume();
     setTimeout(refresh, 50);
   }
-  window.__tg = { pause: pauseAll, start: start };
+  window.__tg = { pause: pauseAll, start: start, reset: () => { running = false; setManaged(false); voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume(); resetFlags(); setTimeout(refresh, 50); } };
   btn.addEventListener('click', () => {
     if(running || anyPlaying()) pauseAll(); else start();
     setTimeout(refresh, 50);
