@@ -355,7 +355,10 @@
   .lyr-voice .lyr-view, .lyr-voice .sy-list, .lyr-voice .lyr-box textarea{ background:#f6fbff; border-color:#b6d0e4; }
   .lyr-picbox{ display:none !important; }
   .lyr-box{ position:relative; z-index:1; }
-  .lyr-bg{ position:absolute; top:0; left:0; right:0; bottom:0; background-size:contain; background-position:center; background-repeat:no-repeat; opacity:0; transition:opacity 1s ease; z-index:0; pointer-events:none; }
+  .lyr-bg > i{ position:absolute; top:0; left:0; right:0; bottom:0; background-position:center; background-repeat:no-repeat; }
+  .lyr-bg > i.bb{ background-size:cover; filter:blur(24px) brightness(.75); transform:scale(1.3); }
+  .lyr-bg > i.ff{ background-size:contain; }
+  .lyr-bg{ position:absolute; top:0; left:0; right:0; bottom:0; overflow:hidden; opacity:0; transition:opacity 1s ease; z-index:0; pointer-events:none; }
   .lyr-thumbs{ display:none; gap:8px; overflow-x:auto; flex:none; margin-top:10px; padding-bottom:2px; }
   .lyr-thumbs .th{ position:relative; flex:none; }
   .lyr-thumbs .th img{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
@@ -4519,13 +4522,13 @@ function mixTotalDuration(){
     const nm = back.querySelector('.nm'), view = back.querySelector('.lyr-view');
     const ta = back.querySelector('textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
-    const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg';
+    const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg'; [bgA, bgB].forEach(o => { o.innerHTML = '<i class="bb"></i><i class="ff"></i>'; });
     back.insertBefore(bgB, back.firstChild); back.insertBefore(bgA, back.firstChild);
     let pics = [], picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
     const thumbsEl = back.querySelector('[data-thumbs]'), imgBx = back.querySelector('.lyr-box');
     function showBg(i){
       if(i < 0){ bgA.style.opacity = '0'; bgB.style.opacity = '0'; bgFront = null; return; }
-      const nxt = bgFront === bgA ? bgB : bgA; nxt.style.backgroundImage = 'url("' + pics[i] + '")'; nxt.style.opacity = '1';
+      const nxt = bgFront === bgA ? bgB : bgA; nxt.querySelectorAll('i').forEach(q => { q.style.backgroundImage = 'url("' + pics[i] + '")'; }); nxt.style.opacity = '1';
       if(bgFront) bgFront.style.opacity = '0'; bgFront = nxt;
     }
     function renderPics(){
