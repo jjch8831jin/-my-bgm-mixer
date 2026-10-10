@@ -4872,7 +4872,7 @@ function mixTotalDuration(){
       if(vexpBusy) return;
       if(!voiceBuffer || !musicBuffer){ alert('영상을 만들려면 음성과 배경음악을 둘 다 불러와야 합니다.'); return; }
       if(!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream){ alert('이 브라우저는 영상 저장을 지원하지 않습니다. 크롬을 사용해 주세요.'); return; }
-      const cands0 = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+      const cands0 = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
       const mime0 = cands0.find(m => { try{ return MediaRecorder.isTypeSupported(m); }catch(e){ return false; } }) || 'video/webm';
       const ext0 = /mp4/.test(mime0) ? 'mp4' : 'webm', base0 = (dispName(kind, name).replace(/[\\/:*?"<>|]+/g, '_') || '영상');
       let hnd0 = null; try{ hnd0 = await pickSaveHandle(base0 + '.' + ext0, ext0, ext0 === 'mp4' ? 'video/mp4' : 'video/webm'); }catch(e){ return; }
@@ -5000,7 +5000,7 @@ function mixTotalDuration(){
         const wasStopped = stopFlag; cleanup();
         if(wasStopped){ return; }
         const sv = await saveOut(hnd0, new Blob(chunks, { type: rec.mimeType || mime || 'video/webm' }), base0 + '.' + ext0);
-        alert('영상을 저장했습니다. (' + sv + ')');
+        alert('영상을 저장했습니다. (' + sv + ')' + (ext0 === 'webm' ? '\n\n이 브라우저는 webm 형식으로만 저장합니다. 크롬·VLC·팟플레이어에서는 재생되지만, 폰 갤러리나 일부 플레이어에서는 안 열릴 수 있습니다. mp4가 필요하면 최신 PC 크롬에서 만들어 주세요.' : ''));
       }catch(e){ try{ if(rec && rec.state !== 'inactive') rec.stop(); }catch(x){} busyMsg(''); cleanup(); alert('영상을 만들지 못했습니다: ' + (e && e.message ? e.message : e)); }
     });
     // 백업 저장 / 불러오기
