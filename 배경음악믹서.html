@@ -274,7 +274,8 @@
   .lyr-head{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
   .lyr-head .nm{ color:#047857; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .lyr-box button{ font:inherit; font-size:14pt; color:#1c1917; background:#fff; border:1px solid #a8a29e; border-radius:8px; padding:6px 16px; cursor:pointer; }
-  .lyr-box button.ok{ background:#ffb347; color:#1c1917; font-weight:700; border-color:#ffb347; padding:6px 26px; }
+  .lyr-box button.ok{ background:#047857; color:#fff; font-weight:700; border-color:#047857; padding:6px 26px; }
+  .lyr-box button[data-del]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
   .lyr-box textarea{ width:100%; box-sizing:border-box; flex:1; min-height:120px; background:#fffdf5; border:1px solid #d6d3c4; border-radius:8px; padding:10px 14px; color:#000; font:inherit; font-size:14pt; line-height:1.7; resize:vertical; }
   .lyr-opt{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:12px 0 4px; font-size:12pt; color:#44403c; }
   .lyr-opt input{ width:84px; background:#fff; border:1px solid #a8a29e; border-radius:6px; padding:2px 8px; color:#000; font-size:14pt; }
@@ -286,17 +287,24 @@
   .lyr-bar .sk{ flex:1 1 160px; min-width:120px; accent-color:#059669; height:6px; cursor:pointer; }
   .lyr-bar .bg{ display:flex; gap:8px; }
   .lyr-box button.rb{ width:44px; height:44px; padding:0; border-radius:50%; background:#fff; border:1px solid #a8a29e; font-size:14pt; display:flex; align-items:center; justify-content:center; }
-  .lyr-box .lyr-bar .bg button:nth-child(1){ color:#9a3412; } .lyr-box .lyr-bar .bg button.playing{ color:#9a3412; border-color:#c2410c; background:#ffe9c7; } .lyr-box .lyr-bar .bg button:nth-child(2){ color:#44403c; }
+  .lyr-box .lyr-bar .bg button:nth-child(1){ background:#047857; border-color:#047857; color:#fff; } .lyr-box .lyr-bar .bg button.playing{ background:#c2410c; border-color:#c2410c; color:#fff; } .lyr-box .lyr-bar .bg button:nth-child(2){ background:#b91c1c; border-color:#b91c1c; color:#fff; }
   .lyr-box button.rb:active{ transform:scale(.88); background:#f3ecd6; }
   .lyr-bar .rate{ display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #f59e0b; border-radius:12px; padding:3px 6px; }
   .lyr-bar .rate b{ min-width:4.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; }
   .lyr-box .lyr-bar .rate button{ width:32px; height:32px; padding:0; border-radius:8px; background:#f59e0b; border-color:#f59e0b; color:#000; font-weight:800; }
-  .lyr-bar .fs{ display:flex; align-items:center; background:#fff; border:1px solid #a8a29e; border-radius:999px; overflow:hidden; }
+  .lyr-bar .fs{ display:flex; align-items:center; background:#dbeafe; border:1px solid #1d4ed8; border-radius:999px; overflow:hidden; }
   .lyr-bar .fs b{ min-width:3.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; cursor:pointer; }
-  .lyr-box .lyr-bar .fs button{ width:44px; height:44px; padding:0; border:0; border-radius:0; background:transparent; color:#44403c; }
-  .lyr-box .lyr-tabs button{ background:#fff; border-color:#a8a29e; color:#44403c; padding:4px 14px; }
-  .lyr-box .lyr-tabs button.on{ background:#ffe9c7; border-color:#c2410c; color:#9a3412; }
-  .lyr-box .lyr-tabs button.rb{ width:44px; height:44px; padding:0; }
+  .lyr-box .lyr-bar .fs button{ width:44px; height:44px; padding:0; border:0; border-radius:0; background:transparent; color:#1e3a8a; font-weight:800; }
+  .lyr-box .lyr-tabs button{ background:#fff; border-color:#a8a29e; color:#44403c; padding:4px 14px; font-weight:700; }
+  .lyr-box .lyr-tabs button[data-tab=view]{ background:#d1fae5; border-color:#047857; color:#065f46; }
+  .lyr-box .lyr-tabs button[data-tab=view].on{ background:#047857; color:#fff; }
+  .lyr-box .lyr-tabs button[data-tab=edit]{ background:#dbeafe; border-color:#1d4ed8; color:#1e3a8a; }
+  .lyr-box .lyr-tabs button[data-tab=edit].on{ background:#1d4ed8; color:#fff; }
+  .lyr-box .lyr-tabs button[data-tab=sync]{ background:#ffedd5; border-color:#c2410c; color:#9a3412; }
+  .lyr-box .lyr-tabs button[data-tab=sync].on{ background:#c2410c; color:#fff; }
+  .lyr-box .lyr-tabs button[data-sw]{ background:#6d28d9; border-color:#4c1d95; color:#fff; }
+  .lyr-box .lyr-tabs button[data-sw]:disabled{ opacity:.4; cursor:default; }
+  .lyr-box .lyr-tabs button.rb{ width:44px; height:44px; padding:0; background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:800; }
   .lyr-view{ position:relative; flex:1; min-height:0; overflow:auto; background:#fffdf5; border:1px solid #d6d3c4; border-radius:8px; padding:8px; }
   .lyr-ln{ padding:8px calc(8% + 28px) 8px 8%; margin:2px 0; border-radius:10px; color:#1c1917; line-height:1.5; text-align:center; transition:color .3s ease, background-color .3s ease; }
   .lyr-ln > span{ display:inline-block; transform-origin:center; transition:transform .3s ease, text-shadow .3s ease; }
@@ -317,7 +325,8 @@
   .sy-bar .tm2{ color:#1c1917; font-size:14pt; min-width:8em; }
   .lyr-box .sy-one button{ height:44px; padding:0 16px; display:flex; align-items:center; justify-content:center; white-space:nowrap; }
   .lyr-box .sy-one button.stamp{ flex:1; min-width:0; font-size:14pt; font-weight:700; background:#ffb347; color:#1c1917; border-color:#ffb347; }
-  .lyr-box .sy-one button.ok{ padding:0 22px; }
+  .lyr-box .sy-one button.ok{ padding:0 22px; background:#047857; border-color:#047857; color:#fff; }
+  .lyr-box .sy-one button[data-undo]{ background:#e0e7ff; border-color:#4338ca; color:#312e81; font-weight:700; }
   @media (max-width:600px){ .lyr-box .sy-one .lg{ display:none; } .lyr-box .sy-one{ gap:8px; } .lyr-box .sy-one button{ padding:0 10px; } .lyr-box .sy-one button.ok{ padding:0 14px; } }
   .lyr-box button.stamp:disabled{ opacity:.4; }
   .lyr-empty{ color:#44403c; font-size:12pt; padding:14px; }
@@ -4422,7 +4431,7 @@ function mixTotalDuration(){
     const L = loadLyr()[keyOf(kind, name)] || {};
     const back = document.createElement('div'); back.className = 'lyr-back';
     back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
-      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
+      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><button type="button" data-sw></button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
       '<div class="lyr-bar"><span class="bt" data-ct>00:00</span><input type="range" class="sk" data-sk min="0" max="1000" value="0" step="1"><span class="bt" data-dt>00:00</span>' +
       '<span class="bg"><button type="button" class="rb" data-pl title="재생">▶</button><button type="button" class="rb" data-st2 title="정지(처음으로)">■</button></span>' +
       (kind === 'voice' ? '<span class="rate" title="속도 조절"><button type="button" data-rm>−</button><b data-rv>1.00x</b><button type="button" data-rp>+</button></span>' : '') +
@@ -4579,6 +4588,10 @@ function mixTotalDuration(){
     document.addEventListener('keydown', onKey, true);
     back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
     back.querySelector('[data-x]').addEventListener('click', close);
+    const swBtn = back.querySelector('[data-sw]'), other = kind === 'voice' ? 'music' : 'voice';
+    swBtn.textContent = kind === 'voice' ? '음악 가사 보기' : '음성 보기';
+    swBtn.disabled = !curInfo(other);
+    swBtn.addEventListener('click', () => { if(!curInfo(other)) return; close(); openLyr(other); });
     back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); close(); tick(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
