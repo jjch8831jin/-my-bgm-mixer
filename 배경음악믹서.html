@@ -297,13 +297,11 @@
   .lyr-bar .fs b{ min-width:3.2em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; cursor:pointer; }
   .lyr-box .lyr-bar .fs button{ width:44px; height:44px; padding:0; border:0; border-radius:0; background:transparent; color:#1e3a8a; font-weight:800; }
   .lyr-box .lyr-tabs button{ background:#fff; border-color:#a8a29e; color:#44403c; padding:4px 14px; font-weight:700; }
-  .lyr-box .trk{ display:inline-flex; gap:0; }
-  .lyr-box .trk button{ padding:4px 9px; font-size:11pt; border-radius:0; margin-left:-1px; background:#fff; border:1px solid #57534e; color:#44403c; }
-  .lyr-box .trk button:first-child{ border-radius:8px 0 0 8px; margin-left:0; }
-  .lyr-box .trk button:last-child{ border-radius:0 8px 8px 0; }
-  .lyr-box .trk button.on{ background:#1c1917; color:#fff; border-color:#1c1917; }
-  @media (max-width:600px){ .lyr-box .trk button{ padding:5px 7px; font-size:10pt; } .lyr-box .trkB{ display:none; } }
-  @media (min-width:601px){ .lyr-box .trkH{ display:none; } .lyr-box .trkB{ margin-left:6px; } }
+  .lyr-box .trk{ display:inline-flex; gap:8px; align-items:center; }
+  .lyr-box .trk button{ padding:4px 14px; font-weight:700; border-radius:8px; background:#fff; border:1px solid #1e3a8a; color:#1e3a8a; }
+  .lyr-box .trk button.on{ background:#1e3a8a; color:#fff; border-color:#1e3a8a; }
+  @media (max-width:600px){ .lyr-box .trk{ gap:5px; } .lyr-box .trk button{ padding:4px 9px; } .lyr-box .trkB{ display:none; } }
+  @media (min-width:601px){ .lyr-box .trkH{ display:none; } .lyr-box .trkB{ margin-left:10px; } }
   .lyr-box .lyr-tabs button[data-tab=view]{ background:#d1fae5; border-color:#047857; color:#065f46; }
   .lyr-box .lyr-tabs button[data-tab=view].on{ background:#047857; color:#fff; }
   .lyr-box .lyr-tabs button[data-tab=edit]{ background:#dbeafe; border-color:#1d4ed8; color:#1e3a8a; }
@@ -4605,7 +4603,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>끝내기</button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>저장</button></div></div>' +
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
