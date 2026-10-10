@@ -301,12 +301,12 @@
   .lyr-ln > span{ display:inline-block; transform-origin:center; transition:transform .3s ease, text-shadow .3s ease; }
   .lyr-sp{ flex:none; }
   .lyr-view{ text-align:center; }
-  .lyr-ln.on{ background:#2b4a3a; color:#8dffb4; font-weight:700; }
+  .lyr-ln.on{ background:#2b4a3a; color:#ffffff; font-weight:700; }
   .lyr-ln.on > span{ transform:scale(1.18); }
-  .sy-list{ position:relative; flex:1; min-height:0; overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
+  .sy-list{ font-size:18pt; position:relative; flex:1; min-height:0; overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
   .sy-row{ display:flex; gap:14px; align-items:baseline; padding:6px 14px; border-radius:10px; color:#f4f8fc; line-height:1.5; }
   .sy-row .tm{ min-width:5.2em; color:#7dffa8; font-size:14pt; }
-  .sy-row .tx2{ flex:1; font-size:18pt; }
+  .sy-row .tx2{ flex:1; font-size:1em; }
   .sy-row.done .tx2{ color:#c9d6e2; }
   .sy-row.now{ background:#2b4a3a; }
   .sy-row.now .tx2{ color:#7dffa8; font-weight:700; }
@@ -4441,7 +4441,6 @@ function mixTotalDuration(){
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
-      back.querySelector('[data-fs]').style.display = k === 'view' ? '' : 'none';
       curTab = k;
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
@@ -4451,7 +4450,7 @@ function mixTotalDuration(){
     const fv = back.querySelector('[data-fv]');
     function setFs(v){
       fsz = Math.max(12, Math.min(60, v)); fv.textContent = fsz + 'pt';
-      view.style.fontSize = fsz + 'pt'; try{ localStorage.setItem('bgmMixerLyrFs', String(fsz)); }catch(e){}
+      view.style.fontSize = fsz + 'pt'; ta.style.fontSize = fsz + 'pt'; syList.style.fontSize = fsz + 'pt'; try{ localStorage.setItem('bgmMixerLyrFs', String(fsz)); }catch(e){}
       lastIdx = -2; upd();
     }
     back.querySelector('[data-fm]').addEventListener('click', () => setFs(fsz - 1));
