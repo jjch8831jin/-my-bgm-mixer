@@ -4510,7 +4510,7 @@ function mixTotalDuration(){
     const ctl = kind === 'voice' ? voicePlayerCtl : musicPlayerCtl;
     const syList = back.querySelector('.sy-list');
     const stampBtn = back.querySelector('[data-stamp]'), undoBtn = back.querySelector('[data-undo]'), finBtn = back.querySelector('[data-fin]');
-    let syT = [], syStamp = [], syPos = 0, syRows = [];
+    let syT = [], syStamp = [], syAbs = [], syPos = 0, syRows = [];
     const mmss = x => { x = Math.max(0, x || 0); const m = Math.floor(x / 60); return m + ':' + String(Math.floor(x % 60)).padStart(2, '0'); };
     const stampStr = x => { const m = Math.floor(x / 60), r = x - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); };
     function syncInit(){
@@ -4538,9 +4538,26 @@ function mixTotalDuration(){
     function doStamp(){
       if(curTab !== 'sync' || syPos >= syT.length) return;
       const cur = curInfo(kind); if(!cur) return;
+      const its = kind === 'voice' ? voiceItems : musicItems; let acc = 0;
+      for(const it of its){ if(it === cur.item) break; acc += it.buffer.duration; }
+      syAbs[syPos] = acc + Math.max(0, cur.t);
       syStamp[syPos] = Math.max(0, cur.t); syPos++; syMark(true);
     }
-    function syUndo(){ if(syPos <= 0) return; syPos--; syStamp[syPos] = null; syMark(true); }
+    function origToFrac(tOrig){
+      const buf = kind === 'voice' ? voiceBuffer : musicBuffer; if(!buf) return 0;
+      const r = kind === 'voice' ? getVoiceTrimRange() : getMusicTrimRange();
+      const del = (r.end - r.start >= 0.02) ? (r.end - r.start) : 0;
+      let t = tOrig;
+      if(del > 0){ if(tOrig >= r.start + del) t = tOrig - del; else if(tOrig > r.start) t = r.start; }
+      return Math.max(0, Math.min(1, t / Math.max(0.001, buf.duration - del)));
+    }
+    function syUndo(){
+      if(syPos <= 0) return;
+      syPos--; const back0 = syAbs[syPos]; syStamp[syPos] = null; syMark(true);
+      try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
+      if(back0 != null){ try{ ctl.seekToFraction(origToFrac(back0)); }catch(e){} }
+      try{ plShow(false); }catch(e){}
+    }
     function syFinish(){
       const lines = syT.map((t, x) => syStamp[x] != null ? stampStr(syStamp[x]) + ' ' + t : t);
       ta.value = lines.join('\n');
