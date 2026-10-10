@@ -326,6 +326,10 @@
   .lyr-box.haspic [data-pane=view]{ justify-content:flex-end; }
   .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(3em + 58px); background:transparent; border-color:transparent; }
   .lyr-box.haspic .lyr-ln{ color:#fff; text-shadow:-2px -2px 0 #1c1917, 2px -2px 0 #1c1917, -2px 2px 0 #1c1917, 2px 2px 0 #1c1917, 0 -2px 0 #1c1917, 0 2px 0 #1c1917, -2px 0 0 #1c1917, 2px 0 0 #1c1917; font-weight:700; }
+  .lyr-box.haspic .lyr-view{ -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 14px), transparent 100%); mask-image:linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 14px), transparent 100%); }
+  .lyr-box.haspic .lyr-ln{ opacity:0; transition:color .9s ease, opacity .9s ease; }
+  .lyr-box.haspic .lyr-ln.on{ opacity:1; }
+  .lyr-box.haspic .lyr-ln.nx{ opacity:.95; }
   .lyr-box.haspic .lyr-ln.on{ color:#ffe04a; }
   .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#7fe3ff; }
   .lyr-box.haspic .lyr-hl, .lyr-voice .lyr-box.haspic .lyr-hl{ display:none; }
@@ -4569,6 +4573,13 @@ function mixTotalDuration(){
     if(sg.title){ try{ const t = loadTtl(); t[key] = sg.title; localStorage.setItem(TTL_KEY, JSON.stringify(t)); }catch(e){} }
   }
   function busyMsg(txt){ let d = document.getElementById('bgmxBusy'); if(!txt){ if(d) d.remove(); return; } if(!d){ d = document.createElement('div'); d.id = 'bgmxBusy'; d.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;background:#1c1917;color:#fff;padding:14px 22px;border-radius:12px;font-size:14pt;box-shadow:0 6px 24px rgba(0,0,0,.4)'; document.body.appendChild(d); } d.textContent = txt; }
+  function animScroll(el, to){
+    if(el.__anim) cancelAnimationFrame(el.__anim);
+    const from = el.scrollTop, d = to - from; if(Math.abs(d) < 1){ el.__anim = 0; return; }
+    const t0 = performance.now(), dur = 900;
+    const step = now => { const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; el.scrollTop = from + d * e; if(k < 1) el.__anim = requestAnimationFrame(step); else el.__anim = 0; };
+    el.__anim = requestAnimationFrame(step);
+  }
   function openLyr(kind){
     const i = curInfo(kind);
     if(!i) return;
@@ -4709,7 +4720,7 @@ function mixTotalDuration(){
       if(c.idx !== lastIdx){
         lastIdx = c.idx;
         const ls = lns;
-        for(let x = 0; x < ls.length; x++) ls[x].classList.toggle('on', x === c.idx);
+        for(let x = 0; x < ls.length; x++){ ls[x].classList.toggle('on', x === c.idx); ls[x].classList.toggle('nx', c.idx >= 0 && x === c.idx + 1); }
         const el = ls[c.idx];
         if(hl){
           if(el && c.has){
@@ -4719,7 +4730,7 @@ function mixTotalDuration(){
             if(first){ void hl.offsetWidth; requestAnimationFrame(() => hl && hl.classList.add('mv')); }
           } else hl.style.opacity = '0';
         }
-        if(el && c.has) view.scrollTo({ top: hasPic ? el.offsetTop - 10 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4, behavior:'smooth' });
+        if(el && c.has) animScroll(view, hasPic ? el.offsetTop - 10 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4);
       }
     }
     // ---- 시간 맞추기 ----
@@ -5022,7 +5033,7 @@ function mixTotalDuration(){
     // 음성·음악·통합 선택 (믹서 4번 선택과 같은 것)
     const trkBtns = Array.from(back.querySelectorAll('[data-trk]'));
     const syncTrk = () => trkBtns.forEach(b => b.classList.toggle('on', b.dataset.trk === activeTrack));
-    trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); }));
+    trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ alert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
     syncTrk();
     // 백업 저장 / 불러오기
     back.querySelector('[data-bsave]').addEventListener('click', async () => {
