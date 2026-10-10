@@ -143,6 +143,8 @@
     display: flex; align-items: center; gap: 6px; padding: 6px 8px;
     background: var(--panel-2); border-radius: 6px; margin-bottom: 4px; font-size: 14pt;
   }
+  .file-item.pl{ cursor:pointer; }
+  .file-item.pl.cur{ background:#dbeafe; border-radius:6px; }
   .file-item-name{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file-item-dur{ color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .file-item button{
@@ -2126,7 +2128,7 @@ function renderList(kind){
   const items = kind === 'voice' ? voiceItems : musicItems;
   const container = document.getElementById(kind === 'voice' ? 'voiceList' : 'musicList');
   container.innerHTML = items.map((it, idx) => `
-    <div class="file-item">
+    <div class="file-item pl" data-idx="${idx}">
       <span class="file-item-name">${idx+1}. ${escapeHtml(it.name)}</span>
       <span class="file-item-dur">${fmtTime(it.buffer.duration)}</span>
       <button type="button" data-action="up" data-id="${it.id}" data-kind="${kind}" ${idx===0?'disabled':''} title="위로">▲</button>
@@ -2137,6 +2139,11 @@ function renderList(kind){
 }
 
 document.addEventListener('click', e => {
+  const row = e.target.closest('#voiceList .file-item.pl, #musicList .file-item.pl');
+  if(row && !e.target.closest('button')){
+    const ctl = row.parentElement.id === 'voiceList' ? voicePlayerCtl : musicPlayerCtl;
+    try{ ctl.playItem(Number(row.dataset.idx)); }catch(x){} return;
+  }
   const btn = e.target.closest('button[data-action]');
   if(!btn) return;
   const kind = btn.dataset.kind;
@@ -2153,6 +2160,14 @@ document.addEventListener('click', e => {
   }
   rebuild(kind);
 });
+
+setInterval(() => {
+  [['voiceList', voicePlayerCtl], ['musicList', musicPlayerCtl]].forEach(([id, ctl]) => {
+    const c = document.getElementById(id); if(!c) return;
+    let ci = -1; try{ ci = ctl.getCurIdx(); }catch(x){}
+    c.querySelectorAll('.file-item.pl').forEach((r, i) => r.classList.toggle('cur', i === ci));
+  });
+}, 400);
 
 function computeTickInterval(duration){
   const steps = [1,2,5,10,15,30,60,120,300,600,900,1800,3600];
@@ -3035,6 +3050,16 @@ function makePlayer(kind){
     }
   }
 
+  async function playItem(idx){
+    if(!rawBuffer()) return;
+    await ensureProcessed();
+    if(idx < 0 || idx >= getItemList().length) return;
+    const was = st.playing && !st.fading;
+    st.curIdx = idx; seekToItem(idx);
+    if(!was && !st.playing) play();
+  }
+  function getCurIdx(){ if(!st.processed || !(st.playing || elapsedNow() > 0.05)) return -1; syncIdxByPos(); return st.curIdx; }
+
   async function next(){
     if(!rawBuffer()) return;
     await ensureProcessed(); syncIdxByPos();
@@ -3164,7 +3189,7 @@ function makePlayer(kind){
     repBtn.classList.toggle('on', st.repeat);
     if(st.source && st.playing) st.source.loop = loopEff();
   });
-  const api = { applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, softStop, isFading: () => !!st.fading, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing && !st.fading, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
+  const api = { playItem, getCurIdx, applyVolume, prepare: ensureProcessed, markDirty, captureLive, reloadKeepPlaying, capturePaused, reloadKeepPaused, getBufferPos, getInfo, setGain, softStop, isFading: () => !!st.fading, setSpeed, seekToFraction, getDuration, play, pause, stop, prev, next, refreshUI, isPlaying: () => st.playing && !st.fading, getElapsed: elapsedNow, isLooping: () => !!(st.playing && st.loopOn), onEnd: null };
   return api;
 }
 
