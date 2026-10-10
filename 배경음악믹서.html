@@ -274,6 +274,13 @@
   .lyr-box textarea{ width:100%; box-sizing:border-box; height:min(210px,36vh); background:#16212c; border:1px solid #455c70; border-radius:8px; padding:10px 14px; color:#f4f8fc; font:inherit; font-size:14pt; line-height:1.7; resize:vertical; }
   .lyr-opt{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:12px 0 4px; font-size:12pt; color:#c9d6e2; }
   .lyr-opt input{ width:84px; background:#16212c; border:1px solid #6f8aa0; border-radius:6px; padding:2px 8px; color:#fff; font-size:14pt; }
+  .lyr-tabs{ display:flex; gap:8px; margin-bottom:10px; }
+  .lyr-box .lyr-tabs button{ background:transparent; border-color:#455c70; color:#c9d6e2; padding:4px 16px; }
+  .lyr-box .lyr-tabs button.on{ background:#455c70; border-color:#6f8aa0; color:#ffb347; }
+  .lyr-view{ position:relative; height:min(420px,52vh); overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
+  .lyr-ln{ padding:6px 14px; border-radius:8px; color:#9fb2c4; line-height:1.5; }
+  .lyr-ln.on{ background:#2b4a3a; color:#7dffa8; font-weight:700; }
+  .lyr-empty{ color:#c9d6e2; font-size:12pt; padding:14px; }
   .lyr-btns{ display:flex; gap:10px; margin-top:14px; }
   .marq{ text-align:left !important; }
   .marq > span{ animation:marqL var(--dur,14s) linear infinite; }
@@ -4338,57 +4345,88 @@ function mixTotalDuration(){
     out.sort((a, b) => a.t - b.t);
     return out;
   }
-  function shown(kind){
-    const i = curInfo(kind);
-    if(!i) return { text:'', lyric:false, name:'' };
-    const name = i.item.name;
-    if(kind !== 'music') return { text:name, lyric:false, name };
-    const L = loadLyr()[name], lines = lyrLines(L);
-    if(!lines.length) return { text:name, lyric:false, name, has:false };
+  function keyOf(kind, name){ return kind === 'voice' ? '[음성] ' + name : name; }
+  // 지금 위치에서 어느 줄인지 계산 (idx -1 = 가사 구간 아님)
+  function lyrCalc(kind, i){
+    const L = loadLyr()[keyOf(kind, i.item.name)], lines = lyrLines(L);
+    if(!lines.length) return { L, has:false, items:[], idx:-1 };
     const dur = i.item.buffer.duration;
-    const SEP = '\u00a0\u00a0\u00a0·\u00a0\u00a0\u00a0';
     const timed = lyrTimed(lines);
     if(timed.length){
       const en = (Number(L.end) > 0) ? Number(L.end) : dur;
-      if(i.t < en && i.t >= timed[0].t){
-        let k = 0; for(let x = 0; x < timed.length; x++){ if(timed[x].t <= i.t) k = x; else break; }
-        return { text: timed[k].text, lyric:true, name, has:true };
-      }
-      return { text:name, lyric:false, name, has:true };
+      let idx = -1;
+      if(i.t < en && i.t >= timed[0].t){ idx = 0; for(let x = 0; x < timed.length; x++){ if(timed[x].t <= i.t) idx = x; else break; } }
+      return { L, has:true, items: timed.map(x => x.text), idx };
     }
     const st = Math.max(0, Number(L.start) || 0);
     const en = (Number(L.end) > st) ? Number(L.end) : dur;
-    if(i.t >= st && i.t < en){
-      const idx = Math.min(lines.length - 1, Math.floor((i.t - st) / (en - st) * lines.length));
-      return { text: lines[idx], lyric:true, name, has:true };
-    }
-    return { text:name, lyric:false, name, has:true };
+    let idx = -1;
+    if(i.t >= st && i.t < en) idx = Math.min(lines.length - 1, Math.floor((i.t - st) / (en - st) * lines.length));
+    return { L, has:true, items: lines, idx };
   }
-  function openLyr(){
-    const i = curInfo('music');
+  function shown(kind){
+    const i = curInfo(kind);
+    if(!i) return { text:'', lyric:false, name:'' };
+    const name = i.item.name, c = lyrCalc(kind, i);
+    if(c.has && c.idx >= 0) return { text: c.items[c.idx], lyric:true, name, has:true };
+    return { text:name, lyric:false, name, has:c.has };
+  }
+  function openLyr(kind){
+    const i = curInfo(kind);
     if(!i) return;
-    const name = i.item.name, all = loadLyr(), L = all[name] || {};
+    let name = i.item.name;
+    const L = loadLyr()[keyOf(kind, name)] || {};
+    const icon = kind === 'voice' ? '🎙' : '🎵';
     const back = document.createElement('div'); back.className = 'lyr-back';
-    back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b>🎵 가사</b><span class="nm"></span><button type="button" data-x title="닫기">✕</button></div>' +
-      '<textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
-      '<div class="lyr-opt">노래 시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 노래 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
-      '<div class="lyr-btns"><button type="button" data-del>🗑 지우기</button><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div>';
+    back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b>' + icon + ' 가사</b><span class="nm"></span><button type="button" data-x title="닫기">✕</button></div>' +
+      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button></div>' +
+      '<div data-pane="view"><div class="lyr-view"></div></div>' +
+      '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
+      '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
+      '<div class="lyr-btns"><button type="button" data-del>🗑 지우기</button><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
     document.body.appendChild(back);
-    back.querySelector('.nm').textContent = name;
+    const nm = back.querySelector('.nm'), view = back.querySelector('.lyr-view');
     const ta = back.querySelector('textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
+    nm.textContent = name;
     ta.value = L.text || ''; si.value = L.start || 0; ei.value = L.end || Math.round(i.item.buffer.duration);
-    const close = () => { back.remove(); document.removeEventListener('keydown', onKey, true); };
+    function tab(k){
+      back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
+      back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
+      if(k === 'edit') ta.focus(); else { shownKey = null; upd(); }
+    }
+    let shownKey = null, lastIdx = -2;
+    function upd(){
+      const cur = curInfo(kind); if(!cur) return;
+      if(cur.item.name !== name){ name = cur.item.name; nm.textContent = name; shownKey = null; }
+      const c = lyrCalc(kind, cur), key = name + '|' + c.items.join('\n');
+      if(key !== shownKey){
+        shownKey = key; lastIdx = -2; view.textContent = '';
+        if(!c.has){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '저장된 가사가 없습니다. "입력"에서 붙여넣어 주세요.'; view.appendChild(e); }
+        else c.items.forEach(t => { const d = document.createElement('div'); d.className = 'lyr-ln'; d.textContent = t; view.appendChild(d); });
+      }
+      if(c.idx !== lastIdx){
+        lastIdx = c.idx;
+        const ls = view.children;
+        for(let x = 0; x < ls.length; x++) ls[x].classList.toggle('on', x === c.idx);
+        const el = ls[c.idx];
+        if(el && c.has) view.scrollTo({ top: el.offsetTop - view.clientHeight / 2 + el.offsetHeight / 2, behavior:'smooth' });
+      }
+    }
+    const timer = setInterval(() => { if(view.offsetParent) upd(); }, 200);
+    const close = () => { clearInterval(timer); back.remove(); document.removeEventListener('keydown', onKey, true); };
     const onKey = e => { if(e.key === 'Escape'){ e.preventDefault(); close(); } };
     document.addEventListener('keydown', onKey, true);
     back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
     back.querySelector('[data-x]').addEventListener('click', close);
-    back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[name]; saveLyr(a); close(); tick(); });
+    back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
+    back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); close(); tick(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
-      const a = loadLyr(), txt = ta.value.trim();
-      if(txt) a[name] = { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) }; else delete a[name];
-      saveLyr(a); close(); tick();
+      const a = loadLyr(), txt = ta.value.trim(), k = keyOf(kind, name);
+      if(txt) a[k] = { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) }; else delete a[k];
+      saveLyr(a); tick();
+      if(txt) tab('view'); else close();
     });
-    ta.focus();
+    tab(lyrLines(L).length ? 'view' : 'edit');
   }
   const slots = [
     { kind:'voice', span:document.querySelector('#voiceTrackTitle > span'), box:document.getElementById('voiceTrackTitle') },
@@ -4397,11 +4435,11 @@ function mixTotalDuration(){
     { kind:'music', span:document.getElementById('allMusicTitle'), box:document.querySelector('#allMusicTitle').parentElement }
   ];
   slots.forEach(o => { o.text = null; o.w = -1; o.lyric = false; });
-  slots.filter(o => o.kind === 'music').forEach(o => {
-    // 통합 탭은 🎵 아이콘·여백을 포함한 음악 칸 전체를 눌러도 열리게
+  slots.forEach(o => {
+    // 통합 탭은 아이콘·여백을 포함한 칸 전체를 눌러도 열리게
     const hit = (o.box.closest && o.box.closest('.all-titles .half')) || o.box;
     hit.style.cursor = 'pointer';
-    hit.addEventListener('click', openLyr);
+    hit.addEventListener('click', () => openLyr(o.kind));
   });
   function fit(o){
     const w = o.box.clientWidth;
@@ -4435,7 +4473,7 @@ function mixTotalDuration(){
         o.keepProg = null;
         if(o.lyric && d.lyric){ try{ const an = o.span.getAnimations()[0]; if(an){ const dd = an.effect.getComputedTiming().duration; o.keepProg = ((an.currentTime % dd) / dd); } }catch(e){} }
         o.text = t; o.lyric = d.lyric; o.span.textContent = t;
-        o.box.title = o.kind === 'music' && d.name ? d.name + (d.has ? ' — 눌러서 가사 수정' : ' — 눌러서 가사 넣기') : d.name;
+        o.box.title = d.name ? d.name + (d.has ? ' — 눌러서 가사 보기' : ' — 눌러서 가사 넣기') : '';
         o.w = -1;
       }
       if(o.box.clientWidth && o.box.clientWidth !== o.w) fit(o);
