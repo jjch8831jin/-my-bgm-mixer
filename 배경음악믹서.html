@@ -358,9 +358,13 @@
   .lyr-bg > i{ position:absolute; top:0; left:0; right:0; bottom:0; background-position:center; background-repeat:no-repeat; }
   .lyr-bg > i.bb{ background-size:cover; filter:blur(24px) brightness(.75); transform:scale(1.3); }
   .lyr-bg > i.ff{ background-size:contain; }
+  .lyr-bg > video{ position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; display:none; background:transparent; }
+  .lyr-bg.isv > video{ display:block; }
+  .lyr-bg.isv > i.ff{ display:none; }
   .lyr-bg{ position:absolute; top:0; left:0; right:0; bottom:0; overflow:hidden; opacity:0; transition:opacity 1s ease; z-index:0; pointer-events:none; }
   .lyr-thumbs{ display:none; gap:8px; overflow-x:auto; flex:none; margin-top:10px; padding-bottom:2px; }
   .lyr-thumbs .th{ position:relative; flex:none; }
+  .lyr-thumbs .th video{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
   .lyr-thumbs .th img{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
   .lyr-box .lyr-thumbs .th button{ position:absolute; top:2px; right:2px; width:22px; height:22px; padding:0; border-radius:50%; font-size:10pt; line-height:1; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-weight:800; }
   .lyr-box.haspic.ended .lyr-view{ visibility:hidden; }
@@ -4514,7 +4518,7 @@ function mixTotalDuration(){
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
-      '<div class="lyr-btns"><button type="button" data-imgadd>🖼 이미지 추가</button><button type="button" data-imgdel>이미지 빼기</button><button type="button" data-del>🗑 지우기</button><input type="file" accept="image/*" multiple data-imgf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
+      '<div class="lyr-btns"><button type="button" data-imgadd>🖼 이미지·동영상 추가</button><button type="button" data-imgdel>이미지 빼기</button><button type="button" data-del>🗑 지우기</button><input type="file" accept="image/*,video/*" multiple data-imgf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
     document.body.appendChild(back);
     // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
     const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
@@ -4522,20 +4526,50 @@ function mixTotalDuration(){
     const nm = back.querySelector('.nm'), view = back.querySelector('.lyr-view');
     const ta = back.querySelector('textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
-    const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg'; [bgA, bgB].forEach(o => { o.innerHTML = '<i class="bb"></i><i class="ff"></i>'; });
+    const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg'; [bgA, bgB].forEach(o => { o.innerHTML = '<i class="bb"></i><i class="ff"></i><video muted loop playsinline preload="auto"></video>'; o.querySelector('video').muted = true; });
     back.insertBefore(bgB, back.firstChild); back.insertBefore(bgA, back.firstChild);
     let pics = [], picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
     const thumbsEl = back.querySelector('[data-thumbs]'), imgBx = back.querySelector('.lyr-box');
+    const urlCache = new WeakMap();
+    const isVid = it => typeof it !== 'string';
+    const urlOfItem = it => { if(!isVid(it)) return it; let u = urlCache.get(it); if(!u){ u = URL.createObjectURL(it); urlCache.set(it, u); } return u; };
+    const posterCache = new WeakMap();
+    function posterOf(it){
+      if(posterCache.has(it)) return posterCache.get(it);
+      const pr = new Promise(res => {
+        try{
+          const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = urlOfItem(it);
+          const done = u => { res(u); };
+          v.addEventListener('loadeddata', () => { try{ v.currentTime = Math.min(0.1, (v.duration || 1) / 2); }catch(e){ done(''); } });
+          v.addEventListener('seeked', () => { try{ const c = document.createElement('canvas'), k = Math.min(1, 320 / Math.max(v.videoWidth, v.videoHeight, 1)); c.width = Math.max(1, Math.round(v.videoWidth * k)); c.height = Math.max(1, Math.round(v.videoHeight * k)); c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); done(c.toDataURL('image/jpeg', .7)); }catch(e){ done(''); } });
+          v.addEventListener('error', () => done(''));
+          setTimeout(() => done(''), 4000);
+        }catch(e){ res(''); }
+      });
+      posterCache.set(it, pr); return pr;
+    }
+    function frontVideo(){ return bgFront ? bgFront.querySelector('video') : null; }
     function showBg(i){
-      if(i < 0){ bgA.style.opacity = '0'; bgB.style.opacity = '0'; bgFront = null; return; }
-      const nxt = bgFront === bgA ? bgB : bgA; nxt.querySelectorAll('i').forEach(q => { q.style.backgroundImage = 'url("' + pics[i] + '")'; }); nxt.style.opacity = '1';
+      [bgA, bgB].forEach(o => { const v = o.querySelector('video'); if(v && o !== bgFront){ try{ v.pause(); }catch(e){} } });
+      if(i < 0){ bgA.style.opacity = '0'; bgB.style.opacity = '0'; const fv = frontVideo(); if(fv){ try{ fv.pause(); }catch(e){} } bgFront = null; return; }
+      const nxt = bgFront === bgA ? bgB : bgA, it = pics[i], v = nxt.querySelector('video');
+      if(isVid(it)){
+        nxt.classList.add('isv'); v.src = urlOfItem(it); try{ v.currentTime = 0; }catch(e){}
+        nxt.querySelector('i.bb').style.backgroundImage = 'none'; nxt.querySelector('i.ff').style.backgroundImage = 'none';
+        posterOf(it).then(u => { if(u && nxt.classList.contains('isv') && pics[i] === it) nxt.querySelector('i.bb').style.backgroundImage = 'url("' + u + '")'; });
+      } else {
+        nxt.classList.remove('isv'); try{ v.pause(); }catch(e){} v.removeAttribute('src');
+        nxt.querySelectorAll('i').forEach(q => { q.style.backgroundImage = 'url("' + it + '")'; });
+      }
+      nxt.style.opacity = '1';
       if(bgFront) bgFront.style.opacity = '0'; bgFront = nxt;
     }
+    function syncVideo(pl){ const fv = frontVideo(); if(!fv || !bgFront.classList.contains('isv')) return; try{ if(pl && fv.paused){ const r = fv.play(); if(r && r.catch) r.catch(() => {}); } else if(!pl && !fv.paused) fv.pause(); }catch(e){} }
     function renderPics(){
       hasPic = pics.length > 0; imgBx.classList.toggle('haspic', hasPic); picIdx = -2; try{ applyAuto(); }catch(e){}
       thumbsEl.textContent = '';
       pics.forEach((u, x) => {
-        const w = document.createElement('div'); w.className = 'th'; const im = document.createElement('img'); im.src = u; im.alt = '';
+        const w = document.createElement('div'); w.className = 'th'; let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.title = '이 사진 빼기';
         b.addEventListener('click', async () => { pics.splice(x, 1); await setImgs(keyOf(kind, name), pics); renderPics(); });
         w.appendChild(im); w.appendChild(b); thumbsEl.appendChild(w);
@@ -4567,6 +4601,7 @@ function mixTotalDuration(){
       wasPl = pl; lastEl = el;
       const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, cur.t) / 10) % pics.length;
       if(want !== picIdx){ picIdx = want; showBg(want); }
+      syncVideo(pl && !ended);
     }
     refreshPics();
     ta.value = L.text || ''; si.value = L.start || 0; ei.value = L.end || Math.round(i.item.buffer.duration);
@@ -4744,16 +4779,16 @@ function mixTotalDuration(){
     async function putImages(fs){
       fs = Array.from(fs || []).filter(Boolean); if(!fs.length) return;
       const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0;
-      for(const f of fs){ try{ cur.push(await shrinkImage(f)); }catch(e){ bad++; } }
-      if(cur.length === pics.length && bad){ alert('이미지를 읽지 못했습니다. 다른 이미지로 해 주세요.'); return; }
+      for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 100 * 1024 * 1024){ bad++; continue; } cur.push(f); } else cur.push(await shrinkImage(f)); }catch(e){ bad++; } }
+      if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 100MB 이하만 됩니다)'); return; }
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
-      if(bad) alert('읽지 못한 이미지 ' + bad + '장은 빼고 저장했습니다.');
+      if(bad) alert('읽지 못했거나 너무 큰(100MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
       pics = cur; renderPics();
     }
     const putImage = f => putImages([f]);
     imgF.addEventListener('change', () => { const fs = Array.from(imgF.files || []); imgF.value = ''; putImages(fs); });
     // 사이트에서 복사한 이미지 붙여넣기(Ctrl+V) / 끌어다 놓기
-    const imgsOf = dt => { if(!dt) return []; const fl = Array.from(dt.files || []).filter(x => /^image\//.test(x.type)); if(fl.length) return fl; const it = Array.from(dt.items || []).filter(x => x.kind === 'file' && /^image\//.test(x.type)).map(x => x.getAsFile()).filter(Boolean); return it; };
+    const imgsOf = dt => { if(!dt) return []; const fl = Array.from(dt.files || []).filter(x => /^(image|video)\//.test(x.type)); if(fl.length) return fl; const it = Array.from(dt.items || []).filter(x => x.kind === 'file' && /^(image|video)\//.test(x.type)).map(x => x.getAsFile()).filter(Boolean); return it; };
     const onPaste = e => { const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); putImages(fs); } };
     const onDragOver = e => { if(e.dataTransfer) e.preventDefault(); };
     const urlOf = dt => {
@@ -4770,7 +4805,7 @@ function mixTotalDuration(){
       catch(x){ alert('이 사이트의 이미지는 끌어다 놓아서 가져올 수 없습니다.\n이미지를 우클릭해서 "이미지 복사"를 한 뒤 Ctrl+V로 붙여넣어 주세요.'); }
     };
     document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', onDrop);
-    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진 ' + pics.length + '장을 모두 뺄까요?')) return; pics = []; await setImgs(keyOf(kind, name), pics); renderPics(); });
+    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; await setImgs(keyOf(kind, name), pics); renderPics(); });
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
       const a = loadLyr(), txt = ta.value.trim(), k = keyOf(kind, name);
