@@ -374,6 +374,11 @@
   .lyr-box .lyr-btns button[data-imgdel]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
   @media (max-width:600px){ .lyr-btns{ gap:5px !important; } .lyr-box .lyr-btns button{ font-size:10.5pt; padding:6px 7px; white-space:nowrap; } .lyr-box .lyr-btns button.ok{ padding:6px 12px; } .lyr-btns img[data-thumb]{ display:none !important; } }
   .lyr-btns{ display:flex; gap:10px; margin-top:14px; }
+  .lyr-btns.bk{ margin-top:8px; }
+  .lyr-box .lyr-btns.bk button{ font-weight:700; }
+  .lyr-box .lyr-btns button[data-bsave]{ background:#dcfce7; border-color:#15803d; color:#14532d; }
+  .lyr-box .lyr-btns button[data-bload]{ background:#dbeafe; border-color:#1d4ed8; color:#1e3a8a; }
+  .lyr-box .lyr-btns button[data-ball]{ background:#fef3c7; border-color:#b45309; color:#78350f; }
   .marq{ text-align:left !important; }
   .marq > span{ animation:marqL var(--dur,14s) linear infinite; }
   @keyframes marqL{ from{ transform:translateX(0); } to{ transform:translateX(var(--loop,0px)); } }
@@ -4500,6 +4505,48 @@ function mixTotalDuration(){
       fr.readAsDataURL(file);
     });
   }
+  // ---- 백업 파일(.bgmx): 가사 + 시간 + 사진 + 동영상 (소리 파일은 제외) ----
+  const BGMX_MAGIC = 'BGMX1';
+  async function itemToBlob(it){
+    if(typeof it !== 'string') return it;
+    const m = /^data:([^;,]*)(;base64)?,([\s\S]*)$/.exec(it); if(!m) throw new Error('bad');
+    const bin = atob(m[3]), u8 = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return new Blob([u8], { type: m[1] || 'image/jpeg' });
+  }
+  function blobToDataUrl(b){ return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(fr.error); fr.readAsDataURL(b); }); }
+  async function listImgKeys(){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').getAllKeys(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); }); }catch(e){ return []; } }
+  async function packSong(key, lyrOverride){
+    const lyr = loadLyr(), ttl = loadTtl(), items = await getImgs(key), media = [], blobs = [];
+    for(const it of items){ const b = await itemToBlob(it); media.push({ k: typeof it === 'string' ? 'i' : 'v', type: b.type || '', size: b.size }); blobs.push(b); }
+    return { head: { key, title: ttl[key] || '', lyr: lyrOverride || lyr[key] || null, media }, blobs };
+  }
+  function buildBgmx(packs){
+    const head = new TextEncoder().encode(JSON.stringify({ v: 1, songs: packs.map(x => x.head) }));
+    const len = new Uint8Array(4); new DataView(len.buffer).setUint32(0, head.length, true);
+    const parts = [new TextEncoder().encode(BGMX_MAGIC), len, head]; packs.forEach(x => x.blobs.forEach(b => parts.push(b)));
+    return new Blob(parts, { type: 'application/octet-stream' });
+  }
+  function downloadBlob(blob, fname){
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  }
+  async function readBgmx(file){
+    const hb = new Uint8Array(await file.slice(0, 9).arrayBuffer());
+    if(new TextDecoder().decode(hb.slice(0, 5)) !== BGMX_MAGIC) throw new Error('magic');
+    const n = new DataView(hb.buffer, 5, 4).getUint32(0, true);
+    const h = JSON.parse(await file.slice(9, 9 + n).text()); let pos = 9 + n;
+    h.songs.forEach(sg => { (sg.media || []).forEach(m => { m.blob = file.slice(pos, pos + m.size, m.type); pos += m.size; }); });
+    return h.songs;
+  }
+  async function applySong(sg, key, add){
+    const items = [];
+    for(const m of (sg.media || [])) items.push(m.k === 'i' ? await blobToDataUrl(m.blob) : new File([m.blob], 'video', { type: m.type || 'video/mp4' }));
+    const cur = add ? await getImgs(key) : [];
+    if(items.length || !add){ if(!(await setImgs(key, cur.concat(items)))) throw new Error('save'); }
+    if(sg.lyr && sg.lyr.text){ const a = loadLyr(); a[key] = sg.lyr; saveLyr(a); }
+    if(sg.title){ try{ const t = loadTtl(); t[key] = sg.title; localStorage.setItem(TTL_KEY, JSON.stringify(t)); }catch(e){} }
+  }
+  function busyMsg(txt){ let d = document.getElementById('bgmxBusy'); if(!txt){ if(d) d.remove(); return; } if(!d){ d = document.createElement('div'); d.id = 'bgmxBusy'; d.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;background:#1c1917;color:#fff;padding:14px 22px;border-radius:12px;font-size:14pt;box-shadow:0 6px 24px rgba(0,0,0,.4)'; document.body.appendChild(d); } d.textContent = txt; }
   function openLyr(kind){
     const i = curInfo(kind);
     if(!i) return;
@@ -4518,7 +4565,7 @@ function mixTotalDuration(){
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
-      '<div class="lyr-btns"><button type="button" data-imgadd>🖼 이미지·동영상 추가</button><button type="button" data-imgdel>이미지 빼기</button><button type="button" data-del>🗑 지우기</button><input type="file" accept="image/*,video/*" multiple data-imgf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
+      '<div class="lyr-btns"><button type="button" data-imgadd>🖼 사진·영상 추가</button><button type="button" data-imgdel>이미지 빼기</button><button type="button" data-del>🗑 지우기</button><input type="file" accept="image/*,video/*" multiple data-imgf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div><div class="lyr-btns bk"><button type="button" data-bsave title="이 곡의 가사·시간·사진·동영상을 파일로 저장">💾 이 곡 백업저장</button><button type="button" data-bload title="저장해 둔 .bgmx 파일 불러오기">📂 불러오기</button><button type="button" data-ball title="모든 곡을 한 파일로 저장">📦 전체 저장</button><input type="file" accept=".bgmx" data-bf style="display:none"></div></div></div>';
     document.body.appendChild(back);
     // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
     const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
@@ -4806,6 +4853,47 @@ function mixTotalDuration(){
     };
     document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', onDrop);
     back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; await setImgs(keyOf(kind, name), pics); renderPics(); });
+    // 백업 저장 / 불러오기
+    back.querySelector('[data-bsave]').addEventListener('click', async () => {
+      try{
+        busyMsg('저장 파일 만드는 중…'); const key = keyOf(kind, name), txt = ta.value.trim();
+        const pk = await packSong(key, txt ? { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) } : null);
+        if(!pk.head.lyr && !pk.blobs.length){ busyMsg(''); alert('저장할 가사나 사진이 없습니다.'); return; }
+        downloadBlob(buildBgmx([pk]), (dispName(kind, name).replace(/[\\/:*?"<>|]+/g, '_') || '곡') + '.bgmx'); busyMsg('');
+      }catch(e){ busyMsg(''); alert('저장 파일을 만들지 못했습니다.'); }
+    });
+    back.querySelector('[data-ball]').addEventListener('click', async () => {
+      try{
+        busyMsg('전체 저장 파일 만드는 중…');
+        const keys = new Set([...Object.keys(loadLyr()), ...(await listImgKeys())]); const packs = [];
+        for(const k of keys){ const pk = await packSong(k); if(pk.head.lyr || pk.blobs.length) packs.push(pk); }
+        if(!packs.length){ busyMsg(''); alert('저장할 곡이 없습니다.'); return; }
+        const d = new Date(), z = n => String(n).padStart(2, '0');
+        downloadBlob(buildBgmx(packs), '배경음악믹서_전체_' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '.bgmx'); busyMsg('');
+      }catch(e){ busyMsg(''); alert('전체 저장 파일을 만들지 못했습니다.'); }
+    });
+    const bf = back.querySelector('[data-bf]');
+    back.querySelector('[data-bload]').addEventListener('click', () => bf.click());
+    bf.addEventListener('change', async () => {
+      const f = bf.files && bf.files[0]; bf.value = ''; if(!f) return;
+      try{
+        busyMsg('불러오는 중…'); const songs = await readBgmx(f); busyMsg('');
+        if(!songs.length){ alert('들어 있는 곡이 없습니다.'); return; }
+        const key = keyOf(kind, name);
+        if(songs.length === 1){
+          const had = (await getImgs(key)).length > 0; let add = false;
+          if(had) add = !confirm('이 곡에 이미 사진·동영상이 있습니다.\n확인 = 기존 것을 지우고 불러온 것으로 바꾸기\n취소 = 기존 것 뒤에 추가하기');
+          busyMsg('불러오는 중…'); await applySong(songs[0], key, add);
+        } else {
+          if(!confirm('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?')) return;
+          busyMsg('불러오는 중…'); for(const sg of songs) await applySong(sg, sg.key, false);
+        }
+        busyMsg('');
+        const L2 = loadLyr()[key] || {}; ta.value = L2.text || ''; si.value = L2.start || 0; ei.value = L2.end || Math.round(i.item.buffer.duration);
+        nm.textContent = dispName(kind, name); shownKey = null; await refreshPics(); tick(); tab('view');
+        alert('불러왔습니다.');
+      }catch(e){ busyMsg(''); alert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
+    });
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
       const a = loadLyr(), txt = ta.value.trim(), k = keyOf(kind, name);
