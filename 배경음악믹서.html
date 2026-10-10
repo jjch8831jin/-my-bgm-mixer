@@ -4174,9 +4174,18 @@ function setActiveTrack(k){
     c.classList.toggle('music-sel', t === 'music');
   });
 }
+// 음성/배경음악/통합을 누르면 그 소리만 바로 재생 (통합 = 믹싱 설정대로)
+function autoPlayFor(k){
+  try{
+    if(window.__tg) window.__tg.pause();
+    if(k === 'voice'){ if(voiceBuffer) voicePlayerCtl.play(); }
+    else if(k === 'music'){ if(musicBuffer) musicPlayerCtl.play(); }
+    else if(window.__tg) window.__tg.start();
+  }catch(err){ console.warn(err); }
+}
 document.getElementById('toolSelect').addEventListener('click', e => {
   const b = e.target.closest('button[data-track]');
-  if(b) setActiveTrack(b.dataset.track);
+  if(b){ setActiveTrack(b.dataset.track); autoPlayFor(b.dataset.track); }
 });
 ['voice','music'].forEach(t => document.getElementById('card_' + t).addEventListener('pointerdown', () => setActiveTrack(t)));
 document.getElementById('recordBtn').addEventListener('click', () => setActiveTrack('music'));
@@ -4323,6 +4332,7 @@ function mixTotalDuration(){
     voicePlayerCtl.pause(); musicPlayerCtl.pause(); musicPlayerCtl.applyVolume();
     setTimeout(refresh, 50);
   }
+  window.__tg = { pause: pauseAll, start: start };
   btn.addEventListener('click', () => {
     if(running || anyPlaying()) pauseAll(); else start();
     setTimeout(refresh, 50);
@@ -5033,7 +5043,7 @@ function mixTotalDuration(){
     // 음성·음악·통합 선택 (믹서 4번 선택과 같은 것)
     const trkBtns = Array.from(back.querySelectorAll('[data-trk]'));
     const syncTrk = () => trkBtns.forEach(b => b.classList.toggle('on', b.dataset.trk === activeTrack));
-    trkBtns.forEach(b => b.addEventListener('click', () => { if(b.dataset.trk !== activeTrack && (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying())) document.getElementById('togetherStopBtn').click(); const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ alert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
+    trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ alert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
     syncTrk();
     // 백업 저장 / 불러오기
     back.querySelector('[data-bsave]').addEventListener('click', async () => {
