@@ -330,6 +330,8 @@
   @media (max-width:600px){ .lyr-box .sy-one .lg{ display:none; } .lyr-box .sy-one{ gap:8px; } .lyr-box .sy-one button{ padding:0 10px; } .lyr-box .sy-one button.ok{ padding:0 14px; } }
   .lyr-box button.stamp:disabled{ opacity:.4; }
   .lyr-empty{ color:#44403c; font-size:12pt; padding:14px; }
+  .lyr-voice, .lyr-voice .lyr-box{ background:#e3f0fa; }
+  .lyr-voice .lyr-view, .lyr-voice .sy-list, .lyr-voice .lyr-box textarea{ background:#f6fbff; border-color:#b6d0e4; }
   .lyr-btns{ display:flex; gap:10px; margin-top:14px; }
   .marq{ text-align:left !important; }
   .marq > span{ animation:marqL var(--dur,14s) linear infinite; }
@@ -4429,7 +4431,7 @@ function mixTotalDuration(){
     if(!i) return;
     let name = i.item.name;
     const L = loadLyr()[keyOf(kind, name)] || {};
-    const back = document.createElement('div'); back.className = 'lyr-back';
+    const back = document.createElement('div'); back.className = 'lyr-back' + (kind === 'voice' ? ' lyr-voice' : '');
     back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
       '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><button type="button" data-sw></button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
       '<div class="lyr-bar"><span class="bt" data-ct>00:00</span><input type="range" class="sk" data-sk min="0" max="1000" value="0" step="1"><span class="bt" data-dt>00:00</span>' +
