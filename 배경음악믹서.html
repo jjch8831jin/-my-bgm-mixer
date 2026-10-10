@@ -265,8 +265,8 @@
   .head-title .tx{ text-align:left; }
   .head-title .tx.st, .all-titles .tx.st{ -webkit-mask-image:none; mask-image:none; }
   .head-title .tx.st > span, .all-titles .tx.st > span{ display:inline; }
-  .lyr-back{ position:fixed; inset:0; background:#1f2d3a; display:flex; z-index:9999; padding:0; }
-  .lyr-box{ width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; background:#1f2d3a; padding:14px 18px; color:#f4f8fc; font-size:14pt; box-sizing:border-box; }
+  .lyr-back{ position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh; height:100dvh; background:#1f2d3a; display:flex; z-index:9999; padding:0; }
+  .lyr-box{ width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; background:#1f2d3a; padding:10px 12px; color:#f4f8fc; font-size:14pt; box-sizing:border-box; }
   .lyr-box [data-pane]{ flex:1; min-height:0; display:flex; flex-direction:column; }
   .lyr-head .lb{ color:#fff; font-size:18pt; }
   .lyr-head .nm{ font-size:18pt; }
@@ -277,10 +277,22 @@
   .lyr-box textarea{ width:100%; box-sizing:border-box; flex:1; min-height:120px; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:10px 14px; color:#f4f8fc; font:inherit; font-size:14pt; line-height:1.7; resize:vertical; }
   .lyr-opt{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:12px 0 4px; font-size:12pt; color:#c9d6e2; }
   .lyr-opt input{ width:84px; background:#16212c; border:1px solid #6f8aa0; border-radius:6px; padding:2px 8px; color:#fff; font-size:14pt; }
-  .lyr-tabs{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
-  .lyr-tabs .fs{ margin-left:auto; display:flex; align-items:center; gap:8px; color:#c9d6e2; }
-  .lyr-tabs .fs b{ min-width:2.2em; text-align:center; color:#fff; }
-  .lyr-box .lyr-tabs button{ background:transparent; border-color:#455c70; color:#c9d6e2; padding:4px 16px; }
+  .lyr-tabs{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .lyr-head{ flex-wrap:wrap; }
+  .lyr-head .nm{ flex:1 1 120px; }
+  .lyr-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .lyr-bar .bt{ font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:700; color:#fff; font-size:14pt; min-width:3.4em; }
+  .lyr-bar .sk{ flex:1 1 160px; min-width:120px; accent-color:#34d399; height:6px; cursor:pointer; }
+  .lyr-bar .bg{ display:flex; gap:8px; }
+  .lyr-box .lyr-bar button.rb{ width:44px; height:44px; padding:0; border-radius:50%; background:#292524; border:1px solid #57534e; font-size:14pt; display:flex; align-items:center; justify-content:center; }
+  .lyr-box .lyr-bar button.rb:nth-child(1){ color:#6ee7b7; } .lyr-box .lyr-bar .bg button:nth-child(2){ color:#fcd34d; } .lyr-box .lyr-bar .bg button:nth-child(3){ color:#fda4af; }
+  .lyr-bar .rate{ display:flex; align-items:center; gap:6px; background:#1c1917; border:1px solid #f59e0b; border-radius:12px; padding:3px 6px; }
+  .lyr-bar .rate b{ min-width:4.2em; text-align:center; color:#fff; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; }
+  .lyr-box .lyr-bar .rate button{ width:32px; height:32px; padding:0; border-radius:8px; background:#f59e0b; border-color:#f59e0b; color:#000; font-weight:800; }
+  .lyr-bar .fs{ display:flex; align-items:center; background:#292524; border:1px solid #57534e; border-radius:999px; overflow:hidden; }
+  .lyr-bar .fs b{ min-width:3.2em; text-align:center; color:#fff; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; cursor:pointer; }
+  .lyr-box .lyr-bar .fs button{ width:44px; height:44px; padding:0; border:0; border-radius:0; background:transparent; color:#d6d3d1; }
+  .lyr-box .lyr-tabs button{ background:transparent; border-color:#455c70; color:#c9d6e2; padding:4px 14px; }
   .lyr-box .lyr-tabs button.on{ background:#455c70; border-color:#6f8aa0; color:#ffb347; }
   .lyr-view{ position:relative; flex:1; min-height:0; overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
   .lyr-ln{ padding:8px 16px; border-radius:10px; color:#f4f8fc; line-height:1.5; text-align:center; }
@@ -4395,14 +4407,22 @@ function mixTotalDuration(){
     let name = i.item.name;
     const L = loadLyr()[keyOf(kind, name)] || {};
     const back = document.createElement('div'); back.className = 'lyr-back';
-    back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span><button type="button" data-x title="닫기">✕</button></div>' +
-      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="fs" data-fs>글자 <button type="button" data-fm>−</button><b data-fv></b><button type="button" data-fp>+</button></span></div>' +
+    back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
+      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button></div></div>' +
+      '<div class="lyr-bar"><span class="bt" data-ct>00:00</span><input type="range" class="sk" data-sk min="0" max="1000" value="0" step="1"><span class="bt" data-dt>00:00</span>' +
+      '<span class="bg"><button type="button" class="rb" data-pl title="재생">▶</button><button type="button" class="rb" data-pa title="일시정지">⏸</button><button type="button" class="rb" data-st2 title="정지(처음으로)">■</button></span>' +
+      (kind === 'voice' ? '<span class="rate" title="속도 조절"><button type="button" data-rm>−</button><b data-rv>1.00x</b><button type="button" data-rp>+</button></span>' : '') +
+      '<span class="fs" data-fs title="글자 크기"><button type="button" data-fm>−</button><b data-fv title="숫자를 눌러 직접 입력"></b><button type="button" data-fp>+</button></span>' +
+      '<button type="button" class="rb" data-x title="닫기">✕</button></div>' +
       '<div data-pane="view"><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar"><button type="button" data-sp>▶</button><span class="tm2" data-st>0:00 / 0:00</span><button type="button" class="stamp" data-stamp>▶ 이 줄 시작! (스페이스)</button></div><div class="sy-bar"><button type="button" data-undo>↶ 한 줄 되돌리기</button><span style="flex:1"></span><button type="button" class="ok" data-fin>끝내기</button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar"><button type="button" class="stamp" data-stamp>▶ 이 줄 시작! (스페이스)</button></div><div class="sy-bar"><button type="button" data-undo>↶ 한 줄 되돌리기</button><span style="flex:1"></span><button type="button" class="ok" data-fin>끝내기</button></div></div>' +
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-btns"><button type="button" data-del>🗑 지우기</button><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
     document.body.appendChild(back);
+    // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
+    const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
+    document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
     const nm = back.querySelector('.nm'), view = back.querySelector('.lyr-view');
     const ta = back.querySelector('textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
     nm.textContent = name;
@@ -4410,21 +4430,22 @@ function mixTotalDuration(){
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
-      back.querySelector('[data-fs]').style.visibility = k === 'view' ? '' : 'hidden';
+      back.querySelector('[data-fs]').style.display = k === 'view' ? '' : 'none';
       curTab = k;
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
     let shownKey = null, lastIdx = -2, curTab = 'view';
     let lns = [];
-    let fsz = 20; try{ fsz = Math.max(12, Math.min(60, Number(localStorage.getItem('bgmMixerLyrFs')) || 20)); }catch(e){}
+    let fsz = 18; try{ fsz = Math.max(12, Math.min(60, Number(localStorage.getItem('bgmMixerLyrFs')) || 18)); }catch(e){}
     const fv = back.querySelector('[data-fv]');
     function setFs(v){
-      fsz = Math.max(12, Math.min(60, v)); fv.textContent = fsz;
+      fsz = Math.max(12, Math.min(60, v)); fv.textContent = fsz + 'pt';
       view.style.fontSize = fsz + 'pt'; try{ localStorage.setItem('bgmMixerLyrFs', String(fsz)); }catch(e){}
       lastIdx = -2; upd();
     }
-    back.querySelector('[data-fm]').addEventListener('click', () => setFs(fsz - 2));
-    back.querySelector('[data-fp]').addEventListener('click', () => setFs(fsz + 2));
+    back.querySelector('[data-fm]').addEventListener('click', () => setFs(fsz - 1));
+    back.querySelector('[data-fp]').addEventListener('click', () => setFs(fsz + 1));
+    fv.addEventListener('click', () => { const v = Number(prompt('글자 크기(12~60)', fsz)); if(v >= 12 && v <= 60) setFs(Math.round(v)); });
     function upd(){
       const cur = curInfo(kind); if(!cur) return;
       if(cur.item.name !== name){ name = cur.item.name; nm.textContent = name; shownKey = null; }
@@ -4448,7 +4469,7 @@ function mixTotalDuration(){
     }
     // ---- 시간 맞추기 ----
     const ctl = kind === 'voice' ? voicePlayerCtl : musicPlayerCtl;
-    const syList = back.querySelector('.sy-list'), spBtn = back.querySelector('[data-sp]'), stTxt = back.querySelector('[data-st]');
+    const syList = back.querySelector('.sy-list');
     const stampBtn = back.querySelector('[data-stamp]'), undoBtn = back.querySelector('[data-undo]'), finBtn = back.querySelector('[data-fin]');
     let syT = [], syStamp = [], syPos = 0, syRows = [];
     const mmss = x => { x = Math.max(0, x || 0); const m = Math.floor(x / 60); return m + ':' + String(Math.floor(x % 60)).padStart(2, '0'); };
@@ -4491,19 +4512,34 @@ function mixTotalDuration(){
     stampBtn.addEventListener('pointerdown', e => { e.preventDefault(); doStamp(); });
     undoBtn.addEventListener('click', syUndo);
     finBtn.addEventListener('click', syFinish);
-    spBtn.addEventListener('click', () => { if(ctl.isPlaying()) ctl.pause(); else ctl.play(); });
-    function syUpd(){
-      const cur = curInfo(kind);
-      spBtn.textContent = ctl.isPlaying() ? '⏸' : '▶';
-      stTxt.textContent = cur ? mmss(cur.t) + ' / ' + mmss(cur.item.buffer.duration) : '0:00 / 0:00';
-    }
     const onSpace = e => {
       if(curTab !== 'sync' || e.code !== 'Space') return;
       e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){} if(!e.repeat) doStamp();
     };
     document.addEventListener('keydown', onSpace, true);
-    const timer = setInterval(() => { if(curTab === 'sync') syUpd(); else if(view.offsetParent) upd(); }, 200);
-    const close = () => { clearInterval(timer); document.removeEventListener('keydown', onSpace, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    // ---- 기능 줄 (시간 바·재생·속도) ----
+    const sk = back.querySelector('[data-sk]'), ct = back.querySelector('[data-ct]'), dt = back.querySelector('[data-dt]');
+    let dragging = false;
+    function barUpd(){
+      const dur = ctl.getDuration() || 0, el = ctl.getElapsed() || 0;
+      if(!dragging){ sk.value = dur > 0 ? Math.round(Math.max(0, Math.min(1, el / dur)) * 1000) : 0; ct.textContent = mmss(el); }
+      dt.textContent = mmss(dur);
+      if(kind === 'voice'){ const sl = document.getElementById('voiceSpeedSlider'); back.querySelector('[data-rv]').textContent = (Number(sl.value) || 1).toFixed(2) + 'x'; }
+    }
+    sk.addEventListener('pointerdown', () => { dragging = true; });
+    sk.addEventListener('input', () => { const dur = ctl.getDuration() || 0; ct.textContent = mmss(sk.value / 1000 * dur); });
+    sk.addEventListener('change', () => { dragging = false; ctl.seekToFraction(sk.value / 1000); });
+    sk.addEventListener('pointerup', () => { setTimeout(() => { dragging = false; }, 0); });
+    back.querySelector('[data-pl]').addEventListener('click', () => { if(!ctl.isPlaying()) ctl.play(); });
+    back.querySelector('[data-pa]').addEventListener('click', () => { if(ctl.isPlaying()) ctl.pause(); });
+    back.querySelector('[data-st2]').addEventListener('click', () => { ctl.stop(); });
+    if(kind === 'voice'){
+      const adj = d => { const sl = document.getElementById('voiceSpeedSlider'); sl.value = (Math.max(0.5, Math.min(2.5, Math.round(((Number(sl.value) || 1) + d) * 100) / 100))).toFixed(2); sl.dispatchEvent(new Event('input', { bubbles:true })); barUpd(); };
+      back.querySelector('[data-rm]').addEventListener('click', () => adj(-0.01));
+      back.querySelector('[data-rp]').addEventListener('click', () => adj(0.01));
+    }
+    const timer = setInterval(() => { barUpd(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     const onKey = e => { if(e.key === 'Escape'){ e.preventDefault(); close(); } };
     document.addEventListener('keydown', onKey, true);
     back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
