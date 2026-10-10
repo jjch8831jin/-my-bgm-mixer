@@ -4682,7 +4682,7 @@ function mixTotalDuration(){
       wasPl = pl; lastEl = el;
       const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, cur.t) / 10) % pics.length;
       if(want !== picIdx){ picIdx = want; showBg(want); }
-      syncVideo(pl && !ended);
+      syncVideo((activeTrack === 'all' ? (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying()) : pl) && !ended);
     }
     refreshPics();
     ta.value = L.text || ''; si.value = L.start || 0; ei.value = L.end || Math.round(i.item.buffer.duration);
@@ -4813,7 +4813,7 @@ function mixTotalDuration(){
     function barUpd(){
       const dur = ctl.getDuration() || 0, el = ctl.getElapsed() || 0;
       if(!dragging){ sk.value = dur > 0 ? Math.round(Math.max(0, Math.min(1, el / dur)) * 1000) : 0; ct.textContent = mmss(el); }
-      dt.textContent = mmss(dur); plShow(ctl.isPlaying());
+      dt.textContent = mmss(dur); plShow(activeTrack === 'all' ? (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying()) : ctl.isPlaying());
       if(curTab === 'sync'){ let pi = -1; syStamp.forEach((v, x) => { if(v != null && v <= el + 0.05) pi = x; }); syRows.forEach((r, x) => r.classList.toggle('play', x === pi)); }
       if(kind === 'voice'){ const sl = document.getElementById('voiceSpeedSlider'); back.querySelector('[data-rv]').textContent = (Number(sl.value) || 1).toFixed(2) + 'x'; }
     }
@@ -4823,8 +4823,8 @@ function mixTotalDuration(){
     sk.addEventListener('pointerup', () => { setTimeout(() => { dragging = false; }, 0); });
     const plBtn = back.querySelector('[data-pl]');
     function plShow(on){ plBtn.textContent = on ? '⏸' : '▶'; plBtn.title = on ? '일시정지' : '재생'; plBtn.classList.toggle('playing', on); }
-    plBtn.addEventListener('click', () => { if(ctl.isPlaying()){ ctl.pause(); plShow(false); } else { ctl.play(); plShow(true); } });
-    back.querySelector('[data-st2]').addEventListener('click', () => { ctl.stop(); });
+    plBtn.addEventListener('click', () => { if(activeTrack === 'all'){ document.getElementById('togetherBtn').click(); return; } if(ctl.isPlaying()){ ctl.pause(); plShow(false); } else { ctl.play(); plShow(true); } });
+    back.querySelector('[data-st2]').addEventListener('click', () => { if(activeTrack === 'all') document.getElementById('togetherStopBtn').click(); else ctl.stop(); });
     if(kind === 'voice'){
       const adj = d => { const sl = document.getElementById('voiceSpeedSlider'); sl.value = (Math.max(0.5, Math.min(2.5, Math.round(((Number(sl.value) || 1) + d) * 100) / 100))).toFixed(2); sl.dispatchEvent(new Event('input', { bubbles:true })); barUpd(); };
       back.querySelector('[data-rm]').addEventListener('click', () => adj(-0.01));
@@ -5033,7 +5033,7 @@ function mixTotalDuration(){
     // 음성·음악·통합 선택 (믹서 4번 선택과 같은 것)
     const trkBtns = Array.from(back.querySelectorAll('[data-trk]'));
     const syncTrk = () => trkBtns.forEach(b => b.classList.toggle('on', b.dataset.trk === activeTrack));
-    trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ alert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
+    trkBtns.forEach(b => b.addEventListener('click', () => { if(b.dataset.trk !== activeTrack && (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying())) document.getElementById('togetherStopBtn').click(); const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ alert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
     syncTrk();
     // 백업 저장 / 불러오기
     back.querySelector('[data-bsave]').addEventListener('click', async () => {
