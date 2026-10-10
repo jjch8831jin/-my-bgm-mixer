@@ -316,9 +316,11 @@
   .lyr-box.haspic [data-pane=view]{ justify-content:flex-end; }
   .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(3em + 58px); background:transparent; border-color:transparent; }
   .lyr-box.haspic .lyr-ln{ color:#fff; text-shadow:-2px -2px 0 #1c1917, 2px -2px 0 #1c1917, -2px 2px 0 #1c1917, 2px 2px 0 #1c1917, 0 -2px 0 #1c1917, 0 2px 0 #1c1917, -2px 0 0 #1c1917, 2px 0 0 #1c1917; font-weight:700; }
-  .lyr-box.haspic .lyr-ln.on, .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#fff; }
-  .lyr-box.haspic .lyr-hl{ background:rgba(255,160,40,.50); }
-  .lyr-voice .lyr-box.haspic .lyr-hl{ background:rgba(70,140,255,.50); }
+  .lyr-box.haspic .lyr-ln.on{ color:#ffe04a; }
+  .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#7fe3ff; }
+  .lyr-box.haspic .lyr-hl, .lyr-voice .lyr-box.haspic .lyr-hl{ display:none; }
+  #btnReload{ font:inherit; font-size:13pt; line-height:1; width:30px; height:30px; margin-left:8px; vertical-align:middle; border-radius:50%; border:1px solid #c9b99a; background:#fff7e6; color:#8a5a00; cursor:pointer; padding:0; }
+  #btnReload:hover{ background:#ffe9bd; }
   .lyr-box.haspic.ended .lyr-hl{ visibility:hidden; }
   .lyr-ln{ position:relative; z-index:1; }
   .lyr-ln.on{ color:#9a3412; font-weight:700; }
@@ -655,7 +657,7 @@
 <div class="wrap">
 
   <header>
-    <h1>배경음악 믹서</h1>
+    <h1>배경음악 믹서<button type="button" id="btnReload" title="새로고침" aria-label="새로고침" onclick="location.reload()">⟳</button></h1>
     <p>음성 파일 위에 배경음악을 입혀 하나의 오디오로 내보냅니다.</p>
   </header>
 
