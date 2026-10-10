@@ -310,7 +310,14 @@
   .lyr-ln > span{ display:inline-block; transform-origin:center; transition:transform .3s ease, text-shadow .3s ease; }
   .lyr-sp{ flex:none; }
   .lyr-view{ text-align:center; }
-  .lyr-ln.on{ background:#ffe9c7; color:#9a3412; font-weight:700; }
+  .lyr-ln{ position:relative; z-index:1; }
+  .lyr-ln.on{ color:#9a3412; font-weight:700; }
+  .lyr-hl{ position:absolute; left:8px; right:8px; top:0; height:0; background:#ffe9c7; border-radius:10px; opacity:0; z-index:0; pointer-events:none; }
+  .lyr-hl.mv{ transition:top .35s ease, height .35s ease, opacity .25s ease; }
+  .lyr-voice .lyr-hl{ background:#bfdbfe; }
+  .lyr-voice .lyr-ln.on{ color:#1e3a8a; }
+  .lyr-voice .sy-row.play{ background:#bfdbfe; }
+  .lyr-voice .sy-row.play .tx2, .lyr-voice .sy-row.play .tm{ color:#1e3a8a; }
   .lyr-ln.on > span{ transform:scale(1.18); }
   .sy-list{ font-size:18pt; position:relative; flex:1; min-height:0; overflow:auto; background:#fffdf5; border:1px solid #d6d3c4; border-radius:8px; padding:8px; }
   .sy-row{ display:flex; gap:14px; align-items:baseline; padding:6px 14px; border:3px solid transparent; border-radius:10px; color:#000; line-height:1.5; }
@@ -4458,7 +4465,7 @@ function mixTotalDuration(){
       curTab = k;
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
-    let shownKey = null, lastIdx = -2, curTab = 'view';
+    let shownKey = null, lastIdx = -2, curTab = 'view', hl = null;
     let lns = [];
     let fsz = 18; try{ fsz = Math.max(12, Math.min(60, Number(localStorage.getItem('bgmMixerLyrFs')) || 18)); }catch(e){}
     const fv = back.querySelector('[data-fv]');
@@ -4476,6 +4483,7 @@ function mixTotalDuration(){
       const c = lyrCalc(kind, cur), key = name + '|' + c.items.join('\n');
       if(key !== shownKey){
         shownKey = key; lastIdx = -2; view.textContent = ''; lns = [];
+        hl = document.createElement('div'); hl.className = 'lyr-hl'; view.appendChild(hl);
         if(!c.has){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '저장된 가사가 없습니다. "입력"에서 붙여넣어 주세요.'; view.appendChild(e); }
         else c.items.forEach(t => { const d = document.createElement('div'); d.className = 'lyr-ln'; const sp = document.createElement('span'); sp.textContent = t; d.appendChild(sp); view.appendChild(d); lns.push(d); });
         const sp2 = document.createElement('div'); sp2.className = 'lyr-sp'; view.appendChild(sp2);
@@ -4487,6 +4495,14 @@ function mixTotalDuration(){
         const ls = lns;
         for(let x = 0; x < ls.length; x++) ls[x].classList.toggle('on', x === c.idx);
         const el = ls[c.idx];
+        if(hl){
+          if(el && c.has){
+            const first = hl.style.opacity !== '1';
+            if(first) hl.classList.remove('mv');
+            hl.style.top = el.offsetTop + 'px'; hl.style.height = el.offsetHeight + 'px'; hl.style.opacity = '1';
+            if(first){ void hl.offsetWidth; requestAnimationFrame(() => hl && hl.classList.add('mv')); }
+          } else hl.style.opacity = '0';
+        }
         if(el && c.has) view.scrollTo({ top: el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4, behavior:'smooth' });
       }
     }
