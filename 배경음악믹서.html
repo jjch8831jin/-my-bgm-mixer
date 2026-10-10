@@ -4488,7 +4488,7 @@ function mixTotalDuration(){
     const picBox = back.querySelector('.lyr-picbox'), picImg = picBox.querySelector('img'), thumb = back.querySelector('[data-thumb]');
     function setPic(){
       const u = loadImgs()[keyOf(kind, name)];
-      const veil = kind === 'voice' ? 'rgba(246,251,255,.70)' : 'rgba(255,253,245,.70)';
+      const veil = kind === 'voice' ? 'rgba(246,251,255,.42)' : 'rgba(255,253,245,.42)';
       if(u){ thumb.src = u; thumb.style.display = 'block'; view.style.backgroundImage = 'linear-gradient(' + veil + ',' + veil + '), url("' + u + '")'; view.style.backgroundSize = 'cover'; view.style.backgroundPosition = 'center'; view.style.backgroundRepeat = 'no-repeat'; }
       else { thumb.removeAttribute('src'); thumb.style.display = 'none'; view.style.backgroundImage = ''; }
       back.querySelector('[data-imgdel]').disabled = !u;
@@ -4640,7 +4640,7 @@ function mixTotalDuration(){
       back.querySelector('[data-rp]').addEventListener('click', () => adj(0.01));
     }
     const timer = setInterval(() => { barUpd(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
-    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
@@ -4666,14 +4666,20 @@ function mixTotalDuration(){
     back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
     const imgF = back.querySelector('[data-imgf]');
     back.querySelector('[data-imgadd]').addEventListener('click', () => imgF.click());
-    imgF.addEventListener('change', async () => {
-      const f = imgF.files && imgF.files[0]; imgF.value = ''; if(!f) return;
+    async function putImage(f){
       try{
         const u = await shrinkImage(f), a = loadImgs(); a[keyOf(kind, name)] = u;
         if(!saveImgs(a)){ alert('이미지가 너무 커서 저장하지 못했습니다. 더 작은 이미지를 넣어 주세요.'); return; }
         setPic();
       }catch(e){ alert('이미지를 읽지 못했습니다. 다른 이미지로 해 주세요.'); }
-    });
+    }
+    imgF.addEventListener('change', () => { const f = imgF.files && imgF.files[0]; imgF.value = ''; if(f) putImage(f); });
+    // 사이트에서 복사한 이미지 붙여넣기(Ctrl+V) / 끌어다 놓기
+    const imgOf = dt => { if(!dt) return null; const fl = Array.from(dt.files || []).find(x => /^image\//.test(x.type)); if(fl) return fl; const it = Array.from(dt.items || []).find(x => x.kind === 'file' && /^image\//.test(x.type)); return it ? it.getAsFile() : null; };
+    const onPaste = e => { const f = imgOf(e.clipboardData); if(f){ e.preventDefault(); e.stopPropagation(); putImage(f); } };
+    const onDragOver = e => { if(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) e.preventDefault(); };
+    const onDrop = e => { const f = imgOf(e.dataTransfer); if(f){ e.preventDefault(); e.stopPropagation(); putImage(f); } };
+    document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', onDrop);
     back.querySelector('[data-imgdel]').addEventListener('click', () => { const a = loadImgs(); delete a[keyOf(kind, name)]; saveImgs(a); setPic(); });
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
