@@ -4870,24 +4870,30 @@ function mixTotalDuration(){
     let vexpBusy = false;
     back.querySelector('[data-vexp]').addEventListener('click', async () => {
       if(vexpBusy) return;
-      if(!voiceBuffer || !musicBuffer){ alert('영상을 만들려면 음성과 배경음악을 둘 다 불러와야 합니다.'); return; }
+      const trk = activeTrack, vk = trk === 'music' ? 'music' : 'voice';
+      if(trk === 'voice' && !voiceBuffer){ alert('음성을 먼저 불러와 주세요.'); return; }
+      if(trk === 'music' && !musicBuffer){ alert('배경음악을 먼저 불러와 주세요.'); return; }
+      if(trk === 'all' && (!voiceBuffer || !musicBuffer)){ alert('통합 영상을 만들려면 음성과 배경음악을 둘 다 불러와야 합니다.'); return; }
       if(!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream){ alert('이 브라우저는 영상 저장을 지원하지 않습니다. 크롬을 사용해 주세요.'); return; }
       const cands0 = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
       const mime0 = cands0.find(m => { try{ return MediaRecorder.isTypeSupported(m); }catch(e){ return false; } }) || 'video/webm';
-      const ext0 = /mp4/.test(mime0) ? 'mp4' : 'webm', base0 = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '영상');
+      const ext0 = /mp4/.test(mime0) ? 'mp4' : 'webm', base0 = (dispName(vk, ((curInfo(vk) || { item: { name: name } }).item.name)).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '영상');
       let hnd0 = null; try{ hnd0 = await pickSaveHandle(base0 + '.' + ext0, ext0, ext0 === 'mp4' ? 'video/mp4' : 'video/webm'); }catch(e){ return; }
       vexpBusy = true; let ov = null, stopFlag = false, ctxA = null, srcA = null, rec = null;
       const cleanup = () => { try{ if(srcA){ srcA.onended = null; srcA.stop(); } }catch(e){} if(ov){ ov.remove(); ov = null; } vexpBusy = false; };
       try{
-        busyMsg('믹싱 중… (영상에 들어갈 소리를 만듭니다)');
+        busyMsg(trk === 'all' ? '믹싱 중… (영상에 들어갈 소리를 만듭니다)' : '소리 준비 중…');
         try{ voicePlayerCtl.pause(); }catch(e){} try{ musicPlayerCtl.pause(); }catch(e){}
-        const okMix = await performMix(); busyMsg('');
-        const M = window.__lastMix; if(!okMix || !mixedBuffer || !M){ alert('믹싱에 실패했습니다.'); vexpBusy = false; return; }
+        let audioBuf = null, M = null;
+        if(trk === 'all'){ const okMix = await performMix(); audioBuf = mixedBuffer; M = window.__lastMix; if(!okMix || !audioBuf || !M){ busyMsg(''); alert('믹싱에 실패했습니다.'); vexpBusy = false; return; } }
+        else if(trk === 'voice'){ const tv = getTrimmedVoiceBuffer(), r0 = getVoiceTrimRange(); audioBuf = await buildSegmentedVoiceBuffer(tv, r0.start, voiceSpeed, voiceSpeedSegments, () => {}); M = { voiceDelay: 0, vDur: audioBuf.duration, mDur: audioBuf.duration, duration: audioBuf.duration }; }
+        else { const tm0 = getTrimmedMusicBuffer(), r1 = getMusicTrimRange(); audioBuf = await buildSegmentedMusicBuffer(tm0, r1.start, musicSpeed, musicSpeedSegments, () => {}); M = { voiceDelay: 0, vDur: audioBuf.duration, mDur: audioBuf.duration, duration: audioBuf.duration }; }
+        busyMsg('');
         busyMsg('사진·동영상 준비 중…');
-        const items = kind === 'voice' ? voiceItems : musicItems, W = 1280, H = 720, music = kind !== 'voice';
+        const items = vk === 'voice' ? voiceItems : musicItems, W = 1280, H = 720, music = vk === 'music';
         const pre = {};
         for(const itm of items){
-          const arr = await getImgs(keyOf(kind, itm.name)), out = [];
+          const arr = await getImgs(keyOf(vk, itm.name)), out = [];
           for(const it of arr){
             try{
               if(isVid(it)){
@@ -4959,7 +4965,7 @@ function mixTotalDuration(){
             const src = o.v || o.im, k = Math.min(W / o.w, H / o.h), dw = o.w * k, dh = o.h * k;
             try{ g.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh); }catch(e){}
           }
-          const C = lyrCalc(kind, { item: inf.item, t: inf.t }), hlC = music ? '#ffe04a' : '#7fe3ff';
+          const C = lyrCalc(vk, { item: inf.item, t: inf.t }), hlC = music ? '#ffe04a' : '#7fe3ff';
           const key = name2;
           if(key !== lastKey){ lastKey = key; lastIdx = -2; fadeFrom = null; }
           const idx = C.has ? C.idx : -1;
@@ -4971,12 +4977,12 @@ function mixTotalDuration(){
         };
         // 녹화 준비
         ctxA = getCtx(); await ctxA.resume();
-        const dest = ctxA.createMediaStreamDestination(); srcA = ctxA.createBufferSource(); srcA.buffer = mixedBuffer; srcA.connect(dest);
+        const dest = ctxA.createMediaStreamDestination(); srcA = ctxA.createBufferSource(); srcA.buffer = audioBuf; srcA.connect(dest);
         const vs = cv.captureStream(30), stream = new MediaStream([...vs.getVideoTracks(), ...dest.stream.getAudioTracks()]);
         const mime = mime0;
         rec = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 4000000, audioBitsPerSecond: 192000 }, mime ? { mimeType: mime } : {}));
         const chunks = []; rec.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
-        const total = mixedBuffer.duration;
+        const total = audioBuf.duration;
         ov = document.createElement('div'); ov.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;color:#fff;font-size:13pt;text-align:center';
         const info = document.createElement('div'); const stopB = document.createElement('button'); stopB.type = 'button'; stopB.textContent = '■ 중지(취소)';
         stopB.style.cssText = 'font-size:13pt;padding:8px 18px;border-radius:10px;border:1px solid #fff;background:#be123c;color:#fff;font-weight:700;cursor:pointer';
