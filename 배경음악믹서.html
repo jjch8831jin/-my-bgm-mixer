@@ -316,8 +316,8 @@
   .lyr-box.haspic [data-pane=view]{ justify-content:flex-end; }
   .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(3em + 58px); background:transparent; border-color:transparent; }
   .lyr-box.haspic .lyr-ln{ color:#fff; text-shadow:-2px -2px 0 #1c1917, 2px -2px 0 #1c1917, -2px 2px 0 #1c1917, 2px 2px 0 #1c1917, 0 -2px 0 #1c1917, 0 2px 0 #1c1917, -2px 0 0 #1c1917, 2px 0 0 #1c1917; font-weight:700; }
-  .lyr-box.haspic .lyr-ln.on{ color:#9a3412; text-shadow:none; }
-  .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#1e3a8a; }
+  .lyr-box.haspic .lyr-ln.on, .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#fff; }
+  .lyr-box.haspic .lyr-hl{ display:none; }
   .lyr-ln{ position:relative; z-index:1; }
   .lyr-ln.on{ color:#9a3412; font-weight:700; }
   .lyr-hl{ position:absolute; left:8px; right:8px; top:0; height:0; background:#ffe9c7; border-radius:10px; opacity:0; z-index:0; pointer-events:none; }
@@ -347,9 +347,14 @@
   .lyr-empty{ color:#44403c; font-size:12pt; padding:14px; }
   .lyr-voice, .lyr-voice .lyr-box{ background:#e3f0fa; }
   .lyr-voice .lyr-view, .lyr-voice .sy-list, .lyr-voice .lyr-box textarea{ background:#f6fbff; border-color:#b6d0e4; }
-  .lyr-picbox{ flex:0 1 58%; min-height:0; display:none; justify-content:center; align-items:center; margin-bottom:8px; }
-  .lyr-picbox img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; border:1px solid #d6d3c4; }
-  .lyr-btns img[data-thumb]{ height:56px; max-width:120px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:none; }
+  .lyr-picbox{ display:none !important; }
+  .lyr-box{ position:relative; z-index:1; }
+  .lyr-bg{ position:absolute; top:0; left:0; right:0; bottom:0; background-size:contain; background-position:center; background-repeat:no-repeat; opacity:0; transition:opacity 1s ease; z-index:0; pointer-events:none; }
+  .lyr-thumbs{ display:none; gap:8px; overflow-x:auto; flex:none; margin-top:10px; padding-bottom:2px; }
+  .lyr-thumbs .th{ position:relative; flex:none; }
+  .lyr-thumbs .th img{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
+  .lyr-box .lyr-thumbs .th button{ position:absolute; top:2px; right:2px; width:22px; height:22px; padding:0; border-radius:50%; font-size:10pt; line-height:1; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-weight:800; }
+  .lyr-box.haspic.ended .lyr-view{ visibility:hidden; }
   .lyr-box .lyr-btns button[data-imgadd]{ background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
   .lyr-box .lyr-btns button[data-imgdel]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
   @media (max-width:600px){ .lyr-btns{ gap:5px !important; } .lyr-box .lyr-btns button{ font-size:10.5pt; padding:6px 7px; white-space:nowrap; } .lyr-box .lyr-btns button.ok{ padding:6px 12px; } .lyr-btns img[data-thumb]{ display:none !important; } }
@@ -4448,8 +4453,20 @@ function mixTotalDuration(){
     return { text:dispName(kind, name), lyric:false, name:dispName(kind, name), has:c.has };
   }
   const IMG_KEY = 'bgmMixerLyrImgs';
-  function loadImgs(){ try{ return JSON.parse(localStorage.getItem(IMG_KEY) || '{}') || {}; }catch(e){ return {}; } }
-  function saveImgs(a){ try{ localStorage.setItem(IMG_KEY, JSON.stringify(a)); return true; }catch(e){ return false; } }
+  function idbOpen(){ return new Promise((res, rej) => { try{ const r = indexedDB.open('bgmMixerImgs', 1); r.onupgradeneeded = () => r.result.createObjectStore('imgs'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }catch(e){ rej(e); } }); }
+  async function getImgs(key){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').get(key); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
+  async function setImgs(key, arr){ try{ const db = await idbOpen(); return await new Promise(res => { const tx = db.transaction('imgs', 'readwrite'), st = tx.objectStore('imgs'); if(arr.length) st.put(arr, key); else st.delete(key); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
+  let imgMigrated = null;
+  function migrateImgs(){
+    if(!imgMigrated) imgMigrated = (async () => {
+      let old = {}; try{ old = JSON.parse(localStorage.getItem(IMG_KEY) || '{}') || {}; }catch(e){}
+      const ks = Object.keys(old); if(!ks.length) return;
+      let ok = true;
+      for(const k of ks){ const ex = await getImgs(k); if(!ex.length && !(await setImgs(k, [old[k]]))) ok = false; }
+      if(ok){ try{ localStorage.removeItem(IMG_KEY); }catch(e){} }
+    })();
+    return imgMigrated;
+  }
   function shrinkImage(file){
     return new Promise((res, rej) => {
       const fr = new FileReader();
@@ -4485,7 +4502,8 @@ function mixTotalDuration(){
       '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>끝내기</button></div></div>' +
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
-      '<div class="lyr-btns"><img data-thumb alt=""><button type="button" data-imgadd>🖼 이미지 넣기</button><button type="button" data-imgdel>이미지 빼기</button><button type="button" data-del>🗑 지우기</button><input type="file" accept="image/*" data-imgf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
+      '<div class="lyr-thumbs" data-thumbs></div>' +
+      '<div class="lyr-btns"><button type="button" data-imgadd>🖼 이미지 추가</button><button type="button" data-imgdel>이미지 빼기</button><button type="button" data-del>🗑 지우기</button><input type="file" accept="image/*" multiple data-imgf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
     document.body.appendChild(back);
     // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
     const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
@@ -4493,17 +4511,42 @@ function mixTotalDuration(){
     const nm = back.querySelector('.nm'), view = back.querySelector('.lyr-view');
     const ta = back.querySelector('textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
-    const picBox = back.querySelector('.lyr-picbox'), picImg = picBox.querySelector('img'), thumb = back.querySelector('[data-thumb]');
-    let hasPic = false;
-    function setPic(){
-      const u = loadImgs()[keyOf(kind, name)];
-      const bx = back.querySelector('.lyr-box'); picBox.style.display = 'none';
-      if(u){ thumb.src = u; thumb.style.display = 'block'; back.style.backgroundImage = 'url("' + u + '")'; back.style.backgroundSize = 'contain'; back.style.backgroundPosition = 'center'; back.style.backgroundRepeat = 'no-repeat'; bx.classList.add('haspic'); }
-      else { thumb.removeAttribute('src'); thumb.style.display = 'none'; back.style.backgroundImage = ''; bx.classList.remove('haspic'); }
-      hasPic = !!u; try{ lastIdx = -2; upd(); }catch(e){}
-      back.querySelector('[data-imgdel]').disabled = !u;
+    const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg';
+    back.insertBefore(bgB, back.firstChild); back.insertBefore(bgA, back.firstChild);
+    let pics = [], picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
+    const thumbsEl = back.querySelector('[data-thumbs]'), imgBx = back.querySelector('.lyr-box');
+    function showBg(i){
+      if(i < 0){ bgA.style.opacity = '0'; bgB.style.opacity = '0'; bgFront = null; return; }
+      const nxt = bgFront === bgA ? bgB : bgA; nxt.style.backgroundImage = 'url("' + pics[i] + '")'; nxt.style.opacity = '1';
+      if(bgFront) bgFront.style.opacity = '0'; bgFront = nxt;
     }
-    setPic();
+    function renderPics(){
+      hasPic = pics.length > 0; imgBx.classList.toggle('haspic', hasPic); picIdx = -2;
+      thumbsEl.textContent = '';
+      pics.forEach((u, x) => {
+        const w = document.createElement('div'); w.className = 'th'; const im = document.createElement('img'); im.src = u; im.alt = '';
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.title = '이 사진 빼기';
+        b.addEventListener('click', async () => { pics.splice(x, 1); await setImgs(keyOf(kind, name), pics); renderPics(); });
+        w.appendChild(im); w.appendChild(b); thumbsEl.appendChild(w);
+      });
+      thumbsEl.style.display = hasPic ? 'flex' : 'none';
+      back.querySelector('[data-imgdel]').disabled = !hasPic;
+      if(!hasPic) showBg(-1);
+      try{ lastIdx = -2; upd(); picTick(); }catch(e){}
+    }
+    async function refreshPics(){ await migrateImgs(); const k = keyOf(kind, name); lastNameKey = k; const a = await getImgs(k); if(k === lastNameKey){ pics = a; ended = false; imgBx.classList.remove('ended'); renderPics(); } }
+    let lastEl = 0, wasPl = false;
+    function picTick(){
+      const cur = curInfo(kind); if(!cur) return;
+      let pl = false, el = 0, dur = 0; try{ pl = ctl.isPlaying(); el = ctl.getElapsed() || 0; dur = ctl.getDuration() || 0; }catch(e){}
+      if(pl){ if(ended){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; } }
+      else if(wasPl && dur > 0 && lastEl >= dur - 1.0 && el < 0.3){ ended = true; imgBx.classList.add('ended'); }
+      if(!pl && ended && el > 0.5){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; }
+      wasPl = pl; lastEl = el;
+      const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, cur.t) / 10) % pics.length;
+      if(want !== picIdx){ picIdx = want; showBg(want); }
+    }
+    refreshPics();
     ta.value = L.text || ''; si.value = L.start || 0; ei.value = L.end || Math.round(i.item.buffer.duration);
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
@@ -4525,7 +4568,7 @@ function mixTotalDuration(){
     fv.addEventListener('click', () => { const v = Number(prompt('글자 크기(12~60)', fsz)); if(v >= 12 && v <= 60) setFs(Math.round(v)); });
     function upd(){
       const cur = curInfo(kind); if(!cur) return;
-      if(cur.item.name !== name){ name = cur.item.name; nm.textContent = dispName(kind, name); shownKey = null; setPic(); }
+      if(cur.item.name !== name){ name = cur.item.name; nm.textContent = dispName(kind, name); shownKey = null; refreshPics(); }
       const c = lyrCalc(kind, cur), key = name + '|' + c.items.join('\n');
       if(key !== shownKey){
         shownKey = key; lastIdx = -2; view.textContent = ''; lns = [];
@@ -4649,7 +4692,7 @@ function mixTotalDuration(){
       back.querySelector('[data-rm]').addEventListener('click', () => adj(-0.01));
       back.querySelector('[data-rp]').addEventListener('click', () => adj(0.01));
     }
-    const timer = setInterval(() => { barUpd(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
+    const timer = setInterval(() => { barUpd(); picTick(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
     const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
@@ -4676,21 +4719,36 @@ function mixTotalDuration(){
     back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
     const imgF = back.querySelector('[data-imgf]');
     back.querySelector('[data-imgadd]').addEventListener('click', () => imgF.click());
-    async function putImage(f){
-      try{
-        const u = await shrinkImage(f), a = loadImgs(); a[keyOf(kind, name)] = u;
-        if(!saveImgs(a)){ alert('이미지가 너무 커서 저장하지 못했습니다. 더 작은 이미지를 넣어 주세요.'); return; }
-        setPic();
-      }catch(e){ alert('이미지를 읽지 못했습니다. 다른 이미지로 해 주세요.'); }
+    async function putImages(fs){
+      fs = Array.from(fs || []).filter(Boolean); if(!fs.length) return;
+      const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0;
+      for(const f of fs){ try{ cur.push(await shrinkImage(f)); }catch(e){ bad++; } }
+      if(cur.length === pics.length && bad){ alert('이미지를 읽지 못했습니다. 다른 이미지로 해 주세요.'); return; }
+      if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
+      if(bad) alert('읽지 못한 이미지 ' + bad + '장은 빼고 저장했습니다.');
+      pics = cur; renderPics();
     }
-    imgF.addEventListener('change', () => { const f = imgF.files && imgF.files[0]; imgF.value = ''; if(f) putImage(f); });
+    const putImage = f => putImages([f]);
+    imgF.addEventListener('change', () => { const fs = Array.from(imgF.files || []); imgF.value = ''; putImages(fs); });
     // 사이트에서 복사한 이미지 붙여넣기(Ctrl+V) / 끌어다 놓기
-    const imgOf = dt => { if(!dt) return null; const fl = Array.from(dt.files || []).find(x => /^image\//.test(x.type)); if(fl) return fl; const it = Array.from(dt.items || []).find(x => x.kind === 'file' && /^image\//.test(x.type)); return it ? it.getAsFile() : null; };
-    const onPaste = e => { const f = imgOf(e.clipboardData); if(f){ e.preventDefault(); e.stopPropagation(); putImage(f); } };
-    const onDragOver = e => { if(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) e.preventDefault(); };
-    const onDrop = e => { const f = imgOf(e.dataTransfer); if(f){ e.preventDefault(); e.stopPropagation(); putImage(f); } };
+    const imgsOf = dt => { if(!dt) return []; const fl = Array.from(dt.files || []).filter(x => /^image\//.test(x.type)); if(fl.length) return fl; const it = Array.from(dt.items || []).filter(x => x.kind === 'file' && /^image\//.test(x.type)).map(x => x.getAsFile()).filter(Boolean); return it; };
+    const onPaste = e => { const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); putImages(fs); } };
+    const onDragOver = e => { if(e.dataTransfer) e.preventDefault(); };
+    const urlOf = dt => {
+      if(!dt) return '';
+      const h = dt.getData && dt.getData('text/html'); const m = h && /<img[^>]+src=["']([^"']+)["']/i.exec(h); if(m) return m[1];
+      const u = ((dt.getData && (dt.getData('text/uri-list') || dt.getData('text/plain'))) || '').split(/\r?\n/)[0].trim();
+      return /^(https?:|data:image)/i.test(u) ? u : '';
+    };
+    const onDrop = async e => {
+      e.preventDefault(); e.stopPropagation();
+      const fs = imgsOf(e.dataTransfer); if(fs.length){ putImages(fs); return; }
+      const u = urlOf(e.dataTransfer); if(!u) return;
+      try{ const r = await fetch(u); const b = await r.blob(); if(!/^image\//.test(b.type)) throw new Error('t'); putImage(b); }
+      catch(x){ alert('이 사이트의 이미지는 끌어다 놓아서 가져올 수 없습니다.\n이미지를 우클릭해서 "이미지 복사"를 한 뒤 Ctrl+V로 붙여넣어 주세요.'); }
+    };
     document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', onDrop);
-    back.querySelector('[data-imgdel]').addEventListener('click', () => { const a = loadImgs(); delete a[keyOf(kind, name)]; saveImgs(a); setPic(); });
+    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진 ' + pics.length + '장을 모두 뺄까요?')) return; pics = []; await setImgs(keyOf(kind, name), pics); renderPics(); });
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
       const a = loadLyr(), txt = ta.value.trim(), k = keyOf(kind, name);
