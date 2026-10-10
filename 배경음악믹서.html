@@ -341,10 +341,10 @@
   .lyr-voice .lyr-view, .lyr-voice .sy-list, .lyr-voice .lyr-box textarea{ background:#f6fbff; border-color:#b6d0e4; }
   .lyr-picbox{ flex:none; display:none; justify-content:center; margin-bottom:8px; }
   .lyr-picbox img{ max-width:100%; max-height:34vh; object-fit:contain; border-radius:8px; border:1px solid #d6d3c4; background:#fff; }
-  .lyr-imgrow{ display:flex; align-items:center; gap:10px; margin-top:10px; flex:none; }
-  .lyr-imgrow img{ height:56px; max-width:120px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:none; }
-  .lyr-box .lyr-imgrow button[data-imgadd]{ background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
-  .lyr-box .lyr-imgrow button[data-imgdel]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
+  .lyr-btns img[data-thumb]{ height:56px; max-width:120px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:none; }
+  .lyr-box .lyr-btns button[data-imgadd]{ background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
+  .lyr-box .lyr-btns button[data-imgdel]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
+  @media (max-width:600px){ .lyr-btns{ gap:5px !important; } .lyr-box .lyr-btns button{ font-size:10.5pt; padding:6px 7px; white-space:nowrap; } .lyr-box .lyr-btns button.ok{ padding:6px 12px; } .lyr-btns img[data-thumb]{ display:none !important; } }
   .lyr-btns{ display:flex; gap:10px; margin-top:14px; }
   .marq{ text-align:left !important; }
   .marq > span{ animation:marqL var(--dur,14s) linear infinite; }
@@ -4477,8 +4477,7 @@ function mixTotalDuration(){
       '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>끝내기</button></div></div>' +
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
-      '<div class="lyr-imgrow"><img data-thumb alt=""><button type="button" data-imgadd>🖼 이미지 넣기</button><button type="button" data-imgdel>이미지 빼기</button><input type="file" accept="image/*" data-imgf style="display:none"></div>' +
-      '<div class="lyr-btns"><button type="button" data-del>🗑 지우기</button><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
+      '<div class="lyr-btns"><img data-thumb alt=""><button type="button" data-imgadd>🖼 이미지 넣기</button><button type="button" data-imgdel>이미지 빼기</button><button type="button" data-del>🗑 지우기</button><input type="file" accept="image/*" data-imgf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
     document.body.appendChild(back);
     // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
     const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
@@ -4489,8 +4488,9 @@ function mixTotalDuration(){
     const picBox = back.querySelector('.lyr-picbox'), picImg = picBox.querySelector('img'), thumb = back.querySelector('[data-thumb]');
     function setPic(){
       const u = loadImgs()[keyOf(kind, name)];
-      if(u){ picImg.src = u; thumb.src = u; picBox.style.display = 'flex'; thumb.style.display = 'block'; }
-      else { picImg.removeAttribute('src'); thumb.removeAttribute('src'); picBox.style.display = 'none'; thumb.style.display = 'none'; }
+      const veil = kind === 'voice' ? 'rgba(246,251,255,.70)' : 'rgba(255,253,245,.70)';
+      if(u){ thumb.src = u; thumb.style.display = 'block'; view.style.backgroundImage = 'linear-gradient(' + veil + ',' + veil + '), url("' + u + '")'; view.style.backgroundSize = 'cover'; view.style.backgroundPosition = 'center'; view.style.backgroundRepeat = 'no-repeat'; }
+      else { thumb.removeAttribute('src'); thumb.style.display = 'none'; view.style.backgroundImage = ''; }
       back.querySelector('[data-imgdel]').disabled = !u;
     }
     setPic();
