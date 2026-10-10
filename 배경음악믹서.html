@@ -306,10 +306,12 @@
   .lyr-box .lyr-tabs button[data-sw]:disabled{ opacity:.4; cursor:default; }
   .lyr-box .lyr-tabs button.rb{ width:44px; height:44px; padding:0; background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:800; }
   .lyr-view{ position:relative; flex:1; min-height:0; overflow:auto; background:#fffdf5; border:1px solid #d6d3c4; border-radius:8px; padding:8px; }
-  .lyr-ln{ padding:8px calc(8% + 28px) 8px 8%; margin:2px 0; border-radius:10px; color:#1c1917; line-height:1.5; text-align:center; transition:color .3s ease, background-color .3s ease; }
-  .lyr-ln > span{ display:inline-block; transform-origin:center; transition:transform .3s ease, text-shadow .3s ease; }
+  .lyr-ln{ padding:8px calc(8% + 28px) 8px 8%; margin:2px 0; border-radius:10px; color:#1c1917; line-height:1.5; text-align:center; transition:color .9s ease, background-color .9s ease; font-weight:700; }
+  .lyr-ln > span{ display:inline-block; transform-origin:center; transition:transform .9s ease, text-shadow .9s ease; }
   .lyr-sp{ flex:none; }
   .lyr-view{ text-align:center; }
+  .lyr-view{ scrollbar-width:none; -ms-overflow-style:none; }
+  .lyr-view::-webkit-scrollbar{ display:none; width:0; height:0; }
   .lyr-box.haspic{ background:transparent; --veil:rgba(250,246,232,.88); }
   .lyr-voice .lyr-box.haspic{ background:transparent; --veil:rgba(227,240,250,.88); }
   .lyr-box.haspic .lyr-head, .lyr-box.haspic .lyr-bar, .lyr-box.haspic .lyr-opt{ background:var(--veil); box-shadow:0 0 0 6px var(--veil); border-radius:8px; }
@@ -319,13 +321,13 @@
   .lyr-box.haspic .lyr-ln.on{ color:#ffe04a; }
   .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#7fe3ff; }
   .lyr-box.haspic .lyr-hl, .lyr-voice .lyr-box.haspic .lyr-hl{ display:none; }
-  #btnReload{ font:inherit; font-size:13pt; line-height:1; width:30px; height:30px; margin-left:8px; vertical-align:middle; border-radius:50%; border:1px solid #c9b99a; background:#fff7e6; color:#8a5a00; cursor:pointer; padding:0; }
-  #btnReload:hover{ background:#ffe9bd; }
+  #btnReload{ display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; margin-left:8px; vertical-align:middle; border-radius:50%; border:2px solid #d9822b; background:#ffb454; color:#5a2d00; cursor:pointer; padding:0; }
+  #btnReload:hover{ background:#ffc87a; }
   .lyr-box.haspic.ended .lyr-hl{ visibility:hidden; }
   .lyr-ln{ position:relative; z-index:1; }
-  .lyr-ln.on{ color:#9a3412; font-weight:700; }
+  .lyr-ln.on{ color:#9a3412; }
   .lyr-hl{ position:absolute; left:8px; right:8px; top:0; height:0; background:#ffe9c7; border-radius:10px; opacity:0; z-index:0; pointer-events:none; }
-  .lyr-hl.mv{ transition:top .35s ease, height .35s ease, opacity .25s ease; }
+  .lyr-hl.mv{ transition:top .8s ease, height .8s ease, opacity .6s ease; }
   .lyr-voice .lyr-hl{ background:#bfdbfe; }
   .lyr-voice .lyr-ln.on{ color:#1e3a8a; }
   .lyr-voice .sy-row.play{ background:#bfdbfe; }
@@ -657,7 +659,7 @@
 <div class="wrap">
 
   <header>
-    <h1>배경음악 믹서<button type="button" id="btnReload" title="새로고침" aria-label="새로고침" onclick="location.reload()">⟳</button></h1>
+    <h1>배경음악 믹서<button type="button" id="btnReload" title="새로고침" aria-label="새로고침" onclick="location.reload()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3v5h-5"/></svg></button></h1>
     <p>음성 파일 위에 배경음악을 입혀 하나의 오디오로 내보냅니다.</p>
   </header>
 
