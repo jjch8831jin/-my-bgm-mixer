@@ -265,20 +265,24 @@
   .head-title .tx{ text-align:left; }
   .head-title .tx.st, .all-titles .tx.st{ -webkit-mask-image:none; mask-image:none; }
   .head-title .tx.st > span, .all-titles .tx.st > span{ display:inline; }
-  .lyr-back{ position:fixed; inset:0; background:rgba(10,16,24,.62); display:flex; align-items:center; justify-content:center; z-index:9999; padding:12px; }
-  .lyr-box{ width:min(760px,100%); max-height:96vh; overflow:auto; background:#1f2d3a; border:1px solid #6f8aa0; border-radius:14px; padding:16px 20px; color:#f4f8fc; font-size:14pt; box-shadow:0 12px 40px rgba(0,0,0,.5); box-sizing:border-box; }
+  .lyr-back{ position:fixed; inset:0; background:#1f2d3a; display:flex; z-index:9999; padding:0; }
+  .lyr-box{ width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; background:#1f2d3a; padding:14px 18px; color:#f4f8fc; font-size:14pt; box-sizing:border-box; }
+  .lyr-box [data-pane]{ flex:1; min-height:0; display:flex; flex-direction:column; }
+  .lyr-head .lb{ color:#fff; }
   .lyr-head{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
   .lyr-head .nm{ color:#7dffa8; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .lyr-box button{ font:inherit; font-size:14pt; color:#f4f8fc; background:#455c70; border:1px solid #6f8aa0; border-radius:8px; padding:6px 16px; cursor:pointer; }
   .lyr-box button.ok{ background:#ffb347; color:#1c1917; font-weight:700; border-color:#ffb347; padding:6px 26px; }
-  .lyr-box textarea{ width:100%; box-sizing:border-box; height:min(210px,36vh); background:#16212c; border:1px solid #455c70; border-radius:8px; padding:10px 14px; color:#f4f8fc; font:inherit; font-size:14pt; line-height:1.7; resize:vertical; }
+  .lyr-box textarea{ width:100%; box-sizing:border-box; flex:1; min-height:120px; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:10px 14px; color:#f4f8fc; font:inherit; font-size:14pt; line-height:1.7; resize:vertical; }
   .lyr-opt{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:12px 0 4px; font-size:12pt; color:#c9d6e2; }
   .lyr-opt input{ width:84px; background:#16212c; border:1px solid #6f8aa0; border-radius:6px; padding:2px 8px; color:#fff; font-size:14pt; }
-  .lyr-tabs{ display:flex; gap:8px; margin-bottom:10px; }
+  .lyr-tabs{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .lyr-tabs .fs{ margin-left:auto; display:flex; align-items:center; gap:8px; color:#c9d6e2; }
+  .lyr-tabs .fs b{ min-width:2.2em; text-align:center; color:#fff; }
   .lyr-box .lyr-tabs button{ background:transparent; border-color:#455c70; color:#c9d6e2; padding:4px 16px; }
   .lyr-box .lyr-tabs button.on{ background:#455c70; border-color:#6f8aa0; color:#ffb347; }
-  .lyr-view{ position:relative; height:min(420px,52vh); overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
-  .lyr-ln{ padding:6px 14px; border-radius:8px; color:#9fb2c4; line-height:1.5; }
+  .lyr-view{ position:relative; flex:1; min-height:0; overflow:auto; background:#16212c; border:1px solid #455c70; border-radius:8px; padding:8px; }
+  .lyr-ln{ padding:8px 16px; border-radius:10px; color:#f4f8fc; line-height:1.5; }
   .lyr-ln.on{ background:#2b4a3a; color:#7dffa8; font-weight:700; }
   .lyr-empty{ color:#c9d6e2; font-size:12pt; padding:14px; }
   .lyr-btns{ display:flex; gap:10px; margin-top:14px; }
@@ -4376,10 +4380,9 @@ function mixTotalDuration(){
     if(!i) return;
     let name = i.item.name;
     const L = loadLyr()[keyOf(kind, name)] || {};
-    const icon = kind === 'voice' ? '🎙' : '🎵';
     const back = document.createElement('div'); back.className = 'lyr-back';
-    back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b>' + icon + ' 가사</b><span class="nm"></span><button type="button" data-x title="닫기">✕</button></div>' +
-      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button></div>' +
+    back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span><button type="button" data-x title="닫기">✕</button></div>' +
+      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><span class="fs" data-fs>글자 <button type="button" data-fm>−</button><b data-fv></b><button type="button" data-fp>+</button></span></div>' +
       '<div data-pane="view"><div class="lyr-view"></div></div>' +
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
@@ -4392,9 +4395,19 @@ function mixTotalDuration(){
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
+      back.querySelector('[data-fs]').style.visibility = k === 'view' ? '' : 'hidden';
       if(k === 'edit') ta.focus(); else { shownKey = null; upd(); }
     }
     let shownKey = null, lastIdx = -2;
+    let fsz = 20; try{ fsz = Math.max(12, Math.min(60, Number(localStorage.getItem('bgmMixerLyrFs')) || 20)); }catch(e){}
+    const fv = back.querySelector('[data-fv]');
+    function setFs(v){
+      fsz = Math.max(12, Math.min(60, v)); fv.textContent = fsz;
+      view.style.fontSize = fsz + 'pt'; try{ localStorage.setItem('bgmMixerLyrFs', String(fsz)); }catch(e){}
+      lastIdx = -2; upd();
+    }
+    back.querySelector('[data-fm]').addEventListener('click', () => setFs(fsz - 2));
+    back.querySelector('[data-fp]').addEventListener('click', () => setFs(fsz + 2));
     function upd(){
       const cur = curInfo(kind); if(!cur) return;
       if(cur.item.name !== name){ name = cur.item.name; nm.textContent = name; shownKey = null; }
@@ -4426,6 +4439,7 @@ function mixTotalDuration(){
       saveLyr(a); tick();
       if(txt) tab('view'); else close();
     });
+    setFs(fsz);
     tab(lyrLines(L).length ? 'view' : 'edit');
   }
   const slots = [
