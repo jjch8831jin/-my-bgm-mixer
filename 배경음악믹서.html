@@ -374,6 +374,12 @@
   .lyr-bg{ position:absolute; top:0; left:0; right:0; bottom:0; overflow:hidden; opacity:0; transition:opacity 1s ease; z-index:0; pointer-events:none; }
   .lyr-thumbs{ display:none; gap:8px; overflow-x:auto; flex:none; margin-top:10px; padding-bottom:2px; }
   .lyr-thumbs .th{ position:relative; flex:none; }
+  .lyr-thumbs .th{ touch-action:pan-x; cursor:grab; }
+  .lyr-thumbs .th.drg{ opacity:.45; outline:2px dashed #1e3a8a; }
+  .lyr-thumbs .th.insL{ box-shadow:-4px 0 0 0 #1e3a8a; } .lyr-thumbs .th.insR{ box-shadow:4px 0 0 0 #1e3a8a; }
+  .lyr-thumbs.dropping{ outline:2px dashed #1e3a8a; outline-offset:2px; border-radius:6px; }
+  .lyr-thumbs .thph{ flex:1; height:28px; display:flex; align-items:center; justify-content:center; border:1px dashed #9ca3af; border-radius:6px; font-size:9pt; color:#6b7280; }
+  .lyr-thumbs .th img, .lyr-thumbs .th video{ -webkit-user-drag:none; user-select:none; }
   .lyr-thumbs .th video{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
   .lyr-thumbs .th img{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
   .lyr-box .lyr-thumbs .th button{ position:absolute; top:2px; right:2px; width:22px; height:22px; padding:0; border-radius:50%; font-size:10pt; line-height:1; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-weight:800; }
@@ -4663,7 +4669,8 @@ function mixTotalDuration(){
         b.addEventListener('click', async () => { pics.splice(x, 1); await setImgs(keyOf(kind, name), pics); renderPics(); });
         w.appendChild(im); w.appendChild(b); thumbsEl.appendChild(w);
       });
-      thumbsEl.style.display = hasPic ? 'flex' : 'none';
+      if(!hasPic){ const ph = document.createElement('div'); ph.className = 'thph'; ph.textContent = '여기에 사진·동영상을 놓으세요'; thumbsEl.appendChild(ph); }
+      thumbsEl.style.display = 'flex';
       back.querySelector('[data-imgdel]').disabled = !hasPic;
       if(!hasPic) showBg(-1);
       try{ lastIdx = -2; upd(); picTick(); }catch(e){}
@@ -4865,16 +4872,17 @@ function mixTotalDuration(){
     back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
     const imgF = back.querySelector('[data-imgf]');
     back.querySelector('[data-imgadd]').addEventListener('click', () => imgF.click());
-    async function putImages(fs){
+    async function putImages(fs, at){
       fs = Array.from(fs || []).filter(Boolean); if(!fs.length) return;
-      const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0;
-      for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 100 * 1024 * 1024){ bad++; continue; } cur.push(f); } else cur.push(await shrinkImage(f)); }catch(e){ bad++; } }
+      const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0; const added = [];
+      for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 100 * 1024 * 1024){ bad++; continue; } added.push(f); } else added.push(await shrinkImage(f)); }catch(e){ bad++; } }
+      const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...added);
       if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 100MB 이하만 됩니다)'); return; }
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
       if(bad) alert('읽지 못했거나 너무 큰(100MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
       pics = cur; renderPics();
     }
-    const putImage = f => putImages([f]);
+    const putImage = (f, at) => putImages([f], at);
     imgF.addEventListener('change', () => { const fs = Array.from(imgF.files || []); imgF.value = ''; putImages(fs); });
     // 사이트에서 복사한 이미지 붙여넣기(Ctrl+V) / 끌어다 놓기
     const imgsOf = dt => { if(!dt) return []; const fl = Array.from(dt.files || []).filter(x => /^(image|video)\//.test(x.type)); if(fl.length) return fl; const it = Array.from(dt.items || []).filter(x => x.kind === 'file' && /^(image|video)\//.test(x.type)).map(x => x.getAsFile()).filter(Boolean); return it; };
@@ -4886,14 +4894,58 @@ function mixTotalDuration(){
       const u = ((dt.getData && (dt.getData('text/uri-list') || dt.getData('text/plain'))) || '').split(/\r?\n/)[0].trim();
       return /^(https?:|data:image)/i.test(u) ? u : '';
     };
-    const onDrop = async e => {
-      e.preventDefault(); e.stopPropagation();
-      const fs = imgsOf(e.dataTransfer); if(fs.length){ putImages(fs); return; }
+    const onDrop = async (e, at) => {
+      e.preventDefault(); e.stopPropagation(); thumbsEl.classList.remove('dropping');
+      const fs = imgsOf(e.dataTransfer); if(fs.length){ putImages(fs, at); return; }
       const u = urlOf(e.dataTransfer); if(!u) return;
-      try{ const r = await fetch(u); const b = await r.blob(); if(!/^image\//.test(b.type)) throw new Error('t'); putImage(b); }
+      try{ const r = await fetch(u); const b = await r.blob(); if(!/^image\//.test(b.type)) throw new Error('t'); putImage(b, at); }
       catch(x){ alert('이 사이트의 이미지는 끌어다 놓아서 가져올 수 없습니다.\n이미지를 우클릭해서 "이미지 복사"를 한 뒤 Ctrl+V로 붙여넣어 주세요.'); }
     };
-    document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', onDrop);
+    document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', e => onDrop(e));
+    // 썸네일 줄: 파일 놓기(놓은 자리에 삽입) + 썸네일 끌어서 순서 바꾸기
+    const posAt = x => { const ths = Array.from(thumbsEl.querySelectorAll('.th')); let n = 0; ths.forEach(t => { const r = t.getBoundingClientRect(); if(r.left + r.width / 2 < x) n++; }); return n; };
+    thumbsEl.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); thumbsEl.classList.add('dropping'); } });
+    thumbsEl.addEventListener('dragleave', e => { if(!thumbsEl.contains(e.relatedTarget)) thumbsEl.classList.remove('dropping'); });
+    thumbsEl.addEventListener('drop', e => onDrop(e, posAt(e.clientX)));
+    (function(){
+      let st = null;
+      const clearMarks = () => thumbsEl.querySelectorAll('.th').forEach(t => t.classList.remove('insL', 'insR', 'drg'));
+      const mark = pos => { const ths = Array.from(thumbsEl.querySelectorAll('.th')); ths.forEach(t => t.classList.remove('insL', 'insR')); if(!ths.length) return; if(pos >= ths.length) ths[ths.length - 1].classList.add('insR'); else ths[pos].classList.add('insL'); };
+      const begin = () => { if(!st || st.on) return; st.on = true; st.el.classList.add('drg'); try{ thumbsEl.setPointerCapture(st.id); }catch(e){} };
+      thumbsEl.addEventListener('pointerdown', e => {
+        const th = e.target.closest && e.target.closest('.th'); if(!th || e.target.closest('button')) return;
+        const from = Array.from(thumbsEl.querySelectorAll('.th')).indexOf(th); if(from < 0) return;
+        st = { id: e.pointerId, el: th, from, x0: e.clientX, y0: e.clientY, on: false, touch: e.pointerType === 'touch', pos: from };
+        if(st.touch){ st.timer = setTimeout(() => { begin(); if(navigator.vibrate) try{ navigator.vibrate(15); }catch(x){} }, 350); }
+      });
+      thumbsEl.addEventListener('pointermove', e => {
+        if(!st || e.pointerId !== st.id) return;
+        if(!st.on){
+          const d = Math.hypot(e.clientX - st.x0, e.clientY - st.y0);
+          if(st.touch){ if(d > 10){ clearTimeout(st.timer); st = null; } return; }
+          if(d > 6) begin(); else return;
+        }
+        e.preventDefault();
+        st.pos = posAt(e.clientX); mark(st.pos);
+        const r = thumbsEl.getBoundingClientRect();
+        if(e.clientX < r.left + 30) thumbsEl.scrollLeft -= 12; else if(e.clientX > r.right - 30) thumbsEl.scrollLeft += 12;
+      });
+      const end = async e => {
+        if(!st || e.pointerId !== st.id) return;
+        clearTimeout(st.timer); const s0 = st; st = null;
+        if(!s0.on) return;
+        try{ thumbsEl.releasePointerCapture(s0.id); }catch(x){}
+        clearMarks();
+        let to = s0.pos; if(to > s0.from) to--;
+        if(to === s0.from || to < 0) return;
+        const it = pics.splice(s0.from, 1)[0]; pics.splice(to, 0, it);
+        await setImgs(keyOf(kind, name), pics); renderPics();
+      };
+      thumbsEl.addEventListener('pointerup', end);
+      thumbsEl.addEventListener('pointercancel', e => { if(st && e.pointerId === st.id){ clearTimeout(st.timer); st = null; clearMarks(); } });
+      thumbsEl.addEventListener('touchmove', e => { if(st && st.on) e.preventDefault(); }, { passive: false });
+      thumbsEl.addEventListener('contextmenu', e => { if(st && st.on) e.preventDefault(); });
+    })();
     back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; await setImgs(keyOf(kind, name), pics); renderPics(); });
     // ---- 영상(16:9)으로 저장: 믹스된 소리 + 사진/동영상 + 가사를 한꺼번에 녹화 ----
     let vexpBusy = false;
