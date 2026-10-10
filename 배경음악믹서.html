@@ -376,6 +376,9 @@
   .lyr-thumbs .th{ position:relative; flex:none; }
   .lyr-thumbs .th{ touch-action:pan-x; cursor:grab; }
   .lyr-thumbs .th.drg{ opacity:.45; outline:2px dashed #1e3a8a; }
+  .lyr-thumbs .th.sel{ outline:3px solid #1e3a8a; outline-offset:-1px; border-radius:6px; }
+  .lyr-thumbs .th.sel::after{ content:'✓'; position:absolute; left:3px; bottom:3px; width:20px; height:20px; border-radius:50%; background:#1e3a8a; color:#fff; font-size:12px; font-weight:800; line-height:20px; text-align:center; pointer-events:none; }
+  .selbox{ position:fixed; z-index:99999; border:1.5px solid #1e3a8a; background:rgba(30,58,138,.18); pointer-events:none; }
   .lyr-thumbs .th.insL{ box-shadow:-4px 0 0 0 #1e3a8a; } .lyr-thumbs .th.insR{ box-shadow:4px 0 0 0 #1e3a8a; }
   .lyr-thumbs.dropping{ outline:2px dashed #1e3a8a; outline-offset:2px; border-radius:6px; }
   .lyr-thumbs .thph{ flex:1; height:28px; display:flex; align-items:center; justify-content:center; border:1px dashed #9ca3af; border-radius:6px; font-size:9pt; color:#6b7280; }
@@ -3011,9 +3014,19 @@ function makePlayer(kind){
     seekTo((itemStartTime(idx) - start) / speed);
   }
 
+  // 저절로 다음 파일로 넘어간 경우에도 맞도록, 지금 재생 위치가 속한 파일 번호로 curIdx를 맞춤
+  function syncIdxByPos(){
+    try{
+      if(!st.processed || elapsedNow() <= 0.05) return;
+      const orig = bufToOrig(pieceInfo(), !!st.fastOk, elapsedNow() * st.rate);
+      const n = getItemList().length; let idx = 0;
+      for(let i = 0; i < n; i++){ if(itemStartTime(i) <= orig + 0.02) idx = i; }
+      st.curIdx = idx;
+    }catch(e){}
+  }
   async function prev(){
     if(!rawBuffer()) return;
-    await ensureProcessed();
+    await ensureProcessed(); syncIdxByPos();
     if(st.curIdx > 0){
       st.curIdx--;
       seekToItem(st.curIdx);
@@ -3024,7 +3037,7 @@ function makePlayer(kind){
 
   async function next(){
     if(!rawBuffer()) return;
-    await ensureProcessed();
+    await ensureProcessed(); syncIdxByPos();
     const items = getItemList();
     if(st.curIdx >= items.length - 1) return; // 이미 마지막 파일
     st.curIdx++;
@@ -4336,7 +4349,7 @@ function mixTotalDuration(){
     voicePlayerCtl.pause(); musicPlayerCtl.pause(); musicPlayerCtl.applyVolume();
     setTimeout(refresh, 50);
   }
-  window.__tg = { pause: pauseAll, start: start, reset: () => { running = false; setManaged(false); voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume(); resetFlags(); setTimeout(refresh, 50); } };
+  window.__tg = { time: () => ({ t: mixT, D: mixTotalDuration(), run: running || anyPlaying() }), pause: pauseAll, start: start, reset: () => { running = false; setManaged(false); voicePlayerCtl.stop(); musicPlayerCtl.stop(); musicPlayerCtl.applyVolume(); resetFlags(); setTimeout(refresh, 50); } };
   btn.addEventListener('click', () => {
     if(running || anyPlaying()) pauseAll(); else start();
     setTimeout(refresh, 50);
@@ -4623,7 +4636,7 @@ function mixTotalDuration(){
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
     const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg'; [bgA, bgB].forEach(o => { o.innerHTML = '<i class="bb"></i><i class="ff"></i><video muted loop playsinline preload="auto"></video>'; o.querySelector('video').muted = true; });
     back.insertBefore(bgB, back.firstChild); back.insertBefore(bgA, back.firstChild);
-    let pics = [], picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
+    let pics = [], selSet = new Set(), picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
     const thumbsEl = back.querySelector('[data-thumbs]'), imgBx = back.querySelector('.lyr-box');
     const urlCache = new WeakMap();
     const isVid = it => typeof it !== 'string';
@@ -4662,7 +4675,7 @@ function mixTotalDuration(){
     function syncVideo(pl){ const fv = frontVideo(); if(!fv || !bgFront.classList.contains('isv')) return; try{ if(pl && fv.paused){ const r = fv.play(); if(r && r.catch) r.catch(() => {}); } else if(!pl && !fv.paused) fv.pause(); }catch(e){} }
     function renderPics(){
       hasPic = pics.length > 0; imgBx.classList.toggle('haspic', hasPic); picIdx = -2; try{ applyAuto(); }catch(e){}
-      thumbsEl.textContent = '';
+      thumbsEl.textContent = ''; selSet = new Set();
       pics.forEach((u, x) => {
         const w = document.createElement('div'); w.className = 'th'; let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.title = '이 사진 빼기';
@@ -4691,11 +4704,13 @@ function mixTotalDuration(){
     function picTick(){
       const cur = curInfo(kind); if(!cur) return;
       let pl = false, el = 0, dur = 0; try{ pl = ctl.isPlaying(); el = ctl.getElapsed() || 0; dur = ctl.getDuration() || 0; }catch(e){}
+      // 통합: 음성·음악 중 하나라도 재생 중이면 계속, 더 긴 쪽이 끝날 때까지 사진·동영상 진행
+      if(activeTrack === 'all'){ try{ const g = window.__tg.time(); pl = g.run; el = g.t; dur = g.D; }catch(e){} }
       if(pl){ if(ended){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; applyAuto(); } }
       else if(wasPl && dur > 0 && lastEl >= dur - 1.0 && el < 0.3){ ended = true; imgBx.classList.add('ended'); applyAuto(); }
       if(!pl && ended && el > 0.5){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; applyAuto(); }
       wasPl = pl; lastEl = el;
-      const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, cur.t) / 10) % pics.length;
+      const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, activeTrack === 'all' ? el : cur.t) / 10) % pics.length;
       if(want !== picIdx){ picIdx = want; showBg(want); }
       syncVideo((activeTrack === 'all' ? (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying()) : pl) && !ended);
     }
@@ -4846,7 +4861,7 @@ function mixTotalDuration(){
       back.querySelector('[data-rp]').addEventListener('click', () => adj(0.01));
     }
     const timer = setInterval(() => { barUpd(); picTick(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
-    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
@@ -4886,7 +4901,18 @@ function mixTotalDuration(){
     imgF.addEventListener('change', () => { const fs = Array.from(imgF.files || []); imgF.value = ''; putImages(fs); });
     // 사이트에서 복사한 이미지 붙여넣기(Ctrl+V) / 끌어다 놓기
     const imgsOf = dt => { if(!dt) return []; const fl = Array.from(dt.files || []).filter(x => /^(image|video)\//.test(x.type)); if(fl.length) return fl; const it = Array.from(dt.items || []).filter(x => x.kind === 'file' && /^(image|video)\//.test(x.type)).map(x => x.getAsFile()).filter(Boolean); return it; };
-    const onPaste = e => { const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); putImages(fs); } };
+    const onPaste = e => {
+      const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); putImages(fs); return; }
+      const tx = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
+      if(tx.indexOf('bgm-pics:') === 0 && window.__picClip && window.__picClip.length){ e.preventDefault(); e.stopPropagation(); putItems(window.__picClip.slice()); }
+    };
+    async function putItems(items, at){
+      if(!items || !items.length) return;
+      const key = keyOf(kind, name), cur = await getImgs(key);
+      const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...items);
+      if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
+      pics = cur; renderPics();
+    }
     const onDragOver = e => { if(e.dataTransfer) e.preventDefault(); };
     const urlOf = dt => {
       if(!dt) return '';
@@ -4907,6 +4933,56 @@ function mixTotalDuration(){
     thumbsEl.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); thumbsEl.classList.add('dropping'); } });
     thumbsEl.addEventListener('dragleave', e => { if(!thumbsEl.contains(e.relatedTarget)) thumbsEl.classList.remove('dropping'); });
     thumbsEl.addEventListener('drop', e => onDrop(e, posAt(e.clientX)));
+    // 썸네일 선택(클릭 / Ctrl+클릭 / 빈 곳에서 끌어 상자 선택) + Ctrl+C 복사
+    const thEls = () => Array.from(thumbsEl.querySelectorAll('.th'));
+    const paintSel = () => thEls().forEach((t, i) => t.classList.toggle('sel', selSet.has(i)));
+    thumbsEl.addEventListener('click', e => {
+      const th = e.target.closest && e.target.closest('.th'); if(!th || e.target.closest('button')) return;
+      const i = thEls().indexOf(th); if(i < 0) return;
+      if(e.ctrlKey || e.metaKey || e.shiftKey){ if(selSet.has(i)) selSet.delete(i); else selSet.add(i); }
+      else if(selSet.size === 1 && selSet.has(i)) selSet.clear();
+      else { selSet.clear(); selSet.add(i); }
+      paintSel();
+    });
+    (function(){
+      let m = null, box = null;
+      thumbsEl.addEventListener('pointerdown', e => {
+        if(e.pointerType !== 'mouse' || e.button !== 0 || e.target !== thumbsEl) return;
+        m = { id: e.pointerId, x0: e.clientX, y0: e.clientY, on: false, base: (e.ctrlKey || e.metaKey) ? new Set(selSet) : new Set() };
+        try{ thumbsEl.setPointerCapture(e.pointerId); }catch(x){}
+      });
+      thumbsEl.addEventListener('pointermove', e => {
+        if(!m || e.pointerId !== m.id) return;
+        if(!m.on){ if(Math.hypot(e.clientX - m.x0, e.clientY - m.y0) < 5) return; m.on = true; box = document.createElement('div'); box.className = 'selbox'; document.body.appendChild(box); }
+        const l = Math.min(m.x0, e.clientX), t = Math.min(m.y0, e.clientY), r = Math.max(m.x0, e.clientX), b = Math.max(m.y0, e.clientY);
+        box.style.left = l + 'px'; box.style.top = t + 'px'; box.style.width = (r - l) + 'px'; box.style.height = (b - t) + 'px';
+        selSet = new Set(m.base);
+        thEls().forEach((th, i) => { const q = th.getBoundingClientRect(); if(q.right > l && q.left < r && q.bottom > t && q.top < b) selSet.add(i); });
+        paintSel();
+        const rc = thumbsEl.getBoundingClientRect();
+        if(e.clientX < rc.left + 24) thumbsEl.scrollLeft -= 12; else if(e.clientX > rc.right - 24) thumbsEl.scrollLeft += 12;
+      });
+      const fin = e => {
+        if(!m || e.pointerId !== m.id) return;
+        if(!m.on){ selSet = new Set(m.base); paintSel(); }
+        if(box){ box.remove(); box = null; }
+        try{ thumbsEl.releasePointerCapture(m.id); }catch(x){}
+        m = null;
+      };
+      thumbsEl.addEventListener('pointerup', fin); thumbsEl.addEventListener('pointercancel', fin);
+    })();
+    const inText = () => { const a = document.activeElement; return a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|search|number|)$/.test(a.type))); };
+    const onCopy = e => {
+      if(!selSet.size) return; if(inText()){ const a = document.activeElement; if(a.selectionStart !== a.selectionEnd) return; }
+      const idx = Array.from(selSet).sort((a, b) => a - b).filter(i => i < pics.length);
+      window.__picClip = idx.map(i => pics[i]);
+      e.preventDefault(); try{ e.clipboardData.setData('text/plain', 'bgm-pics:' + Date.now()); }catch(x){}
+    };
+    const onSelAll = e => {
+      if(!((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) || inText() || !pics.length) return;
+      e.preventDefault(); selSet = new Set(pics.map((_, i) => i)); paintSel();
+    };
+    document.addEventListener('copy', onCopy, true); document.addEventListener('keydown', onSelAll, true);
     (function(){
       let st = null;
       const clearMarks = () => thumbsEl.querySelectorAll('.th').forEach(t => t.classList.remove('insL', 'insR', 'drg'));
