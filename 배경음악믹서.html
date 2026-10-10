@@ -311,10 +311,13 @@
   .lyr-sp{ flex:none; }
   .lyr-view{ text-align:center; }
   .lyr-box.haspic{ background:transparent; --veil:rgba(250,246,232,.88); }
-  .lyr-voice .lyr-box.haspic{ --veil:rgba(227,240,250,.88); }
+  .lyr-voice .lyr-box.haspic{ background:transparent; --veil:rgba(227,240,250,.88); }
   .lyr-box.haspic .lyr-head, .lyr-box.haspic .lyr-bar, .lyr-box.haspic .lyr-opt{ background:var(--veil); box-shadow:0 0 0 6px var(--veil); border-radius:8px; }
   .lyr-box.haspic [data-pane=view]{ justify-content:flex-end; }
-  .lyr-box.haspic .lyr-view{ flex:none; height:calc(4.5em + 78px); background:var(--veil); border-color:#d6d3c4; }
+  .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(4.5em + 78px); background:transparent; border-color:transparent; }
+  .lyr-box.haspic .lyr-ln{ color:#fff; text-shadow:-2px -2px 0 #1c1917, 2px -2px 0 #1c1917, -2px 2px 0 #1c1917, 2px 2px 0 #1c1917, 0 -2px 0 #1c1917, 0 2px 0 #1c1917, -2px 0 0 #1c1917, 2px 0 0 #1c1917; font-weight:700; }
+  .lyr-box.haspic .lyr-ln.on{ color:#9a3412; text-shadow:none; }
+  .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#1e3a8a; }
   .lyr-ln{ position:relative; z-index:1; }
   .lyr-ln.on{ color:#9a3412; font-weight:700; }
   .lyr-hl{ position:absolute; left:8px; right:8px; top:0; height:0; background:#ffe9c7; border-radius:10px; opacity:0; z-index:0; pointer-events:none; }
