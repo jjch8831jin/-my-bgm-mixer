@@ -4874,7 +4874,7 @@ function mixTotalDuration(){
       if(!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream){ alert('이 브라우저는 영상 저장을 지원하지 않습니다. 크롬을 사용해 주세요.'); return; }
       const cands0 = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
       const mime0 = cands0.find(m => { try{ return MediaRecorder.isTypeSupported(m); }catch(e){ return false; } }) || 'video/webm';
-      const ext0 = /mp4/.test(mime0) ? 'mp4' : 'webm', base0 = (dispName(kind, name).replace(/[\\/:*?"<>|]+/g, '_') || '영상');
+      const ext0 = /mp4/.test(mime0) ? 'mp4' : 'webm', base0 = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '영상');
       let hnd0 = null; try{ hnd0 = await pickSaveHandle(base0 + '.' + ext0, ext0, ext0 === 'mp4' ? 'video/mp4' : 'video/webm'); }catch(e){ return; }
       vexpBusy = true; let ov = null, stopFlag = false, ctxA = null, srcA = null, rec = null;
       const cleanup = () => { try{ if(srcA){ srcA.onended = null; srcA.stop(); } }catch(e){} if(ov){ ov.remove(); ov = null; } vexpBusy = false; };
@@ -5008,7 +5008,7 @@ function mixTotalDuration(){
       try{
         const key = keyOf(kind, name), txt = ta.value.trim();
         if(!txt && !pics.length && !loadLyr()[key]){ alert('저장할 가사나 사진이 없습니다.'); return; }
-        const base = (dispName(kind, name).replace(/[\\/:*?"<>|]+/g, '_') || '곡');
+        const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
         const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream');
         busyMsg('저장 파일 만드는 중…');
         const pk = await packSong(key, txt ? { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) } : null);
