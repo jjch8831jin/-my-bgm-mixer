@@ -314,7 +314,7 @@
   .lyr-voice .lyr-box.haspic{ background:transparent; --veil:rgba(227,240,250,.88); }
   .lyr-box.haspic .lyr-head, .lyr-box.haspic .lyr-bar, .lyr-box.haspic .lyr-opt{ background:var(--veil); box-shadow:0 0 0 6px var(--veil); border-radius:8px; }
   .lyr-box.haspic [data-pane=view]{ justify-content:flex-end; }
-  .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(4.5em + 78px); background:transparent; border-color:transparent; }
+  .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(3em + 58px); background:transparent; border-color:transparent; }
   .lyr-box.haspic .lyr-ln{ color:#fff; text-shadow:-2px -2px 0 #1c1917, 2px -2px 0 #1c1917, -2px 2px 0 #1c1917, 2px 2px 0 #1c1917, 0 -2px 0 #1c1917, 0 2px 0 #1c1917, -2px 0 0 #1c1917, 2px 0 0 #1c1917; font-weight:700; }
   .lyr-box.haspic .lyr-ln.on{ color:#9a3412; text-shadow:none; }
   .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#1e3a8a; }
@@ -4458,10 +4458,10 @@ function mixTotalDuration(){
         const im = new Image();
         im.onerror = () => rej(new Error('img'));
         im.onload = () => {
-          const m = 1000, k = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement('canvas');
+          const m = 1600, k = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement('canvas');
           c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
           const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
-          res(c.toDataURL('image/jpeg', 0.82));
+          res(c.toDataURL('image/jpeg', 0.88));
         };
         im.src = fr.result;
       };
@@ -4498,7 +4498,7 @@ function mixTotalDuration(){
     function setPic(){
       const u = loadImgs()[keyOf(kind, name)];
       const bx = back.querySelector('.lyr-box'); picBox.style.display = 'none';
-      if(u){ thumb.src = u; thumb.style.display = 'block'; back.style.backgroundImage = 'url("' + u + '")'; back.style.backgroundSize = 'cover'; back.style.backgroundPosition = 'center'; back.style.backgroundRepeat = 'no-repeat'; bx.classList.add('haspic'); }
+      if(u){ thumb.src = u; thumb.style.display = 'block'; back.style.backgroundImage = 'url("' + u + '")'; back.style.backgroundSize = 'contain'; back.style.backgroundPosition = 'center'; back.style.backgroundRepeat = 'no-repeat'; bx.classList.add('haspic'); }
       else { thumb.removeAttribute('src'); thumb.style.display = 'none'; back.style.backgroundImage = ''; bx.classList.remove('haspic'); }
       hasPic = !!u; try{ lastIdx = -2; upd(); }catch(e){}
       back.querySelector('[data-imgdel]').disabled = !u;
@@ -4549,7 +4549,7 @@ function mixTotalDuration(){
             if(first){ void hl.offsetWidth; requestAnimationFrame(() => hl && hl.classList.add('mv')); }
           } else hl.style.opacity = '0';
         }
-        if(el && c.has) view.scrollTo({ top: hasPic ? el.offsetTop - (view.clientHeight - el.offsetHeight) / 2 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4, behavior:'smooth' });
+        if(el && c.has) view.scrollTo({ top: hasPic ? el.offsetTop - 10 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4, behavior:'smooth' });
       }
     }
     // ---- 시간 맞추기 ----
