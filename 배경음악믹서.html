@@ -5244,16 +5244,16 @@ function mixTotalDuration(){
       const L2 = String(txt || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(tparse); if(!L2.length) return false;
       L2.forEach(o => { syT.push(o.t); syStamp.push(o.s); syAbs.push(null); });
       lyrPersist(); syRender();
-      try{ syList.scrollTo({ top: syList.scrollHeight, behavior: 'smooth' }); }catch(e){}
+      try{ syList.scrollTo({ top: 0 }); }catch(e){}
       return true;
     }
     const attachedPic = x => picL.findIndex((v, k) => v === x && k < pics.length);
     async function attachFiles(fs, x){
       const k0 = attachedPic(x), n0 = pics.length;
-      if(k0 >= 0 && fs.length === 1){ await putImages(fs, undefined, k0); syRender(); return; }
+      if(k0 >= 0 && fs.length === 1){ await putImages(fs, undefined, k0); syRender(true); return; }
       await putImages(fs);
       if(pics.length > n0){ picL = picL.map(v => v === x ? null : v); picL[n0] = x; if(syStamp[x] != null) picT[n0] = syStamp[x]; savePT(); chipsUpd(); }
-      syRender();
+      syRender(true);
     }
     let pkCur = null;
     function lineChooser(x){
@@ -5271,10 +5271,10 @@ function mixTotalDuration(){
           if(!b.classList.contains('sel')){
             g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
             b.classList.add('sel'); const xb = document.createElement('span'); xb.className = 'pk-tx'; xb.textContent = '✕'; xb.title = '이 사진 지우기'; b.appendChild(xb);
-            xb.addEventListener('click', async ev => { ev.stopPropagation(); pop.remove(); pics.splice(k, 1); picT.splice(k, 1); picL.splice(k, 1); savePT(); if(picPos > k) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(); lineChooser(x); });
+            xb.addEventListener('click', async ev => { ev.stopPropagation(); pop.remove(); pics.splice(k, 1); picT.splice(k, 1); picL.splice(k, 1); savePT(); if(picPos > k) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(true); lineChooser(x); });
             return;
           }
-          picL = picL.map(v => v === x ? null : v); picL[k] = x; if(syStamp[x] != null) picT[k] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender();
+          picL = picL.map(v => v === x ? null : v); picL[k] = x; if(syStamp[x] != null) picT[k] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender(true);
         });
         g.appendChild(b);
         if(k === selK) b.click();
@@ -5304,8 +5304,8 @@ function mixTotalDuration(){
       if(!arr.length) return;
       addTa.value = ''; growAdd(); addLines(arr.map(l => l || BLANK).join('\n')); // 빈 줄도 한 줄씩 (두 줄이면 두 줄)
     });
-    function syRender(){
-      closeCtx();
+    function syRender(keep){
+      const keepTop = syList.scrollTop; closeCtx();
       syList.textContent = ''; syRows = []; syList.classList.remove('pics'); syList.classList.add('ly');
       syT.forEach((t, x) => {
         const r = mkEl('div', 'sy-row sy-ly');
@@ -5320,11 +5320,11 @@ function mixTotalDuration(){
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
         r.addEventListener('drop', e => { r.classList.remove('dropto'); const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
-        let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(); }); cw.appendChild(off); }
+        let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); }); cw.appendChild(off); }
         r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cw); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
       });
       addTa.placeholder = syT.length ? '＋ 가사 추가 (줄마다 Enter, 다 쓰면 ⬆️ 올리기)' : '＋ 가사를 쓰거나 붙여넣고 ⬆️ 올리기를 누르세요 (줄마다 Enter)';
-      syMark(true);
+      syMark(!keep); if(keep) syList.scrollTop = keepTop;
     }
     // 끌어서 순서 바꾸기 (가사: 시간이 줄을 따라감 / 사진: 시간은 자리에 그대로)
     (function(){
