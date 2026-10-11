@@ -5430,18 +5430,40 @@ function mixTotalDuration(){
       const paintMs = () => tilesNow().forEach(t => t.classList.toggle('ms', msel.has(t._key)));
       g.addEventListener('pointerdown', e => {
         if(e.button !== 0 || e.pointerType !== 'mouse' || e.target.closest('.pk-t, button')) return;
+        if(e.offsetX > g.clientWidth) return; // 스크롤바 위에서는 시작하지 않음
         e.preventDefault();
-        const sx = e.clientX, sy = e.clientY; let rb = null, moved = false;
+        const g0 = g.getBoundingClientRect();
+        const sxC = e.clientX - g0.left + g.scrollLeft, syC = e.clientY - g0.top + g.scrollTop; // 목록 안 좌표(스크롤 포함)
+        let rb = null, moved = false, mx = e.clientX, my = e.clientY, raf = 0;
         g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
-        const mv = ev => {
-          if(!moved && Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 5) return;
-          moved = true; if(!rb){ rb = document.createElement('div'); rb.className = 'pk-rb'; pop.appendChild(rb); }
-          const l = Math.min(sx, ev.clientX), t = Math.min(sy, ev.clientY), r = Math.max(sx, ev.clientX), b = Math.max(sy, ev.clientY);
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        const draw = () => {
+          const gr = g.getBoundingClientRect();
+          const cx = clamp(mx, gr.left, gr.right), cy = clamp(my, gr.top, gr.bottom); // 창(목록) 밖으로 나가지 않음
+          const ax = clamp(sxC - g.scrollLeft + gr.left, gr.left, gr.right), ay = clamp(syC - g.scrollTop + gr.top, gr.top, gr.bottom);
+          const l = Math.min(ax, cx), t = Math.min(ay, cy), r = Math.max(ax, cx), b = Math.max(ay, cy);
+          if(!rb){ rb = document.createElement('div'); rb.className = 'pk-rb'; pop.appendChild(rb); }
           rb.style.left = l + 'px'; rb.style.top = t + 'px'; rb.style.width = (r - l) + 'px'; rb.style.height = (b - t) + 'px';
-          msel.clear(); tilesNow().forEach(tl => { const q = tl.getBoundingClientRect(); if(q.left < r && q.right > l && q.top < b && q.bottom > t) msel.add(tl._key); });
+          // 선택: 시작점(스크롤 포함)부터 현재 위치까지의 사각형에 닿은 사진
+          const cxC = cx - gr.left + g.scrollLeft, cyC = cy - gr.top + g.scrollTop;
+          const L = Math.min(sxC, cxC), T = Math.min(syC, cyC), R = Math.max(sxC, cxC), B = Math.max(syC, cyC);
+          msel.clear();
+          tilesNow().forEach(tl => { const q = tl.getBoundingClientRect(); const ql = q.left - gr.left + g.scrollLeft, qt = q.top - gr.top + g.scrollTop; if(ql < R && ql + q.width > L && qt < B && qt + q.height > T) msel.add(tl._key); });
           paintMs();
         };
-        const up = () => { document.removeEventListener('pointermove', mv, true); document.removeEventListener('pointerup', up, true); if(rb) rb.remove(); if(!moved){ msel.clear(); paintMs(); } };
+        const tick = () => {
+          raf = 0; if(!moved) return;
+          const gr = g.getBoundingClientRect(), edge = 50; let dy = 0;
+          if(my < gr.top + edge) dy = -Math.ceil(Math.min(1, (gr.top + edge - my) / edge) * 22);
+          else if(my > gr.bottom - edge) dy = Math.ceil(Math.min(1, (my - (gr.bottom - edge)) / edge) * 22);
+          if(dy){ const before = g.scrollTop; g.scrollTop += dy; if(g.scrollTop !== before) draw(); raf = requestAnimationFrame(tick); }
+        };
+        const mv = ev => {
+          mx = ev.clientX; my = ev.clientY;
+          if(!moved && Math.abs(mx - e.clientX) + Math.abs(my - e.clientY) < 5) return;
+          moved = true; draw(); if(!raf) raf = requestAnimationFrame(tick);
+        };
+        const up = () => { document.removeEventListener('pointermove', mv, true); document.removeEventListener('pointerup', up, true); if(raf) cancelAnimationFrame(raf); if(rb) rb.remove(); if(!moved){ msel.clear(); paintMs(); } };
         document.addEventListener('pointermove', mv, true); document.addEventListener('pointerup', up, true);
       });
       const onCtrlA = e => {
