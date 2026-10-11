@@ -604,6 +604,27 @@
   }
   .head-tools{ display: flex; gap: 6px; }
   .folder-line{ font-size: 12pt; color: var(--text-dim); margin: -6px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dlgrp{ display:flex; align-items:center; gap:6px; flex:none; }
+  .dlgrp.inpanel{ margin-top:8px; }
+  .dlgrp .dg-btn{ height:42px; box-sizing:border-box; padding:0 12px; border-radius:8px; border:1px solid #c9a24f; background:#ecdcb0; color:#4a3515; font-weight:700; font-size:14pt; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .dlgrp .dg-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .dlgrp .dg-folder.on{ background:#2fbf5b; color:#08210f; border-color:#7be09a; }
+  .dlgrp .dg-fmt{ display:flex; align-items:center; height:42px; box-sizing:border-box; border-radius:8px; border:1px solid #c9a24f; background:#fff; overflow:hidden; }
+  .dlgrp .dg-fmt button{ border:0; background:transparent; color:#4a3515; font-size:13pt; padding:0 10px; height:100%; cursor:pointer; }
+  .dlgrp .dg-fmt button.on{ background:#f59e0b; color:#1c1917; font-weight:800; margin:3px; height:calc(100% - 6px); border-radius:6px; }
+  .imp-row{ display:flex; gap:8px; align-items:center; margin-top:12px; }
+  .imp-btn{ flex:none; display:inline-flex; align-items:center; height:42px; box-sizing:border-box; border-radius:8px; background:#ecdcb0; border:1px solid #c9a24f; color:#4a3515; font-weight:700; font-size:14pt; overflow:hidden; }
+  .imp-btn button{ border:0; background:transparent; color:inherit; font:inherit; height:100%; padding:0 12px; cursor:pointer; }
+  .imp-btn .ib-find{ border-left:1px solid #c9a24f; padding:0 10px; }
+  .imp-btn.searching{ background:#fff; }
+  .imp-btn .ib-ic{ padding:0 0 0 10px; }
+  .imp-btn .ib-q{ border:0; outline:0; background:transparent; font-size:13pt; width:9em; padding:0 8px; color:#1c1917; height:100%; }
+  .imp-arrow{ flex:none; width:34px; height:42px; border-radius:8px; border:1px solid #c9a24f; background:#ecdcb0; color:#4a3515; font-weight:800; font-size:14pt; cursor:pointer; padding:0; }
+  .imp-arrow:disabled{ opacity:.4; cursor:not-allowed; }
+  .imp-items{ flex:1; min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .imp-items .file-item{ margin:0; min-width:0; }
+  .imp-items .none{ color:#9fb3c5; font-size:12pt; }
+  @media (max-width:600px){ .imp-row{ flex-wrap:wrap; gap:6px; } .imp-items{ order:5; flex-basis:100%; grid-template-columns:minmax(0,1fr); } .imp-row .ia-next{ order:3; } .imp-btn .ib-q{ width:6.5em; } }
   .dl-row{ display: flex; gap: 8px; margin-top: 12px; }
   .dl-row .record-btn{ flex: 1; background: var(--music); border-color: var(--music); color: #fff8ec; padding: 9px 10px; }
   .dl-label{ align-self: center; font-size: 14pt; font-weight: 600; color: var(--text-dim); margin-right: 4px; }
@@ -2144,12 +2165,14 @@ function renderList(kind){
       <button type="button" data-action="remove" data-id="${it.id}" data-kind="${kind}" title="삭제">✕</button>
     </div>
   `).join('');
+  try{ if(window.renderImp) window.renderImp(kind); }catch(e){}
 }
 
 document.addEventListener('click', e => {
-  const row = e.target.closest('#voiceList .file-item.pl, #musicList .file-item.pl');
+  const row = e.target.closest('.file-item.pl');
   if(row && !e.target.closest('button')){
-    const ctl = row.parentElement.id === 'voiceList' ? voicePlayerCtl : musicPlayerCtl;
+    const lk = row.closest('[data-lk]'); if(!lk) return;
+    const ctl = lk.dataset.lk === 'voice' ? voicePlayerCtl : musicPlayerCtl;
     try{ ctl.playItem(Number(row.dataset.idx)); }catch(x){} return;
   }
   const btn = e.target.closest('button[data-action]');
@@ -2183,15 +2206,20 @@ document.addEventListener('click', e => {
 });
 
 setInterval(() => {
-  [['voiceList', voicePlayerCtl], ['musicList', musicPlayerCtl]].forEach(([id, ctl]) => {
-    const c = document.getElementById(id); if(!c) return;
+  [['voice', voicePlayerCtl], ['music', musicPlayerCtl]].forEach(([k, ctl]) => {
     let ci = -1; try{ ci = ctl.getCurIdx(); }catch(x){}
     let pl = false; try{ pl = ctl.isPlaying(); }catch(x){}
-    c.querySelectorAll('.file-item.pl').forEach((r, i) => {
-      r.classList.toggle('cur', i === ci);
-      const b = r.querySelector('button.rp'); if(b){ const on = pl && i === ci; b.classList.toggle('playing', on); const t = on ? '⏸' : '▶'; if(b.textContent !== t) b.textContent = t; }
+    try{ if(window.impTick) window.impTick(k, ci); }catch(x){}
+    [k + 'List', 'impItems_' + k].forEach(id => {
+      const c = document.getElementById(id); if(!c) return;
+      c.querySelectorAll('.file-item.pl').forEach(r => {
+        const ri = Number(r.dataset.idx);
+        r.classList.toggle('cur', ri === ci);
+        const b = r.querySelector('button.rp'); if(b){ const on = pl && ri === ci; b.classList.toggle('playing', on); const t = on ? '⏸' : '▶'; if(b.textContent !== t) b.textContent = t; }
+      });
     });
   });
+  try{ if(window.syncDl) window.syncDl(); }catch(x){}
 }, 400);
 
 function computeTickInterval(duration){
@@ -4239,6 +4267,7 @@ function setActiveTrack(k){
     c.classList.toggle('voice-sel', t === 'voice');
     c.classList.toggle('music-sel', t === 'music');
   });
+  try{ if(window.placeDl) window.placeDl(); }catch(e){}
 }
 // 음성/배경음악/통합을 누르면 그 소리만 바로 재생 (통합 = 믹싱 설정대로)
 function autoPlayFor(k){
@@ -4256,6 +4285,79 @@ document.getElementById('toolSelect').addEventListener('click', e => {
 ['voice','music'].forEach(t => document.getElementById('card_' + t).addEventListener('pointerdown', () => setActiveTrack(t)));
 document.getElementById('recordBtn').addEventListener('click', () => setActiveTrack('music'));
 setActiveTrack('voice');
+
+(function(){
+  const mq = window.matchMedia('(max-width:600px)');
+  let fmt = 'mp3'; try{ const v = localStorage.getItem('bgmMixerDlFmt'); if(v === 'wav' || v === 'mp3') fmt = v; }catch(e){}
+  const grp = document.createElement('div'); grp.id = 'dlGrp'; grp.className = 'dlgrp';
+  grp.innerHTML = '<button type="button" class="dg-btn dg-get" title="받기">⬇ 받기</button><span class="dg-fmt"><button type="button" data-f="wav">WAV</button><button type="button" data-f="mp3">MP3</button></span><button type="button" class="dg-btn dg-folder" title="저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>';
+  const getB = grp.querySelector('.dg-get'), folB = grp.querySelector('.dg-folder');
+  const srcId = (t, f) => t === 'voice' ? (f === 'mp3' ? 'downloadVoiceMp3Btn' : 'downloadVoiceWavBtn') : (f === 'mp3' ? 'downloadMusicMp3Btn' : 'downloadMusicBtn');
+  function syncDl(){
+    const t = activeTrack; if(t !== 'voice' && t !== 'music') return;
+    const s = document.getElementById(srcId(t, fmt)); getB.disabled = !s || s.disabled;
+    const fo = document.getElementById('chooseFolderBtn_' + t); folB.classList.toggle('on', !!(fo && fo.classList.contains('on')));
+    grp.querySelectorAll('.dg-fmt button').forEach(b => b.classList.toggle('on', b.dataset.f === fmt));
+  }
+  function placeDl(){
+    const t = activeTrack;
+    if(t !== 'voice' && t !== 'music'){ grp.style.display = 'none'; return; }
+    grp.style.display = '';
+    if(mq.matches){ const imp = document.getElementById('imp_' + t); if(imp){ imp.before(grp); grp.classList.add('inpanel'); } }
+    else { document.getElementById('toolSelect').after(grp); grp.classList.remove('inpanel'); }
+    syncDl();
+  }
+  getB.addEventListener('click', () => { const s = document.getElementById(srcId(activeTrack, fmt)); if(s && !s.disabled) s.click(); });
+  folB.addEventListener('click', () => { const fo = document.getElementById('chooseFolderBtn_' + activeTrack); if(fo) fo.click(); setTimeout(syncDl, 150); });
+  grp.querySelectorAll('.dg-fmt button').forEach(b => b.addEventListener('click', () => { fmt = b.dataset.f; try{ localStorage.setItem('bgmMixerDlFmt', fmt); }catch(e){} syncDl(); }));
+  window.syncDl = syncDl; window.placeDl = placeDl;
+
+  const S = { voice: { start: 0, q: '', ci: -2, search: false }, music: { start: 0, q: '', ci: -2, search: false } };
+  const els = {};
+  function mk(kind){
+    const d = document.createElement('div'); d.className = 'imp-row'; d.id = 'imp_' + kind;
+    d.innerHTML = '<div class="imp-btn"></div><button type="button" class="imp-arrow ia-prev" title="이전">◀</button><div class="imp-items" id="impItems_' + kind + '" data-lk="' + kind + '"></div><button type="button" class="imp-arrow ia-next" title="다음">▶</button>';
+    const dl = document.querySelector('#panel_' + kind + ' .dl-row'); dl.before(d); dl.style.display = 'none';
+    const e = els[kind] = { row: d, btn: d.querySelector('.imp-btn'), items: d.querySelector('.imp-items'), prev: d.querySelector('.ia-prev'), next: d.querySelector('.ia-next') };
+    const nm = kind === 'voice' ? '음성' : '음악';
+    function btnDefault(){ S[kind].search = false; e.btn.classList.remove('searching'); e.btn.innerHTML = '<button type="button" class="ib-main">📁 ' + nm + ' 불러오기</button><button type="button" class="ib-find" title="이름으로 찾기">🔍</button>'; }
+    btnDefault();
+    d.addEventListener('click', ev => {
+      const t = ev.target;
+      if(t.closest('.ib-main')) document.getElementById(kind + 'Input').click();
+      else if(t.closest('.ib-find')){ S[kind].search = true; e.btn.classList.add('searching'); e.btn.innerHTML = '<span class="ib-ic">🔍</span><input type="text" class="ib-q" placeholder="곡 이름"><button type="button" class="ib-x" title="닫기">✕</button>'; const q = e.btn.querySelector('.ib-q'); q.value = S[kind].q; q.focus(); }
+      else if(t.closest('.ib-x')){ S[kind].q = ''; btnDefault(); let ci = -1; try{ ci = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).getCurIdx(); }catch(x){} S[kind].start = ci > 0 ? ci : 0; render(kind); }
+      else if(t.closest('.ia-prev')){ S[kind].start = Math.max(0, S[kind].start - per()); render(kind); }
+      else if(t.closest('.ia-next')){ S[kind].start += per(); render(kind); }
+    });
+    d.addEventListener('input', ev => { if(ev.target.classList.contains('ib-q')){ S[kind].q = ev.target.value; S[kind].start = 0; render(kind); } });
+    return e;
+  }
+  const per = () => mq.matches ? 1 : 2;
+  function rowHtml(it, idx, kind, total){
+    return '<div class="file-item pl" data-idx="' + idx + '">' +
+      '<button type="button" class="rp" data-action="rowplay" data-id="' + it.id + '" data-kind="' + kind + '" title="재생 / 일시정지">▶</button>' +
+      '<button type="button" class="rs" data-action="rowstop" data-id="' + it.id + '" data-kind="' + kind + '" title="정지">■</button>' +
+      '<span class="file-item-name">' + (idx + 1) + '. ' + escapeHtml(it.name) + '</span><span class="file-item-dur">' + fmtTime(it.buffer.duration) + '</span>' +
+      '<button type="button" data-action="up" data-id="' + it.id + '" data-kind="' + kind + '"' + (idx === 0 ? ' disabled' : '') + ' title="위로">▲</button>' +
+      '<button type="button" data-action="down" data-id="' + it.id + '" data-kind="' + kind + '"' + (idx === total - 1 ? ' disabled' : '') + ' title="아래로">▼</button>' +
+      '<button type="button" data-action="remove" data-id="' + it.id + '" data-kind="' + kind + '" title="삭제">✕</button></div>';
+  }
+  function render(kind){
+    const e = els[kind]; if(!e) return;
+    const items = kind === 'voice' ? voiceItems : musicItems, st = S[kind], q = st.q.trim().toLowerCase(), n = per();
+    const list = []; items.forEach((it, i) => { if(!q || String(it.name).toLowerCase().indexOf(q) >= 0) list.push(i); });
+    st.start = Math.max(0, Math.min(st.start, Math.max(0, list.length - 1)));
+    const shown = list.slice(st.start, st.start + n);
+    e.items.innerHTML = shown.length ? shown.map(i => rowHtml(items[i], i, kind, items.length)).join('') : (q ? '<span class="none">찾는 곡이 없습니다</span>' : '');
+    e.prev.disabled = st.start <= 0; e.next.disabled = st.start + n >= list.length;
+  }
+  window.renderImp = render;
+  window.impTick = (kind, ci) => { const st = S[kind]; if(ci === st.ci) return; st.ci = ci; if(!st.q && ci >= 0) st.start = ci; render(kind); };
+  ['voice', 'music'].forEach(k => { mk(k); document.getElementById(k + 'List').dataset.lk = k; render(k); });
+  mq.addEventListener('change', () => { ['voice', 'music'].forEach(render); placeDl(); });
+  placeDl();
+})();
 profiles = pendingProfiles || { voice: snapshotProfile(), music: snapshotProfile(), all: snapshotProfile() };
 ['voice','music','all'].forEach(t => { const d = snapshotProfile(); PROF_IDS.concat(['durationMode','loopMode','autoDuck']).forEach(key => { if(profiles[t][key] === undefined) profiles[t][key] = d[key]; }); });
 applyProfile('voice');
