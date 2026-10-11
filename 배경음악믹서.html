@@ -791,6 +791,15 @@
   .lyr-box .sy-one button.stamp{ flex-direction:row; height:48px; }
   .lyr-box .sy-seg{ display:flex; } .lyr-box .sy-seg button{ min-width:52px; }
   .lyr-box .sy-one button.ok{ padding:0 14px; }
+  .lyr-box .sy-row.sy-ly .pk{ flex:none; width:64px; height:44px; border-radius:6px; object-fit:cover; border:2px solid #9a3412; box-sizing:border-box; cursor:pointer; }
+  .lyr-box .sy-row.sy-ly .pk.e{ border:2px dashed #7c3aed; background:#f5f3ff; color:#7c3aed; display:flex; align-items:center; justify-content:center; font-size:16pt; font-weight:700; }
+  .lyr-box .sy-row.sy-ly .tm{ white-space:nowrap; }
+  .lyr-box .sy-row.sy-ly.dropto{ outline:3px solid #1e3a8a; outline-offset:-3px; }
+  .pk-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:6px; }
+  .pk-g .pk-t{ padding:0; border:3px solid transparent; border-radius:8px; background:#fff; cursor:pointer; height:56px; overflow:hidden; }
+  .pk-g .pk-t.on{ border-color:#1e3a8a; }
+  .pk-g .pk-t img, .pk-g .pk-t video{ width:100%; height:100%; object-fit:cover; display:block; }
+  @media (max-width:600px){ .lyr-box .sy-row.sy-ly.now .tx2::after{ content:none; } .lyr-box .sy-row.sy-ly{ gap:6px; padding:6px 6px; } .lyr-box .sy-row.sy-ly .tm{ min-width:3.6em; font-size:11pt; } .lyr-box .sy-row.sy-ly .hd{ font-size:14pt; } }
 </style>
 </head>
 <body>
@@ -4784,6 +4793,11 @@ function mixTotalDuration(){
   function loadPT(){ try{ return JSON.parse(localStorage.getItem(PT_KEY) || '{}') || {}; }catch(e){ return {}; } }
   function getPT(k, n){ const a = loadPT()[k]; const r = Array.isArray(a) ? a.slice(0, n) : []; while(r.length < n) r.push(null); return r; }
   function setPT(k, arr){ const all = loadPT(); if(arr.some(v => v != null)) all[k] = arr; else delete all[k]; try{ localStorage.setItem(PT_KEY, JSON.stringify(all)); }catch(e){} }
+  // ---- 가사 줄에 붙인 사진 (사진 순서와 같은 자리에 '줄 번호'를 저장) ----
+  const PL_KEY = 'bgmMixerPicL';
+  function loadPL(){ try{ return JSON.parse(localStorage.getItem(PL_KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function getPL(k, n){ const a = loadPL()[k]; const r = Array.isArray(a) ? a.slice(0, n).map(v => (typeof v === 'number' ? v : null)) : []; while(r.length < n) r.push(null); return r; }
+  function setPL(k, arr){ const all = loadPL(); if(arr.some(v => v != null)) all[k] = arr; else delete all[k]; try{ localStorage.setItem(PL_KEY, JSON.stringify(all)); }catch(e){} }
   function idbOpen(){ return new Promise((res, rej) => { try{ const r = indexedDB.open('bgmMixerImgs', 1); r.onupgradeneeded = () => r.result.createObjectStore('imgs'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }catch(e){ rej(e); } }); }
   async function getImgs(key){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').get(key); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
   async function setImgs(key, arr){ try{ const db = await idbOpen(); return await new Promise(res => { const tx = db.transaction('imgs', 'readwrite'), st = tx.objectStore('imgs'); if(arr.length) st.put(arr, key); else st.delete(key); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
@@ -4904,7 +4918,7 @@ function mixTotalDuration(){
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
     const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg'; [bgA, bgB].forEach(o => { o.innerHTML = '<i class="bb"></i><i class="ff"></i><video muted loop playsinline preload="auto"></video>'; o.querySelector('video').muted = true; });
     back.insertBefore(bgB, back.firstChild); back.insertBefore(bgA, back.firstChild);
-    let pics = [], picT = [], selSet = new Set(), picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
+    let pics = [], picT = [], picL = [], selSet = new Set(), picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
     const thumbsEl = back.querySelector('[data-thumbs]'), imgBx = back.querySelector('.lyr-box');
     const urlCache = new WeakMap();
     const isVid = it => typeof it !== 'string';
@@ -4941,7 +4955,7 @@ function mixTotalDuration(){
       if(bgFront) bgFront.style.opacity = '0'; bgFront = nxt;
     }
     function syncVideo(pl){ const fv = frontVideo(); if(!fv || !bgFront.classList.contains('isv')) return; try{ if(pl && fv.paused){ const r = fv.play(); if(r && r.catch) r.catch(() => {}); } else if(!pl && !fv.paused) fv.pause(); }catch(e){} }
-    const savePT = () => setPT(keyOf(kind, name), picT);
+    const savePT = () => { setPT(keyOf(kind, name), picT); picL.length = pics.length > picL.length ? picL.length : pics.length; setPL(keyOf(kind, name), picL); };
     const pfmt = v => String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(Math.floor(v % 60)).padStart(2, '0');
     function chipsUpd(){
       thumbsEl.querySelectorAll('.th').forEach((w, x) => { const b = w.querySelector('.t1'); if(!b) return; const v = picT[x]; b.classList.toggle('set', v != null); b.textContent = '⏱ ' + (v != null ? pfmt(v) : '지정'); });
@@ -4964,7 +4978,7 @@ function mixTotalDuration(){
       pics.forEach((u, x) => {
         const w = document.createElement('div'); w.className = 'th'; let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.title = '이 사진 빼기';
-        b.addEventListener('click', async () => { pics.splice(x, 1); picT.splice(x, 1); savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
+        b.addEventListener('click', async () => { pics.splice(x, 1); picT.splice(x, 1); picL.splice(x, 1); savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
         w.appendChild(im); w.appendChild(b);
         const tr = document.createElement('div'); tr.className = 'tmrow';
         const tb = document.createElement('button'); tb.type = 'button'; tb.className = 't1'; tb.title = '노래를 틀어 놓고 누르면 지금 시간으로 지정됩니다';
@@ -4991,7 +5005,7 @@ function mixTotalDuration(){
     });
     back.addEventListener('mouseleave', () => { if(Date.now() - lastTouch < 1500) return; clearTimeout(uiTimer); uiTimer = setTimeout(() => imgBx.classList.remove('ui-show'), 250); });
     back.addEventListener('touchstart', () => { lastTouch = Date.now(); if(imgBx.classList.contains('autohide')) showUi(3500); }, { passive:true });
-    async function refreshPics(){ await migrateImgs(); const k = keyOf(kind, name); lastNameKey = k; const a = await getImgs(k); if(k === lastNameKey){ pics = a; picT = getPT(k, a.length); ended = false; imgBx.classList.remove('ended'); renderPics(); } }
+    async function refreshPics(){ await migrateImgs(); const k = keyOf(kind, name); lastNameKey = k; const a = await getImgs(k); if(k === lastNameKey){ pics = a; picT = getPT(k, a.length); picL = getPL(k, a.length); ended = false; imgBx.classList.remove('ended'); renderPics(); } }
     let lastEl = 0, wasPl = false;
     function nxState(){
       const last = (c, items) => { let i = -1; try{ i = c.getCurIdx(); }catch(e){} return Math.max(i, 0) >= items.length - 1; };
@@ -5101,7 +5115,7 @@ function mixTotalDuration(){
     function paintSyPics(){ pRows.forEach((r, x) => { const on = selSet.has(x); r.classList.toggle('sel', on); const c = r.querySelector('.ck'); if(c) c.classList.toggle('off', !on); }); }
     async function removeSel(){
       const idx = Array.from(selSet).filter(i => i < pics.length).sort((a, b) => b - a); if(!idx.length) return;
-      idx.forEach(i => { pics.splice(i, 1); picT.splice(i, 1); });
+      idx.forEach(i => { pics.splice(i, 1); picT.splice(i, 1); picL.splice(i, 1); });
       savePT(); picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics();
     }
     function copySel(){
@@ -5137,7 +5151,7 @@ function mixTotalDuration(){
         const lb = document.createElement('span'); lb.className = 'tx2'; lb.textContent = '사진 ' + (x + 1);
         const hd = document.createElement('span'); hd.className = 'hd'; hd.textContent = '⠿'; hd.title = '끌어서 순서 바꾸기 (시간은 자리에 그대로, 사진만 바뀝니다)';
         const rx = document.createElement('button'); rx.type = 'button'; rx.className = 'rx'; rx.textContent = '✕'; rx.title = '이 사진 빼기';
-        rx.addEventListener('click', async e => { e.stopPropagation(); pics.splice(x, 1); picT.splice(x, 1); savePT(); if(picPos > x) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); });
+        rx.addEventListener('click', async e => { e.stopPropagation(); pics.splice(x, 1); picT.splice(x, 1); picL.splice(x, 1); savePT(); if(picPos > x) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); });
         const ck = document.createElement('span'); ck.className = 'ck off'; ck.textContent = '✓';
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
@@ -5175,6 +5189,7 @@ function mixTotalDuration(){
     }
     function delLine(x){
       syT.splice(x, 1); syStamp.splice(x, 1); syAbs.splice(x, 1);
+      picL = picL.map(v => v == null ? null : (v === x ? null : (v > x ? v - 1 : v))); savePT();
       if(syPos > x) syPos--; syPos = Math.max(0, Math.min(syPos, syT.length));
       lyrPersist(); syRender();
     }
@@ -5185,6 +5200,34 @@ function mixTotalDuration(){
       try{ syList.scrollTo({ top: syList.scrollHeight, behavior: 'smooth' }); }catch(e){}
       return true;
     }
+    const attachedPic = x => picL.findIndex((v, k) => v === x && k < pics.length);
+    async function attachFiles(fs, x){
+      const k0 = attachedPic(x), n0 = pics.length;
+      if(k0 >= 0 && fs.length === 1){ await putImages(fs, undefined, k0); syRender(); return; }
+      await putImages(fs);
+      if(pics.length > n0){ picL = picL.map(v => v === x ? null : v); picL[n0] = x; if(syStamp[x] != null) picT[n0] = syStamp[x]; savePT(); chipsUpd(); }
+      syRender();
+    }
+    function lineChooser(x){
+      closeCtx();
+      const pop = document.createElement('div'); pop.className = 'pk-back';
+      pop.innerHTML = '<div class="pk-box"><div class="pk-h">이 줄에 붙일 사진을 고르세요</div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden><button type="button" class="pk-i" data-new>📁 새 사진 고르기</button><button type="button" class="pk-i" data-none>사진 빼기 (이 줄에서 떼기)</button><button type="button" class="pk-x">닫기</button></div>';
+      const g = pop.querySelector('.pk-g'), cur = attachedPic(x);
+      pics.forEach((u, k) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (k === cur ? ' on' : '');
+        let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
+        b.appendChild(im);
+        b.addEventListener('click', () => { picL = picL.map(v => v === x ? null : v); picL[k] = x; if(syStamp[x] != null) picT[k] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender(); });
+        g.appendChild(b);
+      });
+      const fi = pop.querySelector('input');
+      pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
+      fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); pop.remove(); if(fs.length) attachFiles(fs, x); });
+      pop.querySelector('[data-none]').addEventListener('click', () => { picL = picL.map(v => v === x ? null : v); savePT(); pop.remove(); syRender(); });
+      pop.querySelector('.pk-x').addEventListener('click', () => pop.remove());
+      pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
+      back.appendChild(pop);
+    }
     function syRender(){
       closeCtx();
       syList.textContent = ''; syRows = []; syList.classList.remove('pics'); syList.classList.add('ly');
@@ -5194,7 +5237,14 @@ function mixTotalDuration(){
         const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; syMark(false); });
         const tx = mkEl('span', 'tx2', t); tx.title = '눌러서 고치기'; tx.addEventListener('click', () => editLine(x, tx));
         const rx = mkEl('button', 'rx', '✕'); rx.type = 'button'; rx.title = '이 줄 지우기'; rx.addEventListener('click', () => delLine(x));
-        r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
+        const kp = attachedPic(x); let cell;
+        if(kp >= 0){ const u = pics[kp]; if(isVid(u)){ cell = document.createElement('video'); cell.muted = true; cell.preload = 'metadata'; cell.playsInline = true; cell.src = urlOfItem(u) + '#t=0.1'; } else { cell = document.createElement('img'); cell.src = u; cell.alt = ''; } cell.className = 'pk'; cell.title = '붙인 사진 (눌러서 바꾸기)'; }
+        else { cell = mkEl('span', 'pk e', '+'); cell.title = '사진 붙이기 (누르거나 사진을 끌어다 놓으세요)'; }
+        cell.addEventListener('click', e => { e.stopPropagation(); lineChooser(x); });
+        r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
+        r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
+        r.addEventListener('drop', e => { r.classList.remove('dropto'); const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
+        r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cell); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
       });
       const ad = mkEl('div', 'addl'); const t2 = mkEl('textarea', 'sy-add'); t2.rows = 1;
       t2.placeholder = syT.length ? '＋ 가사 추가 (여러 줄을 붙여넣으면 줄마다 나뉩니다)' : '＋ 가사를 붙여넣으세요 (여러 줄을 붙여넣으면 줄마다 나뉩니다)';
@@ -5230,6 +5280,7 @@ function mixTotalDuration(){
           await setImgs(keyOf(kind, name), pics); renderPics();
         } else {
           [syT, syStamp, syAbs].forEach(a => { const v = a.splice(s0.from, 1)[0]; a.splice(s0.to, 0, v); }); // 가사는 시간이 줄을 따라감
+          { const f = s0.from, t = s0.to; picL = picL.map(v => v == null ? null : (v === f ? t : (f < t && v > f && v <= t ? v - 1 : (f > t && v >= t && v < f ? v + 1 : v)))); savePT(); }
           syPos = firstEmpty(syStamp); lyrPersist(); syRender();
         }
       };
@@ -5294,6 +5345,7 @@ function mixTotalDuration(){
       if(syPos >= syT.length) return;
       const cur = curInfo(kind); if(!cur) return;
       syAbs[syPos] = absOf(cur.t);
+      { const kp = attachedPic(syPos); if(kp >= 0){ picT[kp] = Math.max(0, cur.t); savePT(); chipsUpd(); } }
       syStamp[syPos] = Math.max(0, cur.t); syPos++; lyrPersist(); syMark(true);
     }
     function origToFrac(tOrig){
@@ -5315,7 +5367,9 @@ function mixTotalDuration(){
       }
       if(syPos <= 0) return;
       syPos--; const s0 = syStamp[syPos]; const back0 = syAbs[syPos] != null ? syAbs[syPos] : (s0 != null ? absOf(s0) : null);
-      syStamp[syPos] = null; syAbs[syPos] = null; lyrPersist(); syMark(true);
+      syStamp[syPos] = null; syAbs[syPos] = null;
+      { const kp = attachedPic(syPos); if(kp >= 0){ picT[kp] = null; savePT(); chipsUpd(); } }
+      lyrPersist(); syMark(true);
       try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
       if(back0 != null){ try{ ctl.seekToFraction(origToFrac(back0)); }catch(e){} }
       try{ plShow(false); }catch(e){}
@@ -5450,13 +5504,13 @@ function mixTotalDuration(){
       const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0; const added = [];
       for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 100 * 1024 * 1024){ bad++; continue; } added.push(f); } else added.push(await shrinkImage(f)); }catch(e){ bad++; } }
       const repl = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length === 1 && fs.length === 1; // 한 장이면 그 자리 사진을 바꿈(기존 사진 삭제, 시간은 자리에 그대로)
-      if(repl){ cur[rp] = added[0]; if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; } picT = getPT(key, cur.length); pics = cur; renderPics(); return; }
+      if(repl){ cur[rp] = added[0]; if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; } picT = getPT(key, cur.length); picL = getPL(key, cur.length); pics = cur; renderPics(); return; }
       const slot = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length; if(slot) at = rp; // 그 자리에 끼워 넣고 기존 사진은 뒤로 밀림 (시간은 자리에 그대로)
       const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...added);
       if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 100MB 이하만 됩니다)'); return; }
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
       if(bad) alert('읽지 못했거나 너무 큰(100MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
-      { const pt0 = getPT(key, cur.length - added.length); if(slot){ while(pt0.length < cur.length) pt0.push(null); } else pt0.splice(pos, 0, ...added.map(() => null)); setPT(key, pt0); picT = pt0; }
+      { const pt0 = getPT(key, cur.length - added.length); if(slot){ while(pt0.length < cur.length) pt0.push(null); } else pt0.splice(pos, 0, ...added.map(() => null)); setPT(key, pt0); picT = pt0; const pl0 = getPL(key, cur.length - added.length); pl0.splice(pos, 0, ...added.map(() => null)); setPL(key, pl0); picL = pl0; }
       pics = cur; renderPics();
     }
     const putImage = (f, at, rp) => putImages([f], at, rp);
@@ -5473,7 +5527,7 @@ function mixTotalDuration(){
       const key = keyOf(kind, name), cur = await getImgs(key);
       const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...items);
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
-      { const pt0 = getPT(key, cur.length - items.length); pt0.splice(pos, 0, ...items.map(() => null)); setPT(key, pt0); picT = pt0; }
+      { const pt0 = getPT(key, cur.length - items.length); pt0.splice(pos, 0, ...items.map(() => null)); setPT(key, pt0); picT = pt0; const pl0 = getPL(key, cur.length - items.length); pl0.splice(pos, 0, ...items.map(() => null)); setPL(key, pl0); picL = pl0; }
       pics = cur; renderPics();
     }
     const onDragOver = e => { if(e.dataTransfer) e.preventDefault(); };
@@ -5577,7 +5631,7 @@ function mixTotalDuration(){
         clearMarks();
         let to = s0.pos; if(to > s0.from) to--;
         if(to === s0.from || to < 0) return;
-        const it = pics.splice(s0.from, 1)[0]; pics.splice(to, 0, it); { const tv = picT.splice(s0.from, 1)[0]; picT.splice(to, 0, tv === undefined ? null : tv); savePT(); }
+        const it = pics.splice(s0.from, 1)[0]; pics.splice(to, 0, it); { const tv = picT.splice(s0.from, 1)[0]; picT.splice(to, 0, tv === undefined ? null : tv); const lv = picL.splice(s0.from, 1)[0]; picL.splice(to, 0, lv === undefined ? null : lv); savePT(); }
         await setImgs(keyOf(kind, name), pics); renderPics();
       };
       thumbsEl.addEventListener('pointerup', end);
@@ -5585,7 +5639,7 @@ function mixTotalDuration(){
       thumbsEl.addEventListener('touchmove', e => { if(st && st.on) e.preventDefault(); }, { passive: false });
       thumbsEl.addEventListener('contextmenu', e => { if(st && st.on) e.preventDefault(); });
     })();
-    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; picT = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
+    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; picT = []; picL = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
     // ---- 영상(16:9)으로 저장: 믹스된 소리 + 사진/동영상 + 가사를 한꺼번에 녹화 ----
     let vexpBusy = false;
     back.querySelector('[data-vexp]').addEventListener('click', async () => {
