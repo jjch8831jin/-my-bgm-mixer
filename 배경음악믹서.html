@@ -718,6 +718,15 @@
   body section .dl-row .record-btn.busy, body section .dl-row .record-btn.busy:disabled, body section .dl-row .record-btn.busy:hover:not(:disabled){ background:#ef4a3a; border-color:#ff8a7c; color:#fff; box-shadow:0 0 10px rgba(239,74,58,.7); filter:none; }
 @media (min-width:601px){#voiceList,#musicList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:8px}#voiceList .file-item,#musicList .file-item{min-width:0}}
 .lyr-chip{ position:fixed; right:12px; bottom:12px; z-index:9998; background:#1e3a8a; color:#fff; border:0; border-radius:22px; padding:10px 16px; font-size:14pt; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+.pg12{ display:flex; align-items:stretch; gap:6px; }
+.pg12 > .pg-list{ flex:1; min-width:0; }
+.pg12 .pg-arrow{ flex:none; width:34px; padding:0; border-radius:8px; border:1px solid #475569; background:#334155; color:#cbd5e1; font-size:16px; cursor:pointer; }
+.pg12 .pg-arrow:disabled{ opacity:.35; cursor:default; }
+.pg-list .file-item.pg-hide{ display:none !important; }
+.track-card2 .pg12{ grid-column:1 / -1; grid-row:4; }
+.pg12 > .pg-list{ margin-bottom:0; }
+@media (max-width:600px){ .pg12{ gap:3px; min-width:0; } .pg12 .pg-arrow{ width:24px; font-size:13px; } .pg-list .file-item{ min-width:0; } .pg-list .file-item-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; } }
+@media (max-width:860px){ .track-card2 .pg12{ grid-column:1; grid-row:auto; } }
 </style>
 </head>
 <body>
@@ -2168,6 +2177,7 @@ function renderList(kind){
     </div>
   `).join('');
   try{ if(window.renderImp) window.renderImp(kind); }catch(e){}
+  try{ if(window.pageLists) window.pageLists(kind); }catch(e){}
 }
 
 document.addEventListener('click', e => {
@@ -2229,6 +2239,7 @@ setInterval(() => {
     let ci = -1; try{ ci = ctl.getCurIdx(); }catch(x){}
     let pl = false; try{ pl = ctl.isPlaying(); }catch(x){}
     try{ if(window.impTick) window.impTick(k, ci); }catch(x){}
+    try{ if(window.pageTick) window.pageTick(k, ci); }catch(x){}
     [k + 'List', 'impItems_' + k].forEach(id => {
       const c = document.getElementById(id); if(!c) return;
       c.querySelectorAll('.file-item.pl').forEach(r => {
@@ -5745,6 +5756,36 @@ window.addEventListener('pagehide', flushWork);
 
 // 폰 홈 화면 앱 설치용 (파일을 저장하지 않는 최소 서비스워커)
 try{ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./bgm-sw.js').catch(()=>{}); }catch(e){}
+
+(function(){
+  const mq = window.matchMedia('(max-width:600px)');
+  const per = () => mq.matches ? 1 : 2;
+  const P = { voice: { start: 0, ci: -2 }, music: { start: 0, ci: -2 } };
+  const E = {};
+  ['voice', 'music'].forEach(k => {
+    const l = document.getElementById(k + 'List'); if(!l) return;
+    const w = document.createElement('div'); w.className = 'pg12';
+    l.parentNode.insertBefore(w, l);
+    const pv = document.createElement('button'); pv.type = 'button'; pv.className = 'pg-arrow'; pv.textContent = '◀'; pv.title = '이전';
+    const nx = document.createElement('button'); nx.type = 'button'; nx.className = 'pg-arrow'; nx.textContent = '▶'; nx.title = '다음';
+    l.classList.add('pg-list'); w.appendChild(pv); w.appendChild(l); w.appendChild(nx);
+    E[k] = { w, l, pv, nx };
+    pv.addEventListener('click', () => { P[k].start = Math.max(0, P[k].start - per()); apply(k); });
+    nx.addEventListener('click', () => { P[k].start += per(); apply(k); });
+  });
+  function apply(k){
+    const e = E[k]; if(!e) return;
+    const rows = [...e.l.querySelectorAll('.file-item')], n = per();
+    P[k].start = Math.max(0, Math.min(P[k].start, Math.max(0, rows.length - 1)));
+    rows.forEach((r, i) => r.classList.toggle('pg-hide', i < P[k].start || i >= P[k].start + n));
+    e.pv.disabled = P[k].start <= 0; e.nx.disabled = P[k].start + n >= rows.length;
+    e.w.style.display = rows.length ? '' : 'none';
+  }
+  window.pageLists = apply;
+  window.pageTick = (k, ci) => { if(ci === P[k].ci) return; P[k].ci = ci; if(ci >= 0){ P[k].start = ci; apply(k); } };
+  mq.addEventListener('change', () => ['voice', 'music'].forEach(apply));
+  ['voice', 'music'].forEach(apply);
+})();
 </script>
 </body>
 </html>
