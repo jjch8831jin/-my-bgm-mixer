@@ -817,6 +817,8 @@
   .pk-g .pk-cr button{ padding:6px 12px; border:1px solid #94a3b8; border-radius:8px; background:#f1f5f9; font-size:15px; cursor:pointer; font-family:inherit; }
   .pk-g .pk-cr button.over{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
   @media (max-width:600px){ .pk-g .pk-fd .fi{ font-size:26px; } .pk-g .pk-fd .fn{ font-size:12px; } }
+  .pk-g .pk-t.ms{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; opacity:.85; }
+  .pk-rb{ position:fixed; z-index:99998; border:2px solid #2563eb; background:rgba(37,99,235,.15); pointer-events:none; }
   .pk-g .pk-t.sel{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
   .pk-g .pk-tx{ position:absolute; top:3px; right:3px; width:26px; height:26px; border-radius:50%; background:rgba(127,29,29,.92); color:#fff; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; line-height:1; }
   .pk-top{ display:flex; align-items:center; gap:10px; }
@@ -5279,19 +5281,19 @@ function mixTotalDuration(){
       const pop = document.createElement('div'); pop.className = 'pk-back';
       pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">' + (x == null ? '사진 보관함 (끌어다 놓기·붙여넣기)' : '이 줄에 붙일 사진을 고르세요') + '</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
-      let lib = [], folders = [], fLoaded = false, curF = (typeof f0 === 'number' ? f0 : null), pkDrag = null;
+      let lib = [], folders = [], fLoaded = false, curF = (typeof f0 === 'number' ? f0 : null), pkDrag = null, msel = new Set();
       const nrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u); // 파일 이름이 달라도 그림이 같으면 같은 사진
+      const moveTo = async (key, fi) => { const ks = Array.isArray(key) ? key : [key]; folders.forEach(f => { f.items = f.items.filter(v => !ks.includes(v)); }); if(fi >= 0 && folders[fi]) ks.forEach(v => folders[fi].items.push(v)); msel.clear(); await libFSet(folders); fill(null); };
       const fill = selK => {
       g.innerHTML = ''; const cur = attachedPic(x);
       const libOnly = lib.filter(u => !pics.some(p => nrm(p) === nrm(u))), all = pics.concat(libOnly);
       if(fLoaded && curF != null && !folders[curF]) curF = null;
       const vf = (curF != null && folders[curF]) ? curF : null;
       const fOf = u => (typeof u === 'string' ? folders.findIndex(f => f.items.includes(nrm(u))) : -1);
-      const moveTo = async (key, fi) => { folders.forEach(f => { f.items = f.items.filter(v => v !== key); }); if(fi >= 0 && folders[fi]) folders[fi].items.push(key); await libFSet(folders); fill(null); };
       if(vf != null){
         const cr = document.createElement('div'); cr.className = 'pk-cr';
         const bk = document.createElement('button'); bk.type = 'button'; bk.textContent = '← 전체'; bk.title = '눌러서 돌아가기 (사진을 끌어다 놓으면 폴더에서 빼냅니다)';
-        bk.addEventListener('click', () => { curF = null; fill(null); });
+        bk.addEventListener('click', () => { curF = null; msel.clear(); fill(null); });
         bk.addEventListener('dragover', e => { if(pkDrag != null){ e.preventDefault(); e.stopPropagation(); bk.classList.add('over'); } });
         bk.addEventListener('dragleave', () => bk.classList.remove('over'));
         bk.addEventListener('drop', e => { if(pkDrag == null) return; e.preventDefault(); e.stopPropagation(); bk.classList.remove('over'); moveTo(pkDrag, -1); });
@@ -5304,21 +5306,23 @@ function mixTotalDuration(){
           const fi = document.createElement('span'); fi.className = 'fi'; fi.textContent = '📁';
           const fn = document.createElement('span'); fn.className = 'fn'; fn.textContent = f.name + ' (' + cnt + ')';
           fb.appendChild(fi); fb.appendChild(fn);
-          fb.addEventListener('click', () => { curF = i; fill(null); });
+          fb.addEventListener('click', () => { curF = i; msel.clear(); fill(null); });
           fb.addEventListener('dragover', e => { if(pkDrag != null){ e.preventDefault(); e.stopPropagation(); fb.classList.add('over'); } });
           fb.addEventListener('dragleave', () => fb.classList.remove('over'));
           fb.addEventListener('drop', e => { if(pkDrag == null) return; e.preventDefault(); e.stopPropagation(); fb.classList.remove('over'); moveTo(pkDrag, i); });
           g.appendChild(fb);
         });
       }
+      const shownKeys = new Set();
       all.forEach((u, k) => {
         if(vf == null ? fOf(u) >= 0 : fOf(u) !== vf) return; // 폴더에 넣은 사진은 그 폴더 안에서만 보임
         const inSong = k < pics.length;
         const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (inSong && k === cur ? ' on' : '');
         let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         b.appendChild(im);
-        if(typeof u === 'string'){ b.draggable = true; b.addEventListener('dragstart', e => { pkDrag = nrm(u); try{ e.dataTransfer.setData('text/plain', 'pk'); e.dataTransfer.effectAllowed = 'move'; }catch(x){} }); b.addEventListener('dragend', () => { pkDrag = null; }); b._key = nrm(u); }
+        if(typeof u === 'string'){ b.draggable = true; shownKeys.add(nrm(u)); if(msel.has(nrm(u))) b.classList.add('ms'); b.addEventListener('dragstart', e => { pkDrag = msel.has(nrm(u)) ? Array.from(msel) : [nrm(u)]; try{ e.dataTransfer.setData('text/plain', 'pk'); e.dataTransfer.effectAllowed = 'move'; }catch(x){} }); b.addEventListener('dragend', () => { pkDrag = null; }); b._key = nrm(u); }
         b.addEventListener('click', async () => {
+          if(msel.size){ msel.clear(); g.querySelectorAll('.pk-t.ms').forEach(o => o.classList.remove('ms')); }
           if(!b.classList.contains('sel')){
             g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
             b.classList.add('sel'); const xb = document.createElement('span'); xb.className = 'pk-tx'; xb.textContent = '✕'; xb.title = '이 사진 지우기'; b.appendChild(xb);
@@ -5338,6 +5342,7 @@ function mixTotalDuration(){
         g.appendChild(b);
         if(k === selK) b.click();
       });
+      Array.from(msel).forEach(v => { if(!shownKeys.has(v)) msel.delete(v); });
       };
       fill(null);
       Promise.all([libGet(), libFGet()]).then(([a, fl]) => { if(!pop.isConnected) return; lib = a; folders = fl; fLoaded = true; fill(null); });
@@ -5409,8 +5414,9 @@ function mixTotalDuration(){
         }
         if(tl){
           if(!tl._key) return;
-          const ent = []; folders.forEach((f, i) => { if(i !== curF) ent.push(['📁 ' + f.name + ' 폴더로 옮기기', () => { folders.forEach(q => { q.items = q.items.filter(v => v !== tl._key); }); folders[i].items.push(tl._key); libFSet(folders); fill(null); }]); });
-          if(curF != null) ent.push(['↩ 폴더에서 빼기', () => { folders.forEach(q => { q.items = q.items.filter(v => v !== tl._key); }); libFSet(folders); fill(null); }]);
+          const ks = msel.has(tl._key) ? Array.from(msel) : [tl._key];
+          const ent = []; folders.forEach((f, i) => { if(i !== curF) ent.push(['📁 ' + f.name + ' 폴더로 옮기기', () => moveTo(ks, i)]); });
+          if(curF != null) ent.push(['↩ 폴더에서 빼기', () => moveTo(ks, -1)]);
           if(ent.length) pkMenu(e, ent);
           return;
         }
@@ -5419,6 +5425,34 @@ function mixTotalDuration(){
         if(curF == null) ent.push(['📁 폴더 만들기', () => { const nn = (prompt('폴더 이름') || '').trim(); if(!nn) return; if(folders.some(f => f.name === nn)){ alert('같은 이름의 폴더가 있습니다.'); return; } folders.push({ name: nn, items: [] }); libFSet(folders); fill(null); }]);
         pkMenu(e, ent);
       });
+      // 마우스로 끌어 여러 장 선택 / Ctrl+A 전체 선택
+      const tilesNow = () => Array.from(g.querySelectorAll('.pk-t')).filter(t => t._key);
+      const paintMs = () => tilesNow().forEach(t => t.classList.toggle('ms', msel.has(t._key)));
+      g.addEventListener('pointerdown', e => {
+        if(e.button !== 0 || e.pointerType !== 'mouse' || e.target.closest('.pk-t, button')) return;
+        e.preventDefault();
+        const sx = e.clientX, sy = e.clientY; let rb = null, moved = false;
+        g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
+        const mv = ev => {
+          if(!moved && Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 5) return;
+          moved = true; if(!rb){ rb = document.createElement('div'); rb.className = 'pk-rb'; pop.appendChild(rb); }
+          const l = Math.min(sx, ev.clientX), t = Math.min(sy, ev.clientY), r = Math.max(sx, ev.clientX), b = Math.max(sy, ev.clientY);
+          rb.style.left = l + 'px'; rb.style.top = t + 'px'; rb.style.width = (r - l) + 'px'; rb.style.height = (b - t) + 'px';
+          msel.clear(); tilesNow().forEach(tl => { const q = tl.getBoundingClientRect(); if(q.left < r && q.right > l && q.top < b && q.bottom > t) msel.add(tl._key); });
+          paintMs();
+        };
+        const up = () => { document.removeEventListener('pointermove', mv, true); document.removeEventListener('pointerup', up, true); if(rb) rb.remove(); if(!moved){ msel.clear(); paintMs(); } };
+        document.addEventListener('pointermove', mv, true); document.addEventListener('pointerup', up, true);
+      });
+      const onCtrlA = e => {
+        if(!pop.isConnected){ document.removeEventListener('keydown', onCtrlA, true); return; }
+        if(!(e.ctrlKey || e.metaKey) || (e.key !== 'a' && e.key !== 'A')) return;
+        const tg = e.target; if(tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA')) return;
+        e.preventDefault(); e.stopPropagation();
+        g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
+        msel = new Set(tilesNow().map(t => t._key)); paintMs();
+      };
+      document.addEventListener('keydown', onCtrlA, true);
       pkCur = { x, pop, add: addToList };
       back.appendChild(pop);
     }
