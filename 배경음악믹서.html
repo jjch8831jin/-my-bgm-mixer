@@ -383,7 +383,7 @@
   .lyr-thumbs .th{ touch-action:pan-x; cursor:grab; }
   .lyr-thumbs .th.drg{ opacity:.45; outline:2px dashed #1e3a8a; }
   .lyr-thumbs .th.sel{ outline:3px solid #1e3a8a; outline-offset:-1px; border-radius:6px; }
-  .lyr-thumbs .th.sel::after{ content:'✓'; position:absolute; left:3px; bottom:3px; width:20px; height:20px; border-radius:50%; background:#1e3a8a; color:#fff; font-size:12px; font-weight:800; line-height:20px; text-align:center; pointer-events:none; }
+  .lyr-thumbs .th.sel::after{ content:'✓'; position:absolute; left:3px; top:3px; width:20px; height:20px; border-radius:50%; background:#1e3a8a; color:#fff; font-size:12px; font-weight:800; line-height:20px; text-align:center; pointer-events:none; }
   .selbox{ position:fixed; z-index:99999; border:1.5px solid #1e3a8a; background:rgba(30,58,138,.18); pointer-events:none; }
   .lyr-thumbs .th.insL{ box-shadow:-4px 0 0 0 #1e3a8a; } .lyr-thumbs .th.insR{ box-shadow:4px 0 0 0 #1e3a8a; }
   .lyr-thumbs.dropping{ outline:2px dashed #1e3a8a; outline-offset:2px; border-radius:6px; }
@@ -397,6 +397,7 @@
   .lyr-box.onlypic:not(.ui-show) .lyr-head, .lyr-box.onlypic:not(.ui-show) .lyr-bar{ opacity:0; pointer-events:none; }
   .lyr-head, .lyr-bar{ transition:opacity .25s ease; }
   .lyr-box.autohide:not(.ui-show) .lyr-head, .lyr-box.autohide:not(.ui-show) .lyr-bar{ opacity:0; pointer-events:none; }
+  .lyr-box .lyr-btns button[data-imgsave]{ background:#d1fae5; border-color:#047857; color:#065f46; font-weight:700; }
   .lyr-box .lyr-btns button[data-imgadd]{ background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
   .lyr-box .lyr-btns button[data-imgdel]{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
   @media (max-width:600px){ .lyr-btns{ gap:2px !important; } .lyr-box .lyr-btns button{ font-size:7pt; padding:6px 2px; letter-spacing:-0.04em; white-space:nowrap; } .lyr-box .lyr-btns button.ok{ padding:6px 5px; } .lyr-btns{ gap:2px !important; } .lyr-btns img[data-thumb]{ display:none !important; } }
@@ -755,6 +756,35 @@
   .lyr-box .sy-row.sy-pic .rx{ position:absolute; top:6px; right:8px; width:30px; height:30px; padding:0; border-radius:50%; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-size:12pt; line-height:1; display:flex; align-items:center; justify-content:center; }
   .lyr-box .sy-list .addc{ display:flex; align-items:center; justify-content:center; min-height:170px; border:2px dashed #6d28d9; border-radius:8px; background:#ede9fe; color:#4c1d95; font-size:14pt; font-weight:700; }
   .lyr-box .sy-row.sy-pic.dropto{ outline:3px solid #1e3a8a; outline-offset:-3px; }
+  .lyr-box .sy-list.ly{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; align-content:start; }
+  .lyr-box .sy-row.sy-ly{ display:flex; align-items:center; gap:10px; padding:6px 10px; position:relative; }
+  .lyr-box .sy-row.sy-ly .tm{ min-width:5.2em; }
+  .lyr-box .sy-row.sy-ly .tx2{ flex:1; min-width:0; cursor:text; overflow-wrap:anywhere; }
+  .lyr-box .sy-row.sy-ly .hd{ font-size:18pt; color:#9a3412; cursor:grab; padding:0 2px; flex:none; touch-action:none; user-select:none; }
+  .lyr-box .sy-row.sy-ly.drg{ opacity:.45; } .lyr-box .sy-row.sy-ly.insl{ box-shadow:-5px 0 0 0 #1e3a8a; }
+  .lyr-box .sy-row.sy-ly .rx{ position:static; flex:none; width:30px; height:30px; padding:0; border-radius:50%; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-size:12pt; line-height:1; display:flex; align-items:center; justify-content:center; }
+  .lyr-box .sy-row.sy-ly.now .tx2::after, .lyr-box .sy-row.sy-pic.now .tx2::after{ content:'  ← 다음 차례'; color:#047857; font-size:.75em; }
+  .lyr-box .sy-edit{ flex:1; min-width:0; font:inherit; font-size:1em; padding:2px 8px; border:1px solid #1d4ed8; border-radius:6px; background:#fff; color:#000; }
+  .lyr-box .sy-list .addl{ grid-column:1 / -1; display:flex; align-items:center; justify-content:center; min-height:64px; border:2px dashed #6d28d9; border-radius:8px; background:#ede9fe; }
+  .lyr-box .sy-add{ width:100%; background:transparent; border:0; outline:0; text-align:center; font-size:14pt; font-weight:700; color:#4c1d95; resize:none; min-height:0; padding:10px; line-height:1.4; }
+  .lyr-box .sy-add::placeholder{ color:#4c1d95; }
+  .lyr-box .sy-row.sy-pic.sel{ outline:3px solid #1e3a8a; outline-offset:-3px; }
+  .lyr-box .sy-row.sy-pic .ck{ position:absolute; left:46px; top:8px; width:26px; height:26px; border-radius:50%; background:#1e3a8a; color:#fff; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; z-index:2; pointer-events:none; }
+  .lyr-box .sy-row.sy-pic .ck.off{ background:rgba(255,255,255,.85); border:2px solid #1e3a8a; color:transparent; }
+  .lyr-box .sy-bar .more{ background:#fff; border:1px solid #a8a29e; font-weight:700; flex:none; }
+  .ctxm{ position:fixed; z-index:10002; background:#fff; border:1px solid #a8a29e; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.3); padding:4px; display:flex; flex-direction:column; min-width:150px; }
+  .ctxm button{ text-align:left; font-size:14pt; padding:8px 14px; border:0; background:transparent; border-radius:8px; color:#1c1917; cursor:pointer; white-space:nowrap; }
+  .ctxm button:hover{ background:#e0e7ff; }
+  @media (max-width:600px){ .lyr-box .sy-list.ly{ grid-template-columns:minmax(0,1fr); }
+    .lyr-box .sy-bar.sy-one{ flex-wrap:wrap; gap:6px; }
+    .lyr-box .sy-one button.stamp{ order:9; flex:1 1 100%; }
+    .lyr-box .sy-one button{ height:40px; padding:0 8px; font-size:11pt; }
+    .lyr-box .sy-one button.ok{ margin-left:auto; padding:0 12px; }
+    .lyr-box .sy-row.sy-pic{ gap:8px; }
+    .lyr-box .sy-row.sy-pic .tx2{ display:none; }
+    .lyr-box .sy-row.sy-pic .tm{ min-width:3.6em; }
+    .lyr-box .sy-row.sy-pic img, .lyr-box .sy-row.sy-pic video{ max-width:42vw; }
+    .lyr-box .sy-row.sy-pic .ck{ left:34px; } }
 </style>
 </head>
 <body>
@@ -4850,7 +4880,7 @@ function mixTotalDuration(){
     const L = loadLyr()[keyOf(kind, name)] || {};
     const back = document.createElement('div'); back.className = 'lyr-back' + (kind === 'voice' ? ' lyr-voice' : '');
     back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
-      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="trk trkH" data-trkbox title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span><button type="button" data-sw></button><button type="button" class="rb" data-hide title="숨기기(믹서 보기)">－</button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
+      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit" style="display:none">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="trk trkH" data-trkbox title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span><button type="button" data-sw></button><button type="button" class="rb" data-hide title="숨기기(믹서 보기)">－</button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
       '<div class="lyr-bar"><span class="bt" data-ct>00:00</span><input type="range" class="sk" data-sk min="0" max="1000" value="0" step="1"><span class="bt" data-dt>00:00</span>' +
       '<span class="bg"><button type="button" class="rb" data-pl title="재생">▶</button><button type="button" class="rb" data-st2 title="정지(처음으로)">■</button><button type="button" class="rb" data-nx title="다음곡">⏭</button></span>' +
       (kind === 'voice' ? '<span class="rate" title="속도 조절"><button type="button" data-rm>−</button><b data-rv>1.00x</b><button type="button" data-rp>+</button></span>' : '') +
@@ -4858,11 +4888,11 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on">가사</button><button type="button" data-sym="pic">사진</button></span><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>저장</button></div></div>' +
-      '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on">가사</button><button type="button" data-sym="pic">사진</button></span><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등">⋯ <span class="lg">더보기</span></button><button type="button" class="ok" data-fin>저장</button></div></div>' +
+      '<div data-pane="edit" style="display:none !important"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
-      '<div class="lyr-btns"><button type="button" data-imgadd title="동영상·이미지 추가">🖼 <span class="lg">동·이미지 </span>추가</button><button type="button" data-imgdel>이미지 삭제</button><button type="button" data-del>🗑 글 지우기</button><button type="button" data-vexp title="선택한 소리(음성/배경음악/통합)로 16:9 영상 파일 만들기">🎬 영상</button><button type="button" data-bsave title="이 곡의 가사·시간·사진·동영상을 파일로 저장">💾 백업</button><button type="button" data-ball title="모든 곡을 한 파일로 저장">📦 전체</button><button type="button" data-bload title="저장해 둔 .bgmx 파일 불러오기">📂 불러오기</button><input type="file" accept="image/*,video/*" multiple data-imgf style="display:none"><input type="file" accept=".bgmx,image/*,video/*,.mp4" multiple data-bf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
+      '<div class="lyr-btns"><button type="button" data-imgadd title="동영상·이미지 추가">🖼 <span class="lg">동·이미지 </span>추가</button><button type="button" data-imgsave title="선택한 사진(선택이 없으면 모두)을 폴더에 사진 파일로 저장">📁 사진 저장</button><button type="button" data-imgdel>이미지 삭제</button><button type="button" data-del>🗑 글 지우기</button><button type="button" data-vexp title="선택한 소리(음성/배경음악/통합)로 16:9 영상 파일 만들기">🎬 영상</button><button type="button" data-bsave title="이 곡의 가사·시간·사진·동영상을 파일로 저장">💾 백업</button><button type="button" data-ball title="모든 곡을 한 파일로 저장">📦 전체</button><button type="button" data-bload title="저장해 둔 .bgmx 파일 불러오기">📂 불러오기</button><input type="file" accept="image/*,video/*" multiple data-imgf style="display:none"><input type="file" accept=".bgmx,image/*,video/*,.mp4" multiple data-bf style="display:none"><span style="flex:1"></span><button type="button" class="ok" data-ok>저장</button></div></div></div>';
     document.body.appendChild(back);
     // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
     const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
@@ -5017,7 +5047,7 @@ function mixTotalDuration(){
       if(key !== shownKey){
         shownKey = key; lastIdx = -2; view.textContent = ''; lns = [];
         hl = document.createElement('div'); hl.className = 'lyr-hl'; view.appendChild(hl);
-        if(!c.has){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '저장된 가사가 없습니다. "입력"에서 붙여넣어 주세요.'; view.appendChild(e); }
+        if(!c.has){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '저장된 가사가 없습니다. "시간 맞추기"에서 가사를 붙여넣어 주세요.'; view.appendChild(e); }
         else c.items.forEach(t => { const d = document.createElement('div'); d.className = 'lyr-ln'; const sp = document.createElement('span'); sp.textContent = t; d.appendChild(sp); view.appendChild(d); lns.push(d); });
         const sp2 = document.createElement('div'); sp2.className = 'lyr-sp'; view.appendChild(sp2);
       }
@@ -5046,61 +5076,191 @@ function mixTotalDuration(){
     let syT = [], syStamp = [], syAbs = [], syPos = 0, syRows = [];
     const mmss = x => { x = Math.max(0, x || 0); const m = Math.floor(x / 60); return m + ':' + String(Math.floor(x % 60)).padStart(2, '0'); };
     const stampStr = x => { const m = Math.floor(x / 60), r = x - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); };
+    const mkEl = (tag, cls, txt) => { const e = document.createElement(tag); if(cls) e.className = cls; if(txt != null) e.textContent = txt; return e; };
+    const tparse = l => { const m = TIME_RE.exec(l); return m && m[3].trim() ? { t: m[3].trim(), s: Number(m[1]) * 60 + Number(m[2].replace(',', '.')) } : { t: l, s: null }; };
+    const firstEmpty = a => { const i = a.findIndex(v => v == null); return i < 0 ? 0 : i; };
     function syncInit(){
-      syT = lyrLines({ text: ta.value }).map(l => { const m = TIME_RE.exec(l); return m && m[3].trim() ? m[3].trim() : l; });
-      syStamp = syT.map(() => null); syPos = 0; syRender();
-      if(syMode === 'pic') picSyRender();
+      const L2 = lyrLines({ text: ta.value }).map(tparse);
+      syT = L2.map(o => o.t); syStamp = L2.map(o => o.s); syAbs = L2.map(() => null);
+      syPos = firstEmpty(syStamp); picPos = firstEmpty(picT.slice(0, pics.length));
+      if(syMode === 'pic') picSyRender(); else syRender();
     }
-    // ---- 사진 시간 맞추기 (스페이스) ----
+    function lyrPersist(){
+      const lines = syT.map((t, x) => syStamp[x] != null ? stampStr(syStamp[x]) + ' ' + t : t);
+      ta.value = lines.join('\n');
+      const a = loadLyr(), k = keyOf(kind, name);
+      if(lines.length) a[k] = { text: ta.value, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) }; else delete a[k];
+      saveLyr(a); try{ tick(); }catch(e){}
+    }
+    // ---- 사진·가사 시간 맞추기 (스페이스) ----
     let syMode = 'lyric', picPos = 0, pRows = [];
     function absOf(t){ const cur = curInfo(kind); if(!cur) return null; const its = kind === 'voice' ? voiceItems : musicItems; let acc = 0; for(const it of its){ if(it === cur.item) break; acc += it.buffer.duration; } return acc + Math.max(0, t); }
+    // 선택(복사·빼기) 표시
+    function paintSyPics(){ pRows.forEach((r, x) => { const on = selSet.has(x); r.classList.toggle('sel', on); const c = r.querySelector('.ck'); if(c) c.classList.toggle('off', !on); }); }
+    async function removeSel(){
+      const idx = Array.from(selSet).filter(i => i < pics.length).sort((a, b) => b - a); if(!idx.length) return;
+      idx.forEach(i => { pics.splice(i, 1); picT.splice(i, 1); });
+      savePT(); picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics();
+    }
+    function copySel(){
+      const idx = Array.from(selSet).filter(i => i < pics.length).sort((a, b) => a - b); if(!idx.length) return;
+      window.__picClip = idx.map(i => pics[i]);
+      try{ const pr = navigator.clipboard.writeText('bgm-pics:' + Date.now()); if(pr && pr.catch) pr.catch(() => {}); }catch(e){}
+    }
+    let ctxEl = null;
+    function closeCtx(){ if(ctxEl){ ctxEl.remove(); ctxEl = null; } }
+    function showCtx(cx, cy, x){
+      closeCtx();
+      const m = mkEl('div', 'ctxm'); ctxEl = m;
+      const n = selSet.size;
+      const add = (t, fn) => { const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => { closeCtx(); fn(); }); m.appendChild(b); };
+      add('복사' + (n > 1 ? ' (' + n + '장)' : ''), copySel);
+      add('빼기' + (n > 1 ? ' (' + n + '장)' : ''), removeSel);
+      add('⏱ 지금 시간으로', () => { const c = curInfo(kind); if(!c) return; picT[x] = Math.max(0, c.t); savePT(); chipsUpd(); });
+      add('♪ 가사 줄에 맞추기', () => pickLine(x));
+      back.appendChild(m);
+      const w = m.offsetWidth, h = m.offsetHeight;
+      m.style.left = Math.max(4, Math.min(cx, innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, innerHeight - h - 4)) + 'px';
+    }
+    back.addEventListener('pointerdown', e => { if(ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
     function picSyRender(){
-      syList.textContent = ''; pRows = []; syList.classList.add('pics');
-      if(!pics.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '사진이 없습니다. "입력"에서 사진을 넣어 주세요.'; syList.appendChild(e); }
+      closeCtx();
+      syList.textContent = ''; pRows = []; syList.classList.add('pics'); syList.classList.remove('ly');
+      if(!pics.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '사진이 없습니다. 아래 칸을 누르거나 사진을 끌어다 놓으세요.'; syList.appendChild(e); }
       pics.forEach((u, x) => {
         const r = document.createElement('div'); r.className = 'sy-row sy-pic';
-        const t = document.createElement('span'); t.className = 'tm';
+        const t = document.createElement('span'); t.className = 'tm'; t.title = '누르면 이 사진이 다음 차례가 됩니다';
+        t.addEventListener('click', e => { e.stopPropagation(); picPos = x; picSyMark(false); });
         let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         const lb = document.createElement('span'); lb.className = 'tx2'; lb.textContent = '사진 ' + (x + 1);
         const hd = document.createElement('span'); hd.className = 'hd'; hd.textContent = '⠿'; hd.title = '끌어서 순서 바꾸기 (시간은 자리에 그대로, 사진만 바뀝니다)';
         const rx = document.createElement('button'); rx.type = 'button'; rx.className = 'rx'; rx.textContent = '✕'; rx.title = '이 사진 빼기';
-        rx.addEventListener('click', async () => { pics.splice(x, 1); picT.splice(x, 1); savePT(); if(picPos > x) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); });
+        rx.addEventListener('click', async e => { e.stopPropagation(); pics.splice(x, 1); picT.splice(x, 1); savePT(); if(picPos > x) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); });
+        const ck = document.createElement('span'); ck.className = 'ck off'; ck.textContent = '✓';
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
         r.addEventListener('drop', e => { r.classList.remove('dropto'); onDrop(e, undefined, x); });
-        r.appendChild(hd); r.appendChild(t); r.appendChild(im); r.appendChild(lb); r.appendChild(rx); syList.appendChild(r); pRows.push(r);
+        // 누르면 선택, 한 번 더 누르면 해제 / 오른쪽 마우스(폰은 길게 누르기) = 메뉴
+        let lp = null, lpDone = false;
+        r.addEventListener('click', e => {
+          if(lpDone){ lpDone = false; return; }
+          if(e.target.closest('.hd, .rx, .tm')) return;
+          if(selSet.has(x)) selSet.delete(x); else selSet.add(x);
+          paintSel(); paintSyPics();
+        });
+        r.addEventListener('contextmenu', e => { e.preventDefault(); if(!selSet.has(x)){ selSet = new Set([x]); paintSel(); paintSyPics(); } showCtx(e.clientX, e.clientY, x); });
+        r.addEventListener('pointerdown', e => {
+          if(e.pointerType !== 'touch' || e.target.closest('.hd, .rx, .tm')) return;
+          const x0 = e.clientX, y0 = e.clientY, cx = e.clientX, cy = e.clientY;
+          lp = setTimeout(() => { lp = null; lpDone = true; if(!selSet.has(x)){ selSet = new Set([x]); paintSel(); paintSyPics(); } showCtx(cx, cy, x); }, 520);
+          const mv = ev => { if(Math.hypot(ev.clientX - x0, ev.clientY - y0) > 10 && lp){ clearTimeout(lp); lp = null; } };
+          const up = () => { if(lp){ clearTimeout(lp); lp = null; } r.removeEventListener('pointermove', mv); r.removeEventListener('pointerup', up); r.removeEventListener('pointercancel', up); };
+          r.addEventListener('pointermove', mv); r.addEventListener('pointerup', up); r.addEventListener('pointercancel', up);
+        });
+        r.appendChild(hd); r.appendChild(t); r.appendChild(im); r.appendChild(lb); r.appendChild(rx); r.appendChild(ck); syList.appendChild(r); pRows.push(r);
       });
       const ad = document.createElement('button'); ad.type = 'button'; ad.className = 'addc'; ad.textContent = '🖼 사진·동영상 추가'; ad.addEventListener('click', () => back.querySelector('[data-imgf]').click());
       syList.appendChild(ad);
-      picSyMark(true);
+      picSyMark(true); paintSyPics();
     }
+    // 가사 줄 고치기·지우기·추가
+    function editLine(x, span){
+      const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.value = syT[x]; span.replaceWith(inp); inp.focus(); inp.select();
+      let done = false;
+      const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(); };
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; syRender(); } });
+    }
+    function delLine(x){
+      syT.splice(x, 1); syStamp.splice(x, 1); syAbs.splice(x, 1);
+      if(syPos > x) syPos--; syPos = Math.max(0, Math.min(syPos, syT.length));
+      lyrPersist(); syRender();
+    }
+    function addLines(txt){
+      const L2 = String(txt || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(tparse); if(!L2.length) return false;
+      L2.forEach(o => { syT.push(o.t); syStamp.push(o.s); syAbs.push(null); });
+      lyrPersist(); syRender();
+      try{ syList.scrollTo({ top: syList.scrollHeight, behavior: 'smooth' }); }catch(e){}
+      return true;
+    }
+    function syRender(){
+      closeCtx();
+      syList.textContent = ''; syRows = []; syList.classList.remove('pics'); syList.classList.add('ly');
+      syT.forEach((t, x) => {
+        const r = mkEl('div', 'sy-row sy-ly');
+        const hd = mkEl('span', 'hd', '⠿'); hd.title = '끌어서 순서 바꾸기 (시간은 줄을 따라갑니다)';
+        const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; syMark(false); });
+        const tx = mkEl('span', 'tx2', t); tx.title = '눌러서 고치기'; tx.addEventListener('click', () => editLine(x, tx));
+        const rx = mkEl('button', 'rx', '✕'); rx.type = 'button'; rx.title = '이 줄 지우기'; rx.addEventListener('click', () => delLine(x));
+        r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
+      });
+      const ad = mkEl('div', 'addl'); const t2 = mkEl('textarea', 'sy-add'); t2.rows = 1;
+      t2.placeholder = syT.length ? '＋ 가사 추가 (여러 줄을 붙여넣으면 줄마다 나뉩니다)' : '＋ 가사를 붙여넣으세요 (여러 줄을 붙여넣으면 줄마다 나뉩니다)';
+      const go = () => { const v = t2.value; t2.value = ''; if(v.trim()) addLines(v); };
+      t2.addEventListener('paste', () => setTimeout(go, 0));
+      t2.addEventListener('blur', go);
+      t2.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); go(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); t2.value = ''; t2.blur(); } });
+      ad.appendChild(t2); syList.appendChild(ad);
+      syMark(true);
+    }
+    // 끌어서 순서 바꾸기 (가사: 시간이 줄을 따라감 / 사진: 시간은 자리에 그대로)
     (function(){
       let pd = null;
+      const rowsOf = () => syMode === 'pic' ? pRows : syRows;
       syList.addEventListener('pointerdown', e => {
-        const h = e.target.closest && e.target.closest('.hd'); if(!h || syMode !== 'pic') return;
-        const row = h.closest('.sy-pic'), from = pRows.indexOf(row); if(from < 0) return;
-        pd = { id: e.pointerId, from, to: from }; row.classList.add('drg'); try{ syList.setPointerCapture(e.pointerId); }catch(x){} e.preventDefault();
+        const h = e.target.closest && e.target.closest('.hd'); if(!h) return;
+        const row = h.closest('.sy-row'), from = rowsOf().indexOf(row); if(from < 0) return;
+        pd = { id: e.pointerId, from, to: from, mode: syMode }; row.classList.add('drg'); try{ syList.setPointerCapture(e.pointerId); }catch(x){} e.preventDefault();
       });
       syList.addEventListener('pointermove', e => {
         if(!pd || e.pointerId !== pd.id) return;
-        const el = document.elementFromPoint(e.clientX, e.clientY), r = el && el.closest && el.closest('.sy-pic'), j = pRows.indexOf(r);
-        if(j >= 0){ pd.to = j; pRows.forEach((q, k) => q.classList.toggle('insl', k === j && j !== pd.from)); }
+        const rows = rowsOf();
+        const el = document.elementFromPoint(e.clientX, e.clientY), r = el && el.closest && el.closest('.sy-row'), j = rows.indexOf(r);
+        if(j >= 0){ pd.to = j; rows.forEach((q, k) => q.classList.toggle('insl', k === j && j !== pd.from)); }
         const rc = syList.getBoundingClientRect(); if(e.clientY < rc.top + 30) syList.scrollTop -= 14; else if(e.clientY > rc.bottom - 30) syList.scrollTop += 14;
       });
       const endp = async e => {
         if(!pd || e.pointerId !== pd.id) return;
-        const s0 = pd; pd = null; pRows.forEach(q => q.classList.remove('insl', 'drg'));
+        const s0 = pd; pd = null; rowsOf().forEach(q => q.classList.remove('insl', 'drg'));
         if(s0.to === s0.from) return;
-        const it = pics.splice(s0.from, 1)[0]; pics.splice(s0.to, 0, it); // 시간(picT)은 자리에 그대로 → 옮긴 사진이 그 자리의 시간에 나옴
-        await setImgs(keyOf(kind, name), pics); renderPics();
+        if(s0.mode === 'pic'){
+          const it = pics.splice(s0.from, 1)[0]; pics.splice(s0.to, 0, it); // 시간(picT)은 자리에 그대로 → 옮긴 사진이 그 자리의 시간에 나옴
+          await setImgs(keyOf(kind, name), pics); renderPics();
+        } else {
+          [syT, syStamp, syAbs].forEach(a => { const v = a.splice(s0.from, 1)[0]; a.splice(s0.to, 0, v); }); // 가사는 시간이 줄을 따라감
+          syPos = firstEmpty(syStamp); lyrPersist(); syRender();
+        }
       };
       syList.addEventListener('pointerup', endp); syList.addEventListener('pointercancel', endp);
+      // 빈 곳에서 끌어서 사진 상자 선택
+      let m = null, box = null;
+      syList.addEventListener('pointerdown', e => {
+        if(syMode !== 'pic' || e.pointerType !== 'mouse' || e.button !== 0 || e.target !== syList) return;
+        m = { id: e.pointerId, x0: e.clientX, y0: e.clientY, on: false, base: (e.ctrlKey || e.metaKey) ? new Set(selSet) : new Set() };
+        try{ syList.setPointerCapture(e.pointerId); }catch(x){}
+      });
+      syList.addEventListener('pointermove', e => {
+        if(!m || e.pointerId !== m.id) return;
+        if(!m.on){ if(Math.hypot(e.clientX - m.x0, e.clientY - m.y0) < 5) return; m.on = true; box = document.createElement('div'); box.className = 'selbox'; document.body.appendChild(box); }
+        const l = Math.min(m.x0, e.clientX), t = Math.min(m.y0, e.clientY), r = Math.max(m.x0, e.clientX), b = Math.max(m.y0, e.clientY);
+        box.style.left = l + 'px'; box.style.top = t + 'px'; box.style.width = (r - l) + 'px'; box.style.height = (b - t) + 'px';
+        selSet = new Set(m.base);
+        pRows.forEach((row, i) => { const q = row.getBoundingClientRect(); if(q.right > l && q.left < r && q.bottom > t && q.top < b) selSet.add(i); });
+        paintSel(); paintSyPics();
+      });
+      const fin = e => {
+        if(!m || e.pointerId !== m.id) return;
+        if(!m.on){ selSet = new Set(m.base); paintSel(); paintSyPics(); }
+        if(box){ box.remove(); box = null; }
+        try{ syList.releasePointerCapture(m.id); }catch(x){}
+        m = null;
+      };
+      syList.addEventListener('pointerup', fin); syList.addEventListener('pointercancel', fin);
     })();
     function picSyMark(scroll){
       pRows.forEach((r, x) => {
         const v = picT[x]; r.classList.toggle('done', v != null); r.classList.toggle('now', x === picPos);
         r.querySelector('.tm').textContent = v != null ? pfmt(v) : '--:--';
-        r.querySelector('.tx2').textContent = '사진 ' + (x + 1) + (x === picPos ? '  ← 다음 차례' : '');
       });
       stampBtn.disabled = !pics.length || picPos >= pics.length; undoBtn.disabled = picPos <= 0;
       if(scroll && pRows[picPos]){ const el = pRows[picPos]; syList.scrollTo({ top: el.offsetTop - syList.clientHeight / 2 + el.offsetHeight / 2, behavior:'smooth' }); }
@@ -5108,27 +5268,17 @@ function mixTotalDuration(){
     function setSyMode(m){
       syMode = m;
       back.querySelectorAll('[data-sym]').forEach(b => b.classList.toggle('on', b.dataset.sym === m));
-      if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 장&nbsp;</span>되돌리기'; picSyRender(); }
-      else { stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 줄&nbsp;</span>되돌리기'; syRender(); }
+      if(m === 'pic'){ picPos = firstEmpty(picT.slice(0, pics.length)); stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 장&nbsp;</span>되돌리기'; picSyRender(); }
+      else { syPos = firstEmpty(syStamp); stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 줄&nbsp;</span>되돌리기'; syRender(); }
     }
     back.querySelectorAll('[data-sym]').forEach(b => b.addEventListener('click', () => setSyMode(b.dataset.sym)));
-    function syRender(){
-      syList.textContent = ''; syRows = []; syList.classList.remove('pics');
-      if(!syT.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '먼저 "입력"에서 가사를 붙여넣어 주세요.'; syList.appendChild(e); }
-      syT.forEach((t, x) => {
-        const r = document.createElement('div'); r.className = 'sy-row';
-        r.innerHTML = '<span class="tm"></span><span class="tx2"></span>'; r.children[1].textContent = t; syList.appendChild(r); syRows.push(r);
-      });
-      syMark(true);
-    }
     function syMark(scroll){
       syRows.forEach((r, x) => {
         r.classList.toggle('done', syStamp[x] != null); r.classList.toggle('now', x === syPos);
-        r.children[0].textContent = syStamp[x] != null ? '✓ ' + stampStr(syStamp[x]) : '';
+        r.querySelector('.tm').textContent = syStamp[x] != null ? '✓ ' + stampStr(syStamp[x]) : '--:--';
       });
       stampBtn.disabled = !syT.length || syPos >= syT.length; undoBtn.disabled = syPos <= 0;
       if(scroll && syRows[syPos]) { const el = syRows[syPos]; syList.scrollTo({ top: el.offsetTop - syList.clientHeight / 2 + el.offsetHeight / 2, behavior:'smooth' }); }
-      else if(scroll && syRows.length) syList.scrollTo({ top: syList.scrollHeight, behavior:'smooth' });
     }
     function doStamp(){
       if(curTab !== 'sync') return;
@@ -5139,10 +5289,8 @@ function mixTotalDuration(){
       }
       if(syPos >= syT.length) return;
       const cur = curInfo(kind); if(!cur) return;
-      const its = kind === 'voice' ? voiceItems : musicItems; let acc = 0;
-      for(const it of its){ if(it === cur.item) break; acc += it.buffer.duration; }
-      syAbs[syPos] = acc + Math.max(0, cur.t);
-      syStamp[syPos] = Math.max(0, cur.t); syPos++; syMark(true);
+      syAbs[syPos] = absOf(cur.t);
+      syStamp[syPos] = Math.max(0, cur.t); syPos++; lyrPersist(); syMark(true);
     }
     function origToFrac(tOrig){
       const buf = kind === 'voice' ? voiceBuffer : musicBuffer; if(!buf) return 0;
@@ -5162,27 +5310,49 @@ function mixTotalDuration(){
         return;
       }
       if(syPos <= 0) return;
-      syPos--; const back0 = syAbs[syPos]; syStamp[syPos] = null; syMark(true);
+      syPos--; const s0 = syStamp[syPos]; const back0 = syAbs[syPos] != null ? syAbs[syPos] : (s0 != null ? absOf(s0) : null);
+      syStamp[syPos] = null; syAbs[syPos] = null; lyrPersist(); syMark(true);
       try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
       if(back0 != null){ try{ ctl.seekToFraction(origToFrac(back0)); }catch(e){} }
       try{ plShow(false); }catch(e){}
     }
     function syFinish(){
       if(syMode === 'pic'){ savePT(); tab('view'); return; }
-      const lines = syT.map((t, x) => syStamp[x] != null ? stampStr(syStamp[x]) + ' ' + t : t);
-      ta.value = lines.join('\n');
-      const a = loadLyr(), k = keyOf(kind, name);
-      a[k] = { text: ta.value, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) };
-      saveLyr(a); tick(); tab('view');
+      lyrPersist(); tab('view');
     }
+    // ⋯ 더보기 (입력 탭에 있던 기능)
+    (function(){
+      const mb = back.querySelector('[data-more]'); let pop = null;
+      const closeP = () => { if(pop){ pop.remove(); pop = null; } };
+      const items = [
+        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 불러오기', '[data-bload]'],
+        ['📁 사진 저장 (선택한 사진 / 없으면 전체)', '[data-imgsave]'], ['🗑 가사 모두 지우기', '[data-del]']
+      ];
+      mb.addEventListener('click', e => {
+        e.stopPropagation(); if(pop){ closeP(); return; }
+        pop = mkEl('div', 'ctxm moreM');
+        items.forEach(([t, sel]) => { const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => {
+          closeP();
+          if(sel === '[data-del]'){ if(!confirm('이 곡의 가사를 모두 지울까요?')) return; back.querySelector(sel).click(); setTimeout(() => { syncInit(); }, 0); return; }
+          back.querySelector(sel).click();
+        }); pop.appendChild(b); });
+        back.appendChild(pop);
+        const r = mb.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+        pop.style.left = Math.max(4, Math.min(r.right - w, innerWidth - w - 4)) + 'px'; pop.style.top = Math.max(4, r.top - h - 6) + 'px';
+      });
+      back.addEventListener('pointerdown', e => { if(pop && !pop.contains(e.target) && e.target !== mb) closeP(); }, true);
+    })();
     stampBtn.addEventListener('pointerdown', e => { e.preventDefault(); doStamp(); });
     undoBtn.addEventListener('click', syUndo);
     finBtn.addEventListener('click', syFinish);
     const onSpace = e => {
       if(curTab !== 'sync' || e.code !== 'Space') return;
+      { const t = e.target; if(t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && /^(text|search|number|)$/.test(t.type)))) return; }
       e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){} if(!e.repeat) doStamp();
     };
     document.addEventListener('keydown', onSpace, true);
+    const onDel = e => { if(curTab !== 'sync' || syMode !== 'pic' || e.key !== 'Delete' || !selSet.size) return; { const a = document.activeElement; if(a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')) return; } e.preventDefault(); removeSel(); };
+    document.addEventListener('keydown', onDel, true);
     const onAlt = e => {
       if(curTab !== 'sync' || e.key !== 'Alt') return;
       e.preventDefault(); e.stopPropagation(); if(!e.repeat) syUndo();
@@ -5225,7 +5395,7 @@ function mixTotalDuration(){
       chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
       document.body.appendChild(chipEl);
     });
-    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
@@ -5240,7 +5410,7 @@ function mixTotalDuration(){
       inp.addEventListener('keydown', e => { e.stopPropagation(); if(e.key === 'Enter'){ e.preventDefault(); finish(true); } else if(e.key === 'Escape'){ e.preventDefault(); finish(false); } });
       inp.addEventListener('blur', () => finish(true));
     });
-    const onKey = e => { if(e.key === 'Escape'){ if(nm.querySelector('input')) return; e.preventDefault(); close(); } };
+    const onKey = e => { if(e.key === 'Escape'){ if(nm.querySelector('input')) return; if(e.target && e.target.closest && e.target.closest('.sy-list') && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return; if(ctxEl){ e.preventDefault(); closeCtx(); return; } e.preventDefault(); close(); } };
     document.addEventListener('keydown', onKey, true);
     back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
     back.querySelector('[data-x]').addEventListener('click', close);
@@ -5251,6 +5421,26 @@ function mixTotalDuration(){
     back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
     const imgF = back.querySelector('[data-imgf]');
     back.querySelector('[data-imgadd]').addEventListener('click', () => imgF.click());
+    back.querySelector('[data-imgsave]').addEventListener('click', async () => {
+      if(!pics.length){ alert('저장할 사진이 없습니다.'); return; }
+      const idxs = selSet.size ? Array.from(selSet).sort((a, b) => a - b) : pics.map((_, i) => i);
+      const extOf = t => ({ 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif', 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' }[t] || (/^video/.test(t) ? 'mp4' : 'jpg'));
+      const pad = String(idxs.length).length < 2 ? 2 : String(idxs.length).length;
+      let blobs;
+      try{ blobs = await Promise.all(idxs.map(i => itemToBlob(pics[i]))); }catch(e){ alert('사진을 읽지 못했습니다.'); return; }
+      const names = blobs.map((b, k) => String(k + 1).padStart(pad, '0') + '.' + extOf(b.type));
+      const isMob = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      if(window.showDirectoryPicker && !isMob){
+        try{
+          const saved = await getSavedDirHandle(kind), o = { mode: 'readwrite' }; if(saved) o.startIn = saved;
+          const dir = await window.showDirectoryPicker(o);
+          for(let k = 0; k < blobs.length; k++){ const fh = await dir.getFileHandle(names[k], { create: true }); const w = await fh.createWritable(); await w.write(blobs[k]); await w.close(); }
+          alert('"' + dir.name + '" 폴더에 사진 ' + blobs.length + '개를 저장했습니다. (' + names[0] + ' ~ ' + names[names.length - 1] + ')');
+        }catch(e){ if(e && e.name === 'AbortError') return; alert('저장하지 못했습니다: ' + (e && e.message ? e.message : e)); }
+        return;
+      }
+      for(let k = 0; k < blobs.length; k++){ const u = URL.createObjectURL(blobs[k]), a = document.createElement('a'); a.href = u; a.download = names[k]; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); await new Promise(r => setTimeout(r, 250)); }
+    });
     async function putImages(fs, at, rp){
       fs = Array.from(fs || []).filter(Boolean); if(!fs.length) return;
       const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0; const added = [];
@@ -5302,7 +5492,7 @@ function mixTotalDuration(){
     thumbsEl.addEventListener('drop', e => onDrop(e, posAt(e.clientX)));
     // 썸네일 선택(클릭 / Ctrl+클릭 / 빈 곳에서 끌어 상자 선택) + Ctrl+C 복사
     const thEls = () => Array.from(thumbsEl.querySelectorAll('.th'));
-    const paintSel = () => thEls().forEach((t, i) => t.classList.toggle('sel', selSet.has(i)));
+    const paintSel = () => { thEls().forEach((t, i) => t.classList.toggle('sel', selSet.has(i))); try{ paintSyPics(); }catch(e){} };
     thumbsEl.addEventListener('click', e => {
       const th = e.target.closest && e.target.closest('.th'); if(!th || e.target.closest('button')) return;
       const i = thEls().indexOf(th); if(i < 0) return;
