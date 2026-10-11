@@ -4840,7 +4840,8 @@ function mixTotalDuration(){
           const m = 1600, k = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement('canvas');
           c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
           const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
-          res(c.toDataURL('image/jpeg', 0.88));
+          let nm = String(file && file.name || '').replace(/\.[^.]*$/, '').trim(); if(!nm || /^(image|blob|스크린샷|screenshot)(\s*\(\d+\))?$/i.test(nm)) nm = '';
+          res(c.toDataURL('image/jpeg', 0.88).replace('data:image/jpeg;', 'data:image/jpeg;' + (nm ? 'name=' + encodeURIComponent(nm) + ';' : '')));
         };
         im.src = fr.result;
       };
@@ -4849,9 +4850,10 @@ function mixTotalDuration(){
   }
   // ---- 백업 파일(.bgmx): 가사 + 시간 + 사진 + 동영상 (소리 파일은 제외) ----
   const BGMX_MAGIC = 'BGMX1';
+  function itemName(it){ try{ if(typeof it === 'string'){ const q = /^data:[^;,]*;name=([^;,]*)/.exec(it); return q ? decodeURIComponent(q[1]) : ''; } return String(it && it.name || '').replace(/\.[^.]*$/, ''); }catch(e){ return ''; } }
   async function itemToBlob(it){
     if(typeof it !== 'string') return it;
-    const m = /^data:([^;,]*)(;base64)?,([\s\S]*)$/.exec(it); if(!m) throw new Error('bad');
+    const m0 = /^data:([^;,]*)((?:;[^;,]*?)*?)(;base64)?,([\s\S]*)$/.exec(it); if(!m0) throw new Error('bad'); const m = [0, m0[1], m0[3], m0[4]];
     const bin = atob(m[3]), u8 = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
     return new Blob([u8], { type: m[1] || 'image/jpeg' });
   }
@@ -5526,7 +5528,8 @@ function mixTotalDuration(){
       const pad = String(idxs.length).length < 2 ? 2 : String(idxs.length).length;
       let blobs;
       try{ blobs = await Promise.all(idxs.map(i => itemToBlob(pics[i]))); }catch(e){ alert('사진을 읽지 못했습니다.'); return; }
-      const names = blobs.map((b, k) => String(k + 1).padStart(pad, '0') + '.' + extOf(b.type));
+      const used = new Set(), clean = t => String(t || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').trim().slice(0, 80);
+      const names = blobs.map((b, k) => { let base = clean(itemName(pics[idxs[k]])); if(!base) base = (clean(String(name).replace(/\.[^.]*$/, '')) || '사진') + '_' + String(idxs[k] + 1).padStart(pad, '0'); let nm = base, n = 2; while(used.has(nm.toLowerCase())) nm = base + ' (' + (n++) + ')'; used.add(nm.toLowerCase()); return nm + '.' + extOf(b.type); });
       const isMob = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
       if(window.showDirectoryPicker && !isMob){
         try{
