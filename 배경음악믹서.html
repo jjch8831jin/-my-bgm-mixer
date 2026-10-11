@@ -389,8 +389,8 @@
   .lyr-thumbs.dropping{ outline:2px dashed #1e3a8a; outline-offset:2px; border-radius:6px; }
   .lyr-thumbs .thph{ flex:1; height:28px; display:flex; align-items:center; justify-content:center; border:1px dashed #9ca3af; border-radius:6px; font-size:9pt; color:#6b7280; }
   .lyr-thumbs .th img, .lyr-thumbs .th video{ -webkit-user-drag:none; user-select:none; }
-  .lyr-thumbs .th video{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
-  .lyr-thumbs .th img{ height:56px; width:auto; max-width:140px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
+  .lyr-thumbs .th video{ height:104px; width:auto; max-width:190px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
+  .lyr-thumbs .th img{ height:104px; width:auto; max-width:190px; object-fit:cover; border-radius:6px; border:1px solid #d6d3c4; display:block; }
   .lyr-box .lyr-thumbs .th button{ position:absolute; top:2px; right:2px; width:22px; height:22px; padding:0; border-radius:50%; font-size:10pt; line-height:1; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-weight:800; }
   .lyr-box.haspic.ended .lyr-view{ visibility:hidden; }
   .lyr-box.onlypic .lyr-view, .lyr-box.onlypic .lyr-hl{ visibility:hidden; }
@@ -727,6 +727,24 @@
 .pg12 > .pg-list{ margin-bottom:0; }
 @media (max-width:600px){ .pg12{ gap:3px; min-width:0; } .pg12 .pg-arrow{ width:24px; font-size:13px; } .pg-list .file-item{ min-width:0; } .pg-list .file-item-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; } }
 @media (max-width:860px){ .track-card2 .pg12{ grid-column:1; grid-row:auto; } }
+  .lyr-thumbs .th{ display:flex; flex-direction:column; gap:4px; }
+  .lyr-box .lyr-thumbs .th .tmrow{ display:flex; gap:3px; }
+  .lyr-box .lyr-thumbs .th .tmrow button{ position:static; flex:1; width:auto; height:auto; padding:2px 0; border-radius:6px; font-size:11pt; line-height:1.35; font-weight:400; white-space:nowrap; background:#fff; border:1px solid #a8a29e; color:#44403c; }
+  .lyr-box .lyr-thumbs .th .tmrow button.t1.set{ background:#fef3c7; border-color:#f59e0b; color:#92400e; font-weight:700; }
+  .lyr-box .lyr-thumbs .th .tmrow button.t2{ background:#dbeafe; border-color:#1d4ed8; color:#1e3a8a; }
+  @media (max-width:600px){ .lyr-thumbs .th img, .lyr-thumbs .th video{ height:80px; max-width:130px; } }
+  .lyr-box .sy-seg{ display:inline-flex; flex:none; border:1px solid #c2410c; border-radius:8px; overflow:hidden; }
+  .lyr-box .sy-seg button{ border:0; border-radius:0; background:#fff; color:#9a3412; padding:6px 14px; }
+  .lyr-box .sy-seg button.on{ background:#c2410c; color:#fff; }
+  .lyr-box .sy-row.sy-pic{ display:flex; align-items:center; gap:14px; }
+  .lyr-box .sy-row.sy-pic .tm{ min-width:4.2em; font-family:ui-monospace,Menlo,Consolas,monospace; color:#9a3412; }
+  .lyr-box .sy-row.sy-pic img, .lyr-box .sy-row.sy-pic video{ height:52px; width:auto; max-width:120px; object-fit:cover; border-radius:6px; }
+  .pk-back{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10001; display:flex; align-items:center; justify-content:center; }
+  .pk-box{ background:#faf6e8; border-radius:12px; padding:14px; width:min(560px,92vw); max-height:80vh; display:flex; flex-direction:column; gap:8px; }
+  .pk-h{ font-size:14pt; font-weight:700; color:#1c1917; }
+  .pk-l{ overflow:auto; display:flex; flex-direction:column; gap:4px; }
+  .lyr-box .pk-i, .pk-i{ text-align:left; font-size:14pt; padding:6px 10px; border-radius:8px; border:1px solid #d6d3c4; background:#fff; color:#1c1917; cursor:pointer; }
+  .pk-x{ align-self:flex-end; font-size:14pt; padding:6px 16px; border-radius:8px; border:1px solid #a8a29e; background:#fff; color:#1c1917; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -4719,6 +4737,11 @@ function mixTotalDuration(){
     return { text:dispName(kind, name), lyric:false, name:dispName(kind, name), has:c.has };
   }
   const IMG_KEY = 'bgmMixerLyrImgs';
+  // ---- 사진별 나오는 시간 (곡별, 사진 순서와 같은 자리에 저장) ----
+  const PT_KEY = 'bgmMixerPicT';
+  function loadPT(){ try{ return JSON.parse(localStorage.getItem(PT_KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function getPT(k, n){ const a = loadPT()[k]; const r = Array.isArray(a) ? a.slice(0, n) : []; while(r.length < n) r.push(null); return r; }
+  function setPT(k, arr){ const all = loadPT(); if(arr.some(v => v != null)) all[k] = arr; else delete all[k]; try{ localStorage.setItem(PT_KEY, JSON.stringify(all)); }catch(e){} }
   function idbOpen(){ return new Promise((res, rej) => { try{ const r = indexedDB.open('bgmMixerImgs', 1); r.onupgradeneeded = () => r.result.createObjectStore('imgs'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }catch(e){ rej(e); } }); }
   async function getImgs(key){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').get(key); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
   async function setImgs(key, arr){ try{ const db = await idbOpen(); return await new Promise(res => { const tx = db.transaction('imgs', 'readwrite'), st = tx.objectStore('imgs'); if(arr.length) st.put(arr, key); else st.delete(key); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
@@ -4825,7 +4848,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>저장</button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on">가사</button><button type="button" data-sym="pic">사진</button></span><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="ok" data-fin>저장</button></div></div>' +
       '<div data-pane="edit"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
@@ -4839,7 +4862,7 @@ function mixTotalDuration(){
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
     const bgA = document.createElement('div'), bgB = document.createElement('div'); bgA.className = bgB.className = 'lyr-bg'; [bgA, bgB].forEach(o => { o.innerHTML = '<i class="bb"></i><i class="ff"></i><video muted loop playsinline preload="auto"></video>'; o.querySelector('video').muted = true; });
     back.insertBefore(bgB, back.firstChild); back.insertBefore(bgA, back.firstChild);
-    let pics = [], selSet = new Set(), picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
+    let pics = [], picT = [], selSet = new Set(), picIdx = -2, bgFront = null, ended = false, hasPic = false, lastNameKey = '';
     const thumbsEl = back.querySelector('[data-thumbs]'), imgBx = back.querySelector('.lyr-box');
     const urlCache = new WeakMap();
     const isVid = it => typeof it !== 'string';
@@ -4876,17 +4899,40 @@ function mixTotalDuration(){
       if(bgFront) bgFront.style.opacity = '0'; bgFront = nxt;
     }
     function syncVideo(pl){ const fv = frontVideo(); if(!fv || !bgFront.classList.contains('isv')) return; try{ if(pl && fv.paused){ const r = fv.play(); if(r && r.catch) r.catch(() => {}); } else if(!pl && !fv.paused) fv.pause(); }catch(e){} }
+    const savePT = () => setPT(keyOf(kind, name), picT);
+    const pfmt = v => String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(Math.floor(v % 60)).padStart(2, '0');
+    function chipsUpd(){
+      thumbsEl.querySelectorAll('.th').forEach((w, x) => { const b = w.querySelector('.t1'); if(!b) return; const v = picT[x]; b.classList.toggle('set', v != null); b.textContent = '⏱ ' + (v != null ? pfmt(v) : '지정'); });
+      try{ if(typeof picSyMark === 'function' && curTab === 'sync' && syMode === 'pic') picSyMark(false); }catch(e){}
+    }
+    function pickLine(x){
+      const timed = lyrTimed(lyrLines({ text: ta.value }));
+      if(!timed.length){ alert('가사에 시간이 없습니다. 먼저 "시간 맞추기"에서 가사 시간을 맞춰 주세요.'); return; }
+      const pop = document.createElement('div'); pop.className = 'pk-back';
+      pop.innerHTML = '<div class="pk-box"><div class="pk-h">이 사진이 나올 가사 줄을 고르세요</div><div class="pk-l"></div><button type="button" class="pk-x">닫기</button></div>';
+      const lst = pop.querySelector('.pk-l');
+      timed.forEach(l => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-i'; b.textContent = pfmt(l.t) + '   ' + l.text; b.addEventListener('click', () => { picT[x] = l.t; savePT(); pop.remove(); chipsUpd(); }); lst.appendChild(b); });
+      pop.querySelector('.pk-x').addEventListener('click', () => pop.remove());
+      pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
+      back.appendChild(pop);
+    }
     function renderPics(){
       hasPic = pics.length > 0; imgBx.classList.toggle('haspic', hasPic); picIdx = -2; try{ applyAuto(); }catch(e){}
-      thumbsEl.textContent = ''; selSet = new Set();
+      const sl0 = thumbsEl.scrollLeft; thumbsEl.textContent = ''; selSet = new Set();
       pics.forEach((u, x) => {
         const w = document.createElement('div'); w.className = 'th'; let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.title = '이 사진 빼기';
-        b.addEventListener('click', async () => { pics.splice(x, 1); await setImgs(keyOf(kind, name), pics); renderPics(); });
-        w.appendChild(im); w.appendChild(b); thumbsEl.appendChild(w);
+        b.addEventListener('click', async () => { pics.splice(x, 1); picT.splice(x, 1); savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
+        w.appendChild(im); w.appendChild(b);
+        const tr = document.createElement('div'); tr.className = 'tmrow';
+        const tb = document.createElement('button'); tb.type = 'button'; tb.className = 't1'; tb.title = '노래를 틀어 놓고 누르면 지금 시간으로 지정됩니다';
+        tb.addEventListener('click', () => { const c = curInfo(kind); if(!c) return; picT[x] = Math.max(0, c.t); savePT(); chipsUpd(); });
+        const lb = document.createElement('button'); lb.type = 'button'; lb.className = 't2'; lb.textContent = '♪줄'; lb.title = '가사 줄을 골라서 그 줄이 시작될 때 나오게 합니다';
+        lb.addEventListener('click', () => pickLine(x));
+        tr.appendChild(tb); tr.appendChild(lb); w.appendChild(tr); thumbsEl.appendChild(w);
       });
       if(!hasPic){ const ph = document.createElement('div'); ph.className = 'thph'; ph.textContent = '여기에 사진·동영상을 놓으세요'; thumbsEl.appendChild(ph); }
-      thumbsEl.style.display = 'flex';
+      thumbsEl.style.display = 'flex'; thumbsEl.scrollLeft = sl0; chipsUpd();
       back.querySelector('[data-imgdel]').disabled = !hasPic;
       if(!hasPic) showBg(-1);
       try{ lastIdx = -2; upd(); picTick(); }catch(e){}
@@ -4902,7 +4948,7 @@ function mixTotalDuration(){
     });
     back.addEventListener('mouseleave', () => { if(Date.now() - lastTouch < 1500) return; clearTimeout(uiTimer); uiTimer = setTimeout(() => imgBx.classList.remove('ui-show'), 250); });
     back.addEventListener('touchstart', () => { lastTouch = Date.now(); if(imgBx.classList.contains('autohide')) showUi(3500); }, { passive:true });
-    async function refreshPics(){ await migrateImgs(); const k = keyOf(kind, name); lastNameKey = k; const a = await getImgs(k); if(k === lastNameKey){ pics = a; ended = false; imgBx.classList.remove('ended'); renderPics(); } }
+    async function refreshPics(){ await migrateImgs(); const k = keyOf(kind, name); lastNameKey = k; const a = await getImgs(k); if(k === lastNameKey){ pics = a; picT = getPT(k, a.length); ended = false; imgBx.classList.remove('ended'); renderPics(); } }
     let lastEl = 0, wasPl = false;
     function nxState(){
       const last = (c, items) => { let i = -1; try{ i = c.getCurIdx(); }catch(e){} return Math.max(i, 0) >= items.length - 1; };
@@ -4920,7 +4966,16 @@ function mixTotalDuration(){
       if(!pl && ended && el > 0.5){ ended = false; imgBx.classList.remove('ended'); picIdx = -2; applyAuto(); }
       wasPl = pl; lastEl = el;
       imgBx.classList.toggle('onlypic', hasPic && !ended && activeTrack === 'all' && pl && !ownPl);
-      const want = (!hasPic || ended) ? -1 : Math.floor(Math.max(0, activeTrack === 'all' ? el : cur.t) / 10) % pics.length;
+      let want;
+      if(!hasPic || ended) want = -1;
+      else {
+        const ti = []; picT.forEach((v, i) => { if(v != null && i < pics.length) ti.push(i); });
+        if(ti.length){
+          const tt = (activeTrack === 'all' && !ownPl) ? el : cur.t;
+          ti.sort((a, b) => picT[a] - picT[b]);
+          want = ti[0]; for(const i of ti){ if(picT[i] <= tt + 0.05) want = i; else break; }
+        } else want = Math.floor(Math.max(0, activeTrack === 'all' ? el : cur.t) / 10) % pics.length;
+      }
       if(want !== picIdx){ picIdx = want; showBg(want); }
       syncVideo((activeTrack === 'all' ? (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying()) : pl) && !ended);
     }
@@ -4983,7 +5038,39 @@ function mixTotalDuration(){
     function syncInit(){
       syT = lyrLines({ text: ta.value }).map(l => { const m = TIME_RE.exec(l); return m && m[3].trim() ? m[3].trim() : l; });
       syStamp = syT.map(() => null); syPos = 0; syRender();
+      if(syMode === 'pic') picSyRender();
     }
+    // ---- 사진 시간 맞추기 (스페이스) ----
+    let syMode = 'lyric', picPos = 0, pRows = [];
+    function absOf(t){ const cur = curInfo(kind); if(!cur) return null; const its = kind === 'voice' ? voiceItems : musicItems; let acc = 0; for(const it of its){ if(it === cur.item) break; acc += it.buffer.duration; } return acc + Math.max(0, t); }
+    function picSyRender(){
+      syList.textContent = ''; pRows = [];
+      if(!pics.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '사진이 없습니다. "입력"에서 사진을 넣어 주세요.'; syList.appendChild(e); }
+      pics.forEach((u, x) => {
+        const r = document.createElement('div'); r.className = 'sy-row sy-pic';
+        const t = document.createElement('span'); t.className = 'tm';
+        let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
+        const lb = document.createElement('span'); lb.className = 'tx2'; lb.textContent = '사진 ' + (x + 1);
+        r.appendChild(t); r.appendChild(im); r.appendChild(lb); syList.appendChild(r); pRows.push(r);
+      });
+      picSyMark(true);
+    }
+    function picSyMark(scroll){
+      pRows.forEach((r, x) => {
+        const v = picT[x]; r.classList.toggle('done', v != null); r.classList.toggle('now', x === picPos);
+        r.children[0].textContent = v != null ? pfmt(v) : '--:--';
+        r.querySelector('.tx2').textContent = '사진 ' + (x + 1) + (x === picPos ? '  ← 다음 차례' : '');
+      });
+      stampBtn.disabled = !pics.length || picPos >= pics.length; undoBtn.disabled = picPos <= 0;
+      if(scroll && pRows[picPos]){ const el = pRows[picPos]; syList.scrollTo({ top: el.offsetTop - syList.clientHeight / 2 + el.offsetHeight / 2, behavior:'smooth' }); }
+    }
+    function setSyMode(m){
+      syMode = m;
+      back.querySelectorAll('[data-sym]').forEach(b => b.classList.toggle('on', b.dataset.sym === m));
+      if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 장&nbsp;</span>되돌리기'; picSyRender(); }
+      else { stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 줄&nbsp;</span>되돌리기'; syRender(); }
+    }
+    back.querySelectorAll('[data-sym]').forEach(b => b.addEventListener('click', () => setSyMode(b.dataset.sym)));
     function syRender(){
       syList.textContent = ''; syRows = [];
       if(!syT.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '먼저 "입력"에서 가사를 붙여넣어 주세요.'; syList.appendChild(e); }
@@ -5003,7 +5090,13 @@ function mixTotalDuration(){
       else if(scroll && syRows.length) syList.scrollTo({ top: syList.scrollHeight, behavior:'smooth' });
     }
     function doStamp(){
-      if(curTab !== 'sync' || syPos >= syT.length) return;
+      if(curTab !== 'sync') return;
+      if(syMode === 'pic'){
+        if(picPos >= pics.length) return;
+        const c = curInfo(kind); if(!c) return;
+        picT[picPos] = Math.max(0, c.t); picPos++; savePT(); picSyMark(true); chipsUpd(); return;
+      }
+      if(syPos >= syT.length) return;
       const cur = curInfo(kind); if(!cur) return;
       const its = kind === 'voice' ? voiceItems : musicItems; let acc = 0;
       for(const it of its){ if(it === cur.item) break; acc += it.buffer.duration; }
@@ -5019,6 +5112,14 @@ function mixTotalDuration(){
       return Math.max(0, Math.min(1, t / Math.max(0.001, buf.duration - del)));
     }
     function syUndo(){
+      if(syMode === 'pic'){
+        if(picPos <= 0) return;
+        picPos--; const t0 = picT[picPos]; picT[picPos] = null; savePT(); picSyMark(true); chipsUpd();
+        try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
+        if(t0 != null){ const ab = absOf(t0); if(ab != null){ try{ ctl.seekToFraction(origToFrac(ab)); }catch(e){} } }
+        try{ plShow(false); }catch(e){}
+        return;
+      }
       if(syPos <= 0) return;
       syPos--; const back0 = syAbs[syPos]; syStamp[syPos] = null; syMark(true);
       try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
@@ -5026,6 +5127,7 @@ function mixTotalDuration(){
       try{ plShow(false); }catch(e){}
     }
     function syFinish(){
+      if(syMode === 'pic'){ savePT(); tab('view'); return; }
       const lines = syT.map((t, x) => syStamp[x] != null ? stampStr(syStamp[x]) + ' ' + t : t);
       ta.value = lines.join('\n');
       const a = loadLyr(), k = keyOf(kind, name);
@@ -5055,7 +5157,8 @@ function mixTotalDuration(){
       const sg = ctl.getSeg(), sd = sg.e - sg.s, se = Math.max(0, Math.min(sd, el - sg.s));
       if(!dragging){ sk.value = sd > 0 ? Math.round(Math.max(0, Math.min(1, se / sd)) * 1000) : 0; ct.textContent = mmss(se); }
       dt.textContent = mmss(sd); plShow(activeTrack === 'all' ? (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying()) : ctl.isPlaying());
-      if(curTab === 'sync'){ let pi = -1; syStamp.forEach((v, x) => { if(v != null && v <= el + 0.05) pi = x; }); syRows.forEach((r, x) => r.classList.toggle('play', x === pi)); }
+      if(curTab === 'sync' && syMode === 'pic'){ let pi = -1, bt = -1; picT.forEach((v, x) => { if(v != null && v <= el + 0.05 && v >= bt){ bt = v; pi = x; } }); pRows.forEach((r, x) => r.classList.toggle('play', x === pi)); }
+      else if(curTab === 'sync'){ let pi = -1; syStamp.forEach((v, x) => { if(v != null && v <= el + 0.05) pi = x; }); syRows.forEach((r, x) => r.classList.toggle('play', x === pi)); }
       if(kind === 'voice'){ const sl = document.getElementById('voiceSpeedSlider'); back.querySelector('[data-rv]').textContent = (Number(sl.value) || 1).toFixed(2) + 'x'; }
     }
     sk.addEventListener('pointerdown', () => { dragging = true; });
@@ -5115,6 +5218,7 @@ function mixTotalDuration(){
       if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 100MB 이하만 됩니다)'); return; }
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
       if(bad) alert('읽지 못했거나 너무 큰(100MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
+      { const pt0 = getPT(key, cur.length - added.length); pt0.splice(pos, 0, ...added.map(() => null)); setPT(key, pt0); picT = pt0; }
       pics = cur; renderPics();
     }
     const putImage = (f, at) => putImages([f], at);
@@ -5131,6 +5235,7 @@ function mixTotalDuration(){
       const key = keyOf(kind, name), cur = await getImgs(key);
       const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...items);
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
+      { const pt0 = getPT(key, cur.length - items.length); pt0.splice(pos, 0, ...items.map(() => null)); setPT(key, pt0); picT = pt0; }
       pics = cur; renderPics();
     }
     const onDragOver = e => { if(e.dataTransfer) e.preventDefault(); };
@@ -5234,7 +5339,7 @@ function mixTotalDuration(){
         clearMarks();
         let to = s0.pos; if(to > s0.from) to--;
         if(to === s0.from || to < 0) return;
-        const it = pics.splice(s0.from, 1)[0]; pics.splice(to, 0, it);
+        const it = pics.splice(s0.from, 1)[0]; pics.splice(to, 0, it); { const tv = picT.splice(s0.from, 1)[0]; picT.splice(to, 0, tv === undefined ? null : tv); savePT(); }
         await setImgs(keyOf(kind, name), pics); renderPics();
       };
       thumbsEl.addEventListener('pointerup', end);
@@ -5242,7 +5347,7 @@ function mixTotalDuration(){
       thumbsEl.addEventListener('touchmove', e => { if(st && st.on) e.preventDefault(); }, { passive: false });
       thumbsEl.addEventListener('contextmenu', e => { if(st && st.on) e.preventDefault(); });
     })();
-    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; await setImgs(keyOf(kind, name), pics); renderPics(); });
+    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; picT = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
     // ---- 영상(16:9)으로 저장: 믹스된 소리 + 사진/동영상 + 가사를 한꺼번에 녹화 ----
     let vexpBusy = false;
     back.querySelector('[data-vexp]').addEventListener('click', async () => {
