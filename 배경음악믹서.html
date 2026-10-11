@@ -335,6 +335,8 @@
   .lyr-box.haspic .lyr-ln{ opacity:0; transition:color .9s ease, opacity .9s ease; }
   .lyr-box.haspic .lyr-ln.on{ opacity:1; }
   .lyr-box.haspic .lyr-ln.nx{ opacity:.95; }
+  .lyr-box.haspic .lyr-view.blk .lyr-ln{ opacity:0 !important; }
+  .lyr-box.haspic .lyr-view.blk .lyr-hl{ opacity:0 !important; }
   .lyr-box.haspic .lyr-ln.on{ color:#ffe04a; }
   .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#7fe3ff; }
   .lyr-box.haspic .lyr-hl, .lyr-voice .lyr-box.haspic .lyr-hl{ display:none; }
@@ -5087,6 +5089,7 @@ function mixTotalDuration(){
       if(c.idx !== lastIdx){
         lastIdx = c.idx;
         const ls = lns;
+        view.classList.toggle('blk', c.has && c.idx >= 0 && String(c.items[c.idx]).replace(/\u200b/g, '').trim() === ''); // 지금 줄이 빈 줄이면 글자를 모두 숨김(사진이 있을 때)
         for(let x = 0; x < ls.length; x++){ ls[x].classList.toggle('on', x === c.idx); ls[x].classList.toggle('nx', c.idx >= 0 && x === c.idx + 1); }
         const el = ls[c.idx];
         if(hl){
@@ -5751,6 +5754,7 @@ function mixTotalDuration(){
         let fadeFrom = null, fadeAt = 0, lastKey = '', lastIdx = -2, vidActive = null, mediaIdx = -1, mediaName = '';
         const drawLinesPair = (items2, idx, pic, alpha, hlC) => {
           if(idx < 0 || !items2.length) return;
+          if(String(items2[idx]).replace(/\u200b/g, '').trim() === '') return; // 빈 줄(전주·간주)에는 글자를 그리지 않음
           const curT = items2[idx], nxtT = items2[idx + 1] || '', cs = 54, ns = 44, cL = wrapText(curT, cs), nL = nxtT ? wrapText(nxtT, ns) : [];
           const clh = cs * 1.3, nlh = ns * 1.3, total = cL.length * clh + nL.length * nlh, y0 = H - 50 - total;
           g.save(); g.globalAlpha = alpha; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
