@@ -30,7 +30,7 @@
     color: var(--text);
     font-family: -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     line-height: 1.5;
-    padding: 28px 16px 60px;
+    padding: 4px 16px 60px;
     min-height: 100vh;
   }
   .wrap{ max-width: 1180px; margin: 0 auto; }
@@ -790,10 +790,6 @@
 <body>
 <div class="wrap">
 
-  <header>
-    <h1>배경음악 믹서<button type="button" id="btnReload" title="새로고침" aria-label="새로고침" onclick="location.reload()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3v5h-5"/></svg></button></h1>
-    <p>음성 파일 위에 배경음악을 입혀 하나의 오디오로 내보냅니다.</p>
-  </header>
 
 
   <div class="track-columns">
@@ -5082,7 +5078,7 @@ function mixTotalDuration(){
     function syncInit(){
       const L2 = lyrLines({ text: ta.value }).map(tparse);
       syT = L2.map(o => o.t); syStamp = L2.map(o => o.s); syAbs = L2.map(() => null);
-      syPos = firstEmpty(syStamp); picPos = firstEmpty(picT.slice(0, pics.length));
+      syPos = firstEmpty(syStamp); picPos = 0;
       if(syMode === 'pic') picSyRender(); else syRender();
     }
     function lyrPersist(){
@@ -5268,7 +5264,7 @@ function mixTotalDuration(){
     function setSyMode(m){
       syMode = m;
       back.querySelectorAll('[data-sym]').forEach(b => b.classList.toggle('on', b.dataset.sym === m));
-      if(m === 'pic'){ picPos = firstEmpty(picT.slice(0, pics.length)); stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 장&nbsp;</span>되돌리기'; picSyRender(); }
+      if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 장&nbsp;</span>되돌리기'; picSyRender(); }
       else { syPos = firstEmpty(syStamp); stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 줄&nbsp;</span>되돌리기'; syRender(); }
     }
     back.querySelectorAll('[data-sym]').forEach(b => b.addEventListener('click', () => setSyMode(b.dataset.sym)));
@@ -5285,7 +5281,8 @@ function mixTotalDuration(){
       if(syMode === 'pic'){
         if(!pics.length) return;
         const c = curInfo(kind); if(!c) return;
-        if(picPos >= pics.length){ for(let i = 0; i < pics.length; i++) picT[i] = null; picPos = 0; } // 모두 찍힌 뒤 다시 누르면 이전 시간은 지우고 처음부터
+        if(picPos >= pics.length) picPos = 0;
+        if(picPos === 0){ for(let i = 0; i < pics.length; i++) picT[i] = null; } // 모두 찍힌 뒤 다시 누르면 이전 시간은 지우고 처음부터
         picT[picPos] = Math.max(0, c.t); picPos++; savePT(); picSyMark(true); chipsUpd(); return;
       }
       if(syPos >= syT.length) return;
