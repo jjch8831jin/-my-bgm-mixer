@@ -349,7 +349,7 @@
   .lyr-voice .sy-row.play{ background:#bfdbfe; }
   .lyr-voice .sy-row.play .tx2, .lyr-voice .sy-row.play .tm{ color:#1e3a8a; }
   .lyr-ln.on > span{ transform:scale(1.18); }
-  .sy-list{ font-size:18pt; position:relative; flex:1; min-height:0; overflow:auto; background:#fffdf5; border:1px solid #d6d3c4; border-radius:8px; padding:8px; }
+  .sy-list{ font-size:16pt; position:relative; flex:1; min-height:0; overflow:auto; background:#fffdf5; border:1px solid #d6d3c4; border-radius:8px; padding:8px; }
   .sy-row{ display:flex; gap:14px; align-items:baseline; padding:6px 14px; border:3px solid transparent; border-radius:10px; color:#000; line-height:1.5; }
   .sy-row .tm{ min-width:5.2em; color:#57534e; font-size:14pt; }
   .sy-row .tx2{ flex:1; font-size:1em; }
@@ -784,7 +784,13 @@
     .lyr-box .sy-row.sy-pic .tx2{ display:none; }
     .lyr-box .sy-row.sy-pic .tm{ min-width:3.6em; }
     .lyr-box .sy-row.sy-pic img, .lyr-box .sy-row.sy-pic video{ max-width:42vw; }
-    .lyr-box .sy-row.sy-pic .ck{ left:34px; } }
+    .lyr-box .sy-row.sy-pic .ck{ left:34px; }
+    .lyr-box .sy-add{ min-height:4.4em; } }
+  .lyr-box .sy-one button, .lyr-box .sy-seg button{ flex-direction:column; gap:2px; font-size:11pt !important; line-height:1.1; height:56px; padding:0 8px; }
+  .lyr-box .sy-one .ic{ font-size:16pt; line-height:1; }
+  .lyr-box .sy-one button.stamp{ flex-direction:row; height:48px; }
+  .lyr-box .sy-seg{ display:flex; } .lyr-box .sy-seg button{ min-width:52px; }
+  .lyr-box .sy-one button.ok{ padding:0 14px; }
 </style>
 </head>
 <body>
@@ -4884,7 +4890,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on">가사</button><button type="button" data-sym="pic">사진</button></span><button type="button" data-undo>↶ <span class="lg">한 줄&nbsp;</span>되돌리기</button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등">⋯ <span class="lg">더보기</span></button><button type="button" class="ok" data-fin>저장</button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
       '<div data-pane="edit" style="display:none !important"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
@@ -5026,11 +5032,11 @@ function mixTotalDuration(){
     }
     let shownKey = null, lastIdx = -2, curTab = 'view', hl = null;
     let lns = [];
-    let fsz = 18; try{ fsz = Math.max(12, Math.min(60, Number(localStorage.getItem('bgmMixerLyrFs')) || 18)); }catch(e){}
+    let fsz = 16; try{ fsz = Math.max(12, Math.min(60, Number(localStorage.getItem('bgmMixerLyrFs16')) || 16)); }catch(e){}
     const fv = back.querySelector('[data-fv]');
     function setFs(v){
       fsz = Math.max(12, Math.min(60, v)); fv.textContent = fsz + 'pt';
-      view.style.fontSize = fsz + 'pt'; ta.style.fontSize = fsz + 'pt'; syList.style.fontSize = fsz + 'pt'; try{ localStorage.setItem('bgmMixerLyrFs', String(fsz)); }catch(e){}
+      view.style.fontSize = fsz + 'pt'; ta.style.fontSize = fsz + 'pt'; syList.style.fontSize = fsz + 'pt'; try{ localStorage.setItem('bgmMixerLyrFs16', String(fsz)); }catch(e){}
       lastIdx = -2; upd();
     }
     back.querySelector('[data-fm]').addEventListener('click', () => setFs(fsz - 1));
@@ -5264,8 +5270,8 @@ function mixTotalDuration(){
     function setSyMode(m){
       syMode = m;
       back.querySelectorAll('[data-sym]').forEach(b => b.classList.toggle('on', b.dataset.sym === m));
-      if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 장&nbsp;</span>되돌리기'; picSyRender(); }
-      else { syPos = firstEmpty(syStamp); stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '↶ <span class="lg">한 줄&nbsp;</span>되돌리기'; syRender(); }
+      if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 장&nbsp;</span>되돌리기</span>'; picSyRender(); }
+      else { syPos = firstEmpty(syStamp); stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span>'; syRender(); }
     }
     back.querySelectorAll('[data-sym]').forEach(b => b.addEventListener('click', () => setSyMode(b.dataset.sym)));
     function syMark(scroll){
@@ -5787,7 +5793,7 @@ function mixTotalDuration(){
       if(txt) tab('view'); else close();
     });
     setFs(fsz);
-    tab(lyrLines(L).length ? 'view' : 'edit');
+    tab(lyrLines(L).length ? 'view' : 'sync');
   }
   const slots = [
     { kind:'voice', span:document.querySelector('#voiceTrackTitle > span'), box:document.getElementById('voiceTrackTitle') },
