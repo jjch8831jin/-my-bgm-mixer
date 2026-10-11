@@ -767,7 +767,7 @@
   .lyr-box .sy-row.sy-ly.now .tx2::after, .lyr-box .sy-row.sy-pic.now .tx2::after{ content:'  ← 다음 차례'; color:#047857; font-size:.75em; }
   .lyr-box .sy-edit{ flex:1; min-width:0; font:inherit; font-size:1em; padding:2px 8px; border:1px solid #1d4ed8; border-radius:6px; background:#fff; color:#000; }
   .lyr-box .addl{ flex:none; margin-top:8px; display:flex; align-items:flex-start; border:2px dashed #6d28d9; border-radius:8px; background:#ede9fe; }
-  .lyr-box .sy-add{ width:100%; box-sizing:border-box; background:transparent; border:0; outline:0; text-align:left; font-size:14pt; font-weight:700; color:#4c1d95; resize:none; min-height:3.4em; max-height:30vh; overflow:auto; padding:10px; line-height:1.4; display:block; }
+  .lyr-box .sy-add{ width:100%; box-sizing:border-box; background:transparent; border:0; outline:0; text-align:left; font-size:16pt; font-weight:700; color:#4c1d95; resize:none; min-height:3.4em; max-height:60vh; overflow:auto; padding:10px; line-height:1.4; display:block; }
   .lyr-box .sy-one button.up{ background:#fef3c7; border:1px solid #d97706; color:#7c2d12; font-weight:700; }
   .lyr-box .sy-one button.up:disabled{ opacity:.4; }
   .lyr-box .sy-add::placeholder{ color:#4c1d95; }
@@ -5253,7 +5253,7 @@ function mixTotalDuration(){
       back.appendChild(pop);
     }
     const addTa = back.querySelector('.sy-add'), addWrap = back.querySelector('.addl'), upBtn = back.querySelector('[data-up]');
-    const growAdd = () => { addTa.style.height = 'auto'; addTa.style.height = Math.min(addTa.scrollHeight, Math.round(window.innerHeight * 0.3)) + 'px'; };
+    const growAdd = () => { addTa.style.height = 'auto'; addTa.style.height = Math.min(addTa.scrollHeight, Math.round(window.innerHeight * 0.6)) + 'px'; };
     addTa.addEventListener('input', growAdd);
     addTa.addEventListener('keydown', e => { if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); addTa.value = ''; growAdd(); addTa.blur(); } });
     upBtn.addEventListener('click', () => {
