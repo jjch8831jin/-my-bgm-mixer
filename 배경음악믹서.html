@@ -5270,9 +5270,10 @@ function mixTotalDuration(){
       pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">이 줄에 붙일 사진을 고르세요</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
       let lib = [];
+      const nrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u); // 파일 이름이 달라도 그림이 같으면 같은 사진
       const fill = selK => {
       g.innerHTML = ''; const cur = attachedPic(x);
-      const libOnly = lib.filter(u => !pics.includes(u)), all = pics.concat(libOnly);
+      const libOnly = lib.filter(u => !pics.some(p => nrm(p) === nrm(u))), all = pics.concat(libOnly);
       all.forEach((u, k) => {
         const inSong = k < pics.length;
         const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (inSong && k === cur ? ' on' : '');
@@ -5300,21 +5301,25 @@ function mixTotalDuration(){
       };
       fill(null);
       libGet().then(a => { if(!pop.isConnected || !a.length) return; lib = a; fill(null); });
-      const nrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u); // 파일 이름이 달라도 그림이 같으면 같은 사진
       const addToList = async fs => {
         fs = Array.from(fs || []); if(!fs.length) return;
         const add = []; let selDup = null, selLib = null; const libNow = await libGet();
         for(const f of fs){
           if(/^image\//.test(f.type)){ let d = null; try{ d = await shrinkImage(f); }catch(e){} const nd = d ? nrm(d) : null;
             if(nd){ const k0 = pics.findIndex(u => nrm(u) === nd), kl = k0 >= 0 ? -1 : libNow.findIndex(u => nrm(u) === nd);
-              if((k0 >= 0 || kl >= 0) && confirm('같은 사진이 이미 있습니다. 덮어쓸까요?\n(확인 = 덮어쓰기, 취소 = 한 장 더 추가)')){ if(k0 >= 0){ if(selDup == null) selDup = k0; } else if(selLib == null) selLib = libNow[kl]; continue; } } }
+              if(k0 >= 0 || kl >= 0){
+                if(!confirm('같은 사진이 이미 있습니다. 덮어쓸까요?\n(확인 = 덮어쓰기, 취소 = 가져오지 않음)')) continue; // 취소: 아무것도 넣지 않음
+                if(k0 >= 0){ pics[k0] = d; await setImgs(keyOf(kind, name), pics); renderPics(); const li = libNow.findIndex(u => nrm(u) === nd); if(li >= 0){ libNow[li] = d; await libSet(libNow); } if(selDup == null) selDup = k0; } // 확인: 그 자리의 사진을 새 사진으로 덮어씀
+                else { libNow[kl] = d; await libSet(libNow); if(selLib == null) selLib = d; }
+                continue;
+              } } }
           add.push(f);
         }
         const n0 = pics.length; if(add.length) await putImages(add);
         { const nw = pics.slice(n0).filter(u => typeof u === 'string'); if(nw.length){ const l2 = await libGet(); nw.forEach(u => { if(!l2.some(v => nrm(v) === nrm(u))) l2.push(u); }); await libSet(l2); lib = l2; } else lib = libNow; }
         if(!pop.isConnected) return;
         let sk = pics.length > n0 ? n0 : selDup;
-        if(sk == null && selLib != null){ const lo = lib.filter(u => !pics.includes(u)), li = lo.indexOf(selLib); if(li >= 0) sk = pics.length + li; }
+        if(sk == null && selLib != null){ const lo = lib.filter(u => !pics.some(p => nrm(p) === nrm(u))), li = lo.findIndex(u => nrm(u) === nrm(selLib)); if(li >= 0) sk = pics.length + li; }
         fill(sk);
         const gt = g.querySelector('.pk-t.sel'); if(gt){ try{ gt.scrollIntoView({ block: 'nearest' }); }catch(e){} }
       };
