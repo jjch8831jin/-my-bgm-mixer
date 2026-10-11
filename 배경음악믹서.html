@@ -5620,7 +5620,7 @@ function mixTotalDuration(){
     swBtn.textContent = kind === 'voice' ? '음악 가사 보기' : '음성 보기';
     swBtn.disabled = !curInfo(other);
     swBtn.addEventListener('click', () => { if(!curInfo(other)) return; close(); openLyr(other); });
-    back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => tab(x.dataset.tab)));
+    back.querySelectorAll('[data-tab]').forEach(x => x.addEventListener('click', () => { if(x.dataset.tab === 'sync' && curTab === 'sync'){ tab('view'); return; } tab(x.dataset.tab); }));
     const imgF = back.querySelector('[data-imgf]');
     back.querySelector('[data-imgadd]').addEventListener('click', () => imgF.click());
     back.querySelector('[data-imgsave]').addEventListener('click', async () => {
