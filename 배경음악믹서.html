@@ -5332,6 +5332,31 @@ function mixTotalDuration(){
       pop.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); e.stopPropagation(); pbox.classList.add('dz'); } });
       pop.addEventListener('dragleave', e => { if(!pop.contains(e.relatedTarget)) pbox.classList.remove('dz'); });
       pop.addEventListener('drop', e => { e.stopPropagation(); pbox.classList.remove('dz'); const fs = imgsOf(e.dataTransfer); e.preventDefault(); if(fs.length) addToList(fs); });
+      pop.addEventListener('contextmenu', e => {
+        if(e.target.closest('.pk-t, button, input')) return;
+        e.preventDefault(); e.stopPropagation();
+        pop.querySelectorAll('.pk-ctx').forEach(m => m.remove());
+        const m = document.createElement('div'); m.className = 'pk-ctx';
+        m.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:4px;';
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = '붙여넣기';
+        b.style.cssText = 'display:block;border:0;background:none;padding:8px 22px;font-size:15px;cursor:pointer;border-radius:6px;';
+        b.onmouseenter = () => { b.style.background = '#e0ecff'; }; b.onmouseleave = () => { b.style.background = 'none'; };
+        m.appendChild(b); pop.appendChild(m);
+        const r = m.getBoundingClientRect();
+        m.style.left = Math.max(4, Math.min(e.clientX, window.innerWidth - r.width - 4)) + 'px';
+        m.style.top = Math.max(4, Math.min(e.clientY, window.innerHeight - r.height - 4)) + 'px';
+        const close = () => { m.remove(); document.removeEventListener('pointerdown', away, true); };
+        const away = ev => { if(!m.contains(ev.target)) close(); };
+        setTimeout(() => document.addEventListener('pointerdown', away, true), 0);
+        b.addEventListener('click', async () => {
+          close();
+          try{
+            const items = await navigator.clipboard.read(); const fs = [];
+            for(const it of items){ const t = it.types.find(t => t.startsWith('image/')); if(t){ const bl = await it.getType(t); fs.push(new File([bl], 'paste.' + (t.split('/')[1] || 'png'), { type: t })); } }
+            if(fs.length) addToList(fs); else alert('클립보드에 사진이 없습니다.');
+          }catch(err){ alert('붙여넣기를 할 수 없습니다. Ctrl+V를 눌러 주세요.'); }
+        });
+      });
       pkCur = { x, pop, add: addToList };
       back.appendChild(pop);
     }
