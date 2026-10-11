@@ -800,6 +800,8 @@
   .lyr-box .sy-row.sy-ly .pk{ flex:none; width:64px; height:44px; border-radius:6px; object-fit:cover; border:2px solid #9a3412; box-sizing:border-box; cursor:pointer; }
   .lyr-box .sy-row.sy-ly .pk.e{ border:2px dashed #7c3aed; background:#f5f3ff; color:#7c3aed; display:flex; align-items:center; justify-content:center; font-size:16pt; font-weight:700; }
   .lyr-box .sy-row.sy-ly .tm{ white-space:nowrap; }
+  .lyr-box .sy-row.sy-ly .tx2.blank{ min-width:4em; color:#a8a29e; font-style:italic; font-size:.85em; }
+  .lyr-box .sy-row.sy-ly .tx2.blank::before{ content:'(빈 줄)'; }
   .lyr-box .sy-row.sy-ly.dropto{ outline:3px solid #1e3a8a; outline-offset:-3px; }
   .pk-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:6px; }
   .pk-g .pk-t{ padding:0; border:3px solid transparent; border-radius:8px; background:#fff; cursor:pointer; height:56px; overflow:hidden; }
@@ -5194,9 +5196,9 @@ function mixTotalDuration(){
     }
     // 가사 줄 고치기·지우기·추가
     function editLine(x, span){
-      const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.value = syT[x]; span.replaceWith(inp); inp.focus(); inp.select();
+      const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.value = syT[x] === BLANK ? '' : syT[x]; span.replaceWith(inp); inp.focus(); inp.select();
       let done = false;
-      const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(); };
+      const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ if(syT[x] === BLANK){ syRender(); return; } delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(); };
       inp.addEventListener('blur', commit);
       inp.addEventListener('keydown', e => {
         if(e.key === 'Enter'){
@@ -5252,13 +5254,15 @@ function mixTotalDuration(){
       pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
       back.appendChild(pop);
     }
+    const BLANK = '\u200b'; // 빈 줄 표시(보이지 않는 글자)
     const addTa = back.querySelector('.sy-add'), addWrap = back.querySelector('.addl'), upBtn = back.querySelector('[data-up]');
     const growAdd = () => { addTa.style.height = 'auto'; addTa.style.height = Math.min(addTa.scrollHeight, Math.round(window.innerHeight * 0.6)) + 'px'; };
     addTa.addEventListener('input', growAdd);
     addTa.addEventListener('keydown', e => { if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); addTa.value = ''; growAdd(); addTa.blur(); } });
     upBtn.addEventListener('click', () => {
-      const v = addTa.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean).join('\n'); if(!v) return;
-      addTa.value = ''; growAdd(); addLines(v);
+      const arr = addTa.value.split(/\r?\n/).map(l => l.trim()); while(arr.length && !arr[arr.length - 1]) arr.pop(); // 맨 끝의 빈 줄은 무시
+      if(!arr.length) return;
+      addTa.value = ''; growAdd(); addLines(arr.map(l => l || BLANK).join('\n')); // 빈 줄도 한 줄씩 (두 줄이면 두 줄)
     });
     function syRender(){
       closeCtx();
@@ -5267,7 +5271,7 @@ function mixTotalDuration(){
         const r = mkEl('div', 'sy-row sy-ly');
         const hd = mkEl('span', 'hd', '⠿'); hd.title = '끌어서 순서 바꾸기 (시간은 줄을 따라갑니다)';
         const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; syMark(false); });
-        const tx = mkEl('span', 'tx2', t); tx.title = '눌러서 고치기'; tx.addEventListener('click', () => editLine(x, tx));
+        const tx = mkEl('span', t === BLANK ? 'tx2 blank' : 'tx2', t === BLANK ? '' : t); tx.title = '눌러서 고치기'; tx.addEventListener('click', () => editLine(x, tx));
         const rx = mkEl('button', 'rx', '✕'); rx.type = 'button'; rx.title = '이 줄 지우기'; rx.addEventListener('click', () => delLine(x));
         const kp = attachedPic(x); let cell;
         if(kp >= 0){ const u = pics[kp]; if(isVid(u)){ cell = document.createElement('video'); cell.muted = true; cell.preload = 'metadata'; cell.playsInline = true; cell.src = urlOfItem(u) + '#t=0.1'; } else { cell = document.createElement('img'); cell.src = u; cell.alt = ''; } cell.className = 'pk'; cell.title = '붙인 사진 (눌러서 바꾸기)'; }
