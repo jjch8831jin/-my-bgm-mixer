@@ -4836,6 +4836,10 @@ function mixTotalDuration(){
   function getPL(k, n){ const a = loadPL()[k]; const r = Array.isArray(a) ? a.slice(0, n).map(v => (typeof v === 'number' ? v : null)) : []; while(r.length < n) r.push(null); return r; }
   function setPL(k, arr){ const all = loadPL(); if(arr.some(v => v != null)) all[k] = arr; else delete all[k]; try{ localStorage.setItem(PL_KEY, JSON.stringify(all)); }catch(e){} }
   function idbOpen(){ return new Promise((res, rej) => { try{ const r = indexedDB.open('bgmMixerImgs', 1); r.onupgradeneeded = () => r.result.createObjectStore('imgs'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }catch(e){ rej(e); } }); }
+  // ---- 사진 고르는 창으로 가져온 사진의 공용 보관함 (곡과 상관없이 어느 곡에서나 꺼내 씀) ----
+  function libOpen(){ return new Promise((res, rej) => { try{ const r = indexedDB.open('bgmMixerLib', 1); r.onupgradeneeded = () => r.result.createObjectStore('lib'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }catch(e){ rej(e); } }); }
+  async function libGet(){ try{ const db = await libOpen(); return await new Promise(res => { const q = db.transaction('lib').objectStore('lib').get('list'); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
+  async function libSet(arr){ try{ const db = await libOpen(); return await new Promise(res => { const tx = db.transaction('lib', 'readwrite'); tx.objectStore('lib').put(arr, 'list'); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
   async function getImgs(key){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').get(key); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
   async function setImgs(key, arr){ try{ const db = await idbOpen(); return await new Promise(res => { const tx = db.transaction('imgs', 'readwrite'), st = tx.objectStore('imgs'); if(arr.length) st.put(arr, key); else st.delete(key); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
   let imgMigrated = null;
@@ -5265,27 +5269,38 @@ function mixTotalDuration(){
       const pop = document.createElement('div'); pop.className = 'pk-back';
       pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">이 줄에 붙일 사진을 고르세요</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
+      let lib = [];
       const fill = selK => {
       g.innerHTML = ''; const cur = attachedPic(x);
-      pics.forEach((u, k) => {
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (k === cur ? ' on' : '');
+      const libOnly = lib.filter(u => !pics.includes(u)), all = pics.concat(libOnly);
+      all.forEach((u, k) => {
+        const inSong = k < pics.length;
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (inSong && k === cur ? ' on' : '');
         let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         b.appendChild(im);
-        b.addEventListener('click', () => {
+        b.addEventListener('click', async () => {
           if(!b.classList.contains('sel')){
             g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
             b.classList.add('sel'); const xb = document.createElement('span'); xb.className = 'pk-tx'; xb.textContent = '✕'; xb.title = '이 사진 지우기'; b.appendChild(xb);
-            xb.addEventListener('click', async ev => { ev.stopPropagation(); pop.remove(); pics.splice(k, 1); picT.splice(k, 1); picL.splice(k, 1); savePT(); if(picPos > k) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(true); lineChooser(x); });
+            xb.addEventListener('click', async ev => {
+              ev.stopPropagation(); pop.remove();
+              if(typeof u === 'string'){ const l2 = (await libGet()).filter(v => v !== u); await libSet(l2); }
+              if(inSong){ pics.splice(k, 1); picT.splice(k, 1); picL.splice(k, 1); savePT(); if(picPos > k) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(true); }
+              lineChooser(x);
+            });
             return;
           }
-          picL = picL.map(v => v === x ? null : v); picL[k] = x; if(syStamp[x] != null) picT[k] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender(true);
+          let kk = k;
+          if(!inSong){ await putItems([u]); kk = pics.length - 1; } // 보관함 사진은 이 곡 사진 목록에 넣고 붙임
+          picL = picL.map(v => v === x ? null : v); picL[kk] = x; if(syStamp[x] != null) picT[kk] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender(true);
         });
         g.appendChild(b);
         if(k === selK) b.click();
       });
       };
       fill(null);
-      const addToList = async fs => { fs = Array.from(fs || []); if(!fs.length) return; const n0 = pics.length; await putImages(fs); if(!pop.isConnected) return; fill(pics.length > n0 ? n0 : null); const gt = g.querySelector('.pk-t.sel'); if(gt){ try{ gt.scrollIntoView({ block: 'nearest' }); }catch(e){} } };
+      libGet().then(a => { if(!pop.isConnected || !a.length) return; lib = a; fill(null); });
+      const addToList = async fs => { fs = Array.from(fs || []); if(!fs.length) return; const n0 = pics.length; await putImages(fs); { const nw = pics.slice(n0).filter(u => typeof u === 'string'); if(nw.length){ const l2 = await libGet(); nw.forEach(u => { if(!l2.includes(u)) l2.push(u); }); await libSet(l2); lib = l2; } } if(!pop.isConnected) return; fill(pics.length > n0 ? n0 : null); const gt = g.querySelector('.pk-t.sel'); if(gt){ try{ gt.scrollIntoView({ block: 'nearest' }); }catch(e){} } };
       const fi = pop.querySelector('input');
       pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
       fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); fi.value = ''; addToList(fs); });
