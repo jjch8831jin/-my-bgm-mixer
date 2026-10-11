@@ -5267,7 +5267,7 @@ function mixTotalDuration(){
     function lineChooser(x){
       closeCtx();
       const pop = document.createElement('div'); pop.className = 'pk-back';
-      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">이 줄에 붙일 사진을 고르세요</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
+      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">' + (x == null ? '사진 보관함 (끌어다 놓기·붙여넣기)' : '이 줄에 붙일 사진을 고르세요') + '</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
       let lib = [];
       const nrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u); // 파일 이름이 달라도 그림이 같으면 같은 사진
@@ -5291,6 +5291,7 @@ function mixTotalDuration(){
             });
             return;
           }
+          if(x == null) return; // 더보기에서 연 창: 붙일 줄이 없으므로 선택만
           let kk = k;
           if(!inSong){ await putItems([u]); kk = pics.length - 1; } // 보관함 사진은 이 곡 사진 목록에 넣고 붙임
           picL = picL.map(v => v === x ? null : v); picL[kk] = x; if(syStamp[x] != null) picT[kk] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender(true);
@@ -5521,7 +5522,7 @@ function mixTotalDuration(){
       const mb = back.querySelector('[data-more]'); let pop = null;
       const closeP = () => { if(pop){ pop.remove(); pop = null; } };
       const items = [
-        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 불러오기', '[data-bload]'],
+        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
         ['📁 사진 저장', '[data-imgsave]'], ['🗑 가사·사진 지우기', '[data-del]']
       ];
       mb.addEventListener('click', e => {
@@ -5529,6 +5530,7 @@ function mixTotalDuration(){
         pop = mkEl('div', 'ctxm moreM');
         items.forEach(([t, sel]) => { const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => {
           closeP();
+          if(sel === 'PICK'){ lineChooser(null); return; }
           if(sel === '[data-del]'){
             const nl = syT.length, np = pics.length; if(!nl && !np) return;
             if(!confirm('이 곡의 가사 ' + nl + '줄과 사진·동영상 ' + np + '개를 모두 지울까요?\n(지우면 되돌릴 수 없습니다)')) return;
