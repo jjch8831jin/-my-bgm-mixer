@@ -809,6 +809,14 @@
   .pk-g .pk-t{ padding:0; border:3px solid transparent; border-radius:8px; background:#fff; cursor:pointer; height:56px; overflow:hidden; }
   .pk-g .pk-t.on{ border-color:#1e3a8a; }
   .pk-g .pk-t{ position:relative; }
+  .pk-g .pk-fd{ background:#fef3c7; border-color:#f59e0b; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-family:inherit; }
+  .pk-g .pk-fd.over{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
+  .pk-g .pk-fd .fi{ font-size:34px; line-height:1; }
+  .pk-g .pk-fd .fn{ font-size:13px; font-weight:700; color:#78350f; max-width:100%; padding:0 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pk-g .pk-cr{ grid-column:1/-1; display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; }
+  .pk-g .pk-cr button{ padding:6px 12px; border:1px solid #94a3b8; border-radius:8px; background:#f1f5f9; font-size:15px; cursor:pointer; font-family:inherit; }
+  .pk-g .pk-cr button.over{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
+  @media (max-width:600px){ .pk-g .pk-fd .fi{ font-size:26px; } .pk-g .pk-fd .fn{ font-size:12px; } }
   .pk-g .pk-t.sel{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
   .pk-g .pk-tx{ position:absolute; top:3px; right:3px; width:26px; height:26px; border-radius:50%; background:rgba(127,29,29,.92); color:#fff; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; line-height:1; }
   .pk-top{ display:flex; align-items:center; gap:10px; }
@@ -4840,6 +4848,8 @@ function mixTotalDuration(){
   function libOpen(){ return new Promise((res, rej) => { try{ const r = indexedDB.open('bgmMixerLib', 1); r.onupgradeneeded = () => r.result.createObjectStore('lib'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }catch(e){ rej(e); } }); }
   async function libGet(){ try{ const db = await libOpen(); return await new Promise(res => { const q = db.transaction('lib').objectStore('lib').get('list'); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
   async function libSet(arr){ try{ const db = await libOpen(); return await new Promise(res => { const tx = db.transaction('lib', 'readwrite'); tx.objectStore('lib').put(arr, 'list'); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
+  async function libFGet(){ try{ const db = await libOpen(); return await new Promise(res => { const q = db.transaction('lib').objectStore('lib').get('folders'); q.onsuccess = () => res(Array.isArray(q.result) ? q.result.filter(f => f && typeof f.name === 'string' && Array.isArray(f.items)) : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
+  async function libFSet(arr){ try{ const db = await libOpen(); return await new Promise(res => { const tx = db.transaction('lib', 'readwrite'); tx.objectStore('lib').put(arr, 'folders'); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
   async function getImgs(key){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').get(key); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
   async function setImgs(key, arr){ try{ const db = await idbOpen(); return await new Promise(res => { const tx = db.transaction('imgs', 'readwrite'), st = tx.objectStore('imgs'); if(arr.length) st.put(arr, key); else st.delete(key); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
   let imgMigrated = null;
@@ -5264,30 +5274,59 @@ function mixTotalDuration(){
       syRender(true);
     }
     let pkCur = null;
-    function lineChooser(x){
+    function lineChooser(x, f0){
       closeCtx();
       const pop = document.createElement('div'); pop.className = 'pk-back';
       pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">' + (x == null ? '사진 보관함 (끌어다 놓기·붙여넣기)' : '이 줄에 붙일 사진을 고르세요') + '</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
-      let lib = [];
+      let lib = [], folders = [], fLoaded = false, curF = (typeof f0 === 'number' ? f0 : null), pkDrag = null;
       const nrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u); // 파일 이름이 달라도 그림이 같으면 같은 사진
       const fill = selK => {
       g.innerHTML = ''; const cur = attachedPic(x);
       const libOnly = lib.filter(u => !pics.some(p => nrm(p) === nrm(u))), all = pics.concat(libOnly);
+      if(fLoaded && curF != null && !folders[curF]) curF = null;
+      const vf = (curF != null && folders[curF]) ? curF : null;
+      const fOf = u => (typeof u === 'string' ? folders.findIndex(f => f.items.includes(nrm(u))) : -1);
+      const moveTo = async (key, fi) => { folders.forEach(f => { f.items = f.items.filter(v => v !== key); }); if(fi >= 0 && folders[fi]) folders[fi].items.push(key); await libFSet(folders); fill(null); };
+      if(vf != null){
+        const cr = document.createElement('div'); cr.className = 'pk-cr';
+        const bk = document.createElement('button'); bk.type = 'button'; bk.textContent = '← 전체'; bk.title = '눌러서 돌아가기 (사진을 끌어다 놓으면 폴더에서 빼냅니다)';
+        bk.addEventListener('click', () => { curF = null; fill(null); });
+        bk.addEventListener('dragover', e => { if(pkDrag != null){ e.preventDefault(); e.stopPropagation(); bk.classList.add('over'); } });
+        bk.addEventListener('dragleave', () => bk.classList.remove('over'));
+        bk.addEventListener('drop', e => { if(pkDrag == null) return; e.preventDefault(); e.stopPropagation(); bk.classList.remove('over'); moveTo(pkDrag, -1); });
+        const cn = document.createElement('span'); cn.textContent = '› 📁 ' + folders[vf].name;
+        cr.appendChild(bk); cr.appendChild(cn); g.appendChild(cr);
+      } else {
+        folders.forEach((f, i) => {
+          const cnt = all.filter(u => fOf(u) === i).length;
+          const fb = document.createElement('button'); fb.type = 'button'; fb.className = 'pk-t pk-fd'; fb.dataset.f = String(i);
+          const fi = document.createElement('span'); fi.className = 'fi'; fi.textContent = '📁';
+          const fn = document.createElement('span'); fn.className = 'fn'; fn.textContent = f.name + ' (' + cnt + ')';
+          fb.appendChild(fi); fb.appendChild(fn);
+          fb.addEventListener('click', () => { curF = i; fill(null); });
+          fb.addEventListener('dragover', e => { if(pkDrag != null){ e.preventDefault(); e.stopPropagation(); fb.classList.add('over'); } });
+          fb.addEventListener('dragleave', () => fb.classList.remove('over'));
+          fb.addEventListener('drop', e => { if(pkDrag == null) return; e.preventDefault(); e.stopPropagation(); fb.classList.remove('over'); moveTo(pkDrag, i); });
+          g.appendChild(fb);
+        });
+      }
       all.forEach((u, k) => {
+        if(vf == null ? fOf(u) >= 0 : fOf(u) !== vf) return; // 폴더에 넣은 사진은 그 폴더 안에서만 보임
         const inSong = k < pics.length;
         const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (inSong && k === cur ? ' on' : '');
         let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         b.appendChild(im);
+        if(typeof u === 'string'){ b.draggable = true; b.addEventListener('dragstart', e => { pkDrag = nrm(u); try{ e.dataTransfer.setData('text/plain', 'pk'); e.dataTransfer.effectAllowed = 'move'; }catch(x){} }); b.addEventListener('dragend', () => { pkDrag = null; }); b._key = nrm(u); }
         b.addEventListener('click', async () => {
           if(!b.classList.contains('sel')){
             g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
             b.classList.add('sel'); const xb = document.createElement('span'); xb.className = 'pk-tx'; xb.textContent = '✕'; xb.title = '이 사진 지우기'; b.appendChild(xb);
             xb.addEventListener('click', async ev => {
               ev.stopPropagation(); pop.remove();
-              if(typeof u === 'string'){ const l2 = (await libGet()).filter(v => v !== u); await libSet(l2); }
+              if(typeof u === 'string'){ const l2 = (await libGet()).filter(v => nrm(v) !== nrm(u)); await libSet(l2); folders.forEach(f => { f.items = f.items.filter(v => v !== nrm(u)); }); await libFSet(folders); }
               if(inSong){ pics.splice(k, 1); picT.splice(k, 1); picL.splice(k, 1); savePT(); if(picPos > k) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(true); }
-              lineChooser(x);
+              lineChooser(x, curF);
             });
             return;
           }
@@ -5301,7 +5340,7 @@ function mixTotalDuration(){
       });
       };
       fill(null);
-      libGet().then(a => { if(!pop.isConnected || !a.length) return; lib = a; fill(null); });
+      Promise.all([libGet(), libFGet()]).then(([a, fl]) => { if(!pop.isConnected) return; lib = a; folders = fl; fLoaded = true; fill(null); });
       const addToList = async fs => {
         fs = Array.from(fs || []); if(!fs.length) return;
         const add = []; let selDup = null, selLib = null; const libNow = await libGet();
@@ -5318,6 +5357,7 @@ function mixTotalDuration(){
         }
         const n0 = pics.length; if(add.length) await putImages(add);
         { const nw = pics.slice(n0).filter(u => typeof u === 'string'); if(nw.length){ const l2 = await libGet(); nw.forEach(u => { if(!l2.some(v => nrm(v) === nrm(u))) l2.push(u); }); await libSet(l2); lib = l2; } else lib = libNow; }
+        if(curF != null && folders[curF]){ pics.slice(n0).filter(u => typeof u === 'string').forEach(u => { const n = nrm(u); if(!folders[curF].items.includes(n)) folders[curF].items.push(n); }); await libFSet(folders); }
         if(!pop.isConnected) return;
         let sk = pics.length > n0 ? n0 : selDup;
         if(sk == null && selLib != null){ const lo = lib.filter(u => !pics.some(p => nrm(p) === nrm(u))), li = lo.findIndex(u => nrm(u) === nrm(selLib)); if(li >= 0) sk = pics.length + li; }
@@ -5330,33 +5370,54 @@ function mixTotalDuration(){
       pop.querySelector('.pk-x').addEventListener('click', () => pop.remove());
       pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
       const pbox = pop.querySelector('.pk-box');
-      pop.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); e.stopPropagation(); pbox.classList.add('dz'); } });
+      pop.addEventListener('dragover', e => { if(e.dataTransfer && pkDrag == null){ e.preventDefault(); e.stopPropagation(); pbox.classList.add('dz'); } });
       pop.addEventListener('dragleave', e => { if(!pop.contains(e.relatedTarget)) pbox.classList.remove('dz'); });
-      pop.addEventListener('drop', e => { e.stopPropagation(); pbox.classList.remove('dz'); const fs = imgsOf(e.dataTransfer); e.preventDefault(); if(fs.length) addToList(fs); });
-      pop.addEventListener('contextmenu', e => {
-        if(e.target.closest('.pk-t, button, input')) return;
+      pop.addEventListener('drop', e => { e.stopPropagation(); pbox.classList.remove('dz'); if(pkDrag != null){ e.preventDefault(); return; } const fs = imgsOf(e.dataTransfer); e.preventDefault(); if(fs.length) addToList(fs); });
+      const pkMenu = (e, entries) => {
         e.preventDefault(); e.stopPropagation();
         pop.querySelectorAll('.pk-ctx').forEach(m => m.remove());
         const m = document.createElement('div'); m.className = 'pk-ctx';
         m.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:4px;';
-        const b = document.createElement('button'); b.type = 'button'; b.textContent = '붙여넣기';
-        b.style.cssText = 'display:block;border:0;background:none;padding:8px 22px;font-size:15px;cursor:pointer;border-radius:6px;';
-        b.onmouseenter = () => { b.style.background = '#e0ecff'; }; b.onmouseleave = () => { b.style.background = 'none'; };
-        m.appendChild(b); pop.appendChild(m);
+        const close = () => { m.remove(); document.removeEventListener('pointerdown', away, true); };
+        const away = ev => { if(!m.contains(ev.target)) close(); };
+        entries.forEach(([label, fn]) => {
+          const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+          b.style.cssText = 'display:block;width:100%;text-align:left;border:0;background:none;padding:8px 22px;font-size:15px;cursor:pointer;border-radius:6px;white-space:nowrap;';
+          b.onmouseenter = () => { b.style.background = '#e0ecff'; }; b.onmouseleave = () => { b.style.background = 'none'; };
+          b.addEventListener('click', () => { close(); fn(); }); m.appendChild(b);
+        });
+        pop.appendChild(m);
         const r = m.getBoundingClientRect();
         m.style.left = Math.max(4, Math.min(e.clientX, window.innerWidth - r.width - 4)) + 'px';
         m.style.top = Math.max(4, Math.min(e.clientY, window.innerHeight - r.height - 4)) + 'px';
-        const close = () => { m.remove(); document.removeEventListener('pointerdown', away, true); };
-        const away = ev => { if(!m.contains(ev.target)) close(); };
         setTimeout(() => document.addEventListener('pointerdown', away, true), 0);
-        b.addEventListener('click', async () => {
-          close();
-          try{
-            const items = await navigator.clipboard.read(); const fs = [];
-            for(const it of items){ const t = it.types.find(t => t.startsWith('image/')); if(t){ const bl = await it.getType(t); fs.push(new File([bl], 'paste.' + (t.split('/')[1] || 'png'), { type: t })); } }
-            if(fs.length) addToList(fs); else alert('클립보드에 사진이 없습니다.');
-          }catch(err){ alert('붙여넣기를 할 수 없습니다. Ctrl+V를 눌러 주세요.'); }
-        });
+      };
+      const doPaste = async () => {
+        try{
+          const items = await navigator.clipboard.read(); const fs = [];
+          for(const it of items){ const t = it.types.find(t => t.startsWith('image/')); if(t){ const bl = await it.getType(t); fs.push(new File([bl], 'paste.' + (t.split('/')[1] || 'png'), { type: t })); } }
+          if(fs.length) addToList(fs); else alert('클립보드에 사진이 없습니다.');
+        }catch(err){ alert('붙여넣기를 할 수 없습니다. Ctrl+V를 눌러 주세요.'); }
+      };
+      pop.addEventListener('contextmenu', e => {
+        const fd = e.target.closest('.pk-fd'), tl = e.target.closest('.pk-t');
+        if(fd){
+          const i = Number(fd.dataset.f);
+          pkMenu(e, [['✏️ 이름 바꾸기', () => { const nn = (prompt('폴더 이름', folders[i].name) || '').trim(); if(!nn || nn === folders[i].name) return; if(folders.some((f, q) => q !== i && f.name === nn)){ alert('같은 이름의 폴더가 있습니다.'); return; } folders[i].name = nn; libFSet(folders); fill(null); }],
+            ['🗑 폴더 지우기 (사진은 남음)', () => { folders.splice(i, 1); libFSet(folders); if(curF === i) curF = null; fill(null); }]]);
+          return;
+        }
+        if(tl){
+          if(!tl._key) return;
+          const ent = []; folders.forEach((f, i) => { if(i !== curF) ent.push(['📁 ' + f.name + ' 폴더로 옮기기', () => { folders.forEach(q => { q.items = q.items.filter(v => v !== tl._key); }); folders[i].items.push(tl._key); libFSet(folders); fill(null); }]); });
+          if(curF != null) ent.push(['↩ 폴더에서 빼기', () => { folders.forEach(q => { q.items = q.items.filter(v => v !== tl._key); }); libFSet(folders); fill(null); }]);
+          if(ent.length) pkMenu(e, ent);
+          return;
+        }
+        if(e.target.closest('button, input')) return;
+        const ent = [['📋 붙여넣기', doPaste]];
+        if(curF == null) ent.push(['📁 폴더 만들기', () => { const nn = (prompt('폴더 이름') || '').trim(); if(!nn) return; if(folders.some(f => f.name === nn)){ alert('같은 이름의 폴더가 있습니다.'); return; } folders.push({ name: nn, items: [] }); libFSet(folders); fill(null); }]);
+        pkMenu(e, ent);
       });
       pkCur = { x, pop, add: addToList };
       back.appendChild(pop);
