@@ -5300,7 +5300,19 @@ function mixTotalDuration(){
       };
       fill(null);
       libGet().then(a => { if(!pop.isConnected || !a.length) return; lib = a; fill(null); });
-      const addToList = async fs => { fs = Array.from(fs || []); if(!fs.length) return; const n0 = pics.length; await putImages(fs); { const nw = pics.slice(n0).filter(u => typeof u === 'string'); if(nw.length){ const l2 = await libGet(); nw.forEach(u => { if(!l2.includes(u)) l2.push(u); }); await libSet(l2); lib = l2; } } if(!pop.isConnected) return; fill(pics.length > n0 ? n0 : null); const gt = g.querySelector('.pk-t.sel'); if(gt){ try{ gt.scrollIntoView({ block: 'nearest' }); }catch(e){} } };
+      const addToList = async fs => {
+        fs = Array.from(fs || []); if(!fs.length) return;
+        const add = []; let selDup = null;
+        for(const f of fs){
+          if(/^image\//.test(f.type)){ let d = null; try{ d = await shrinkImage(f); }catch(e){} const k0 = d ? pics.indexOf(d) : -1;
+            if(k0 >= 0 && confirm('같은 사진이 이미 있습니다. 덮어쓸까요?\n(확인 = 덮어쓰기, 취소 = 한 장 더 추가)')){ if(selDup == null) selDup = k0; continue; } }
+          add.push(f);
+        }
+        const n0 = pics.length; if(add.length) await putImages(add);
+        { const nw = pics.slice(n0).filter(u => typeof u === 'string'); if(nw.length){ const l2 = await libGet(); nw.forEach(u => { if(!l2.includes(u)) l2.push(u); }); await libSet(l2); lib = l2; } }
+        if(!pop.isConnected) return; fill(pics.length > n0 ? n0 : selDup);
+        const gt = g.querySelector('.pk-t.sel'); if(gt){ try{ gt.scrollIntoView({ block: 'nearest' }); }catch(e){} }
+      };
       const fi = pop.querySelector('input');
       pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
       fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); fi.value = ''; addToList(fs); });
