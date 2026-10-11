@@ -326,7 +326,8 @@
   .lyr-view::-webkit-scrollbar{ display:none; width:0; height:0; }
   .lyr-box.haspic{ background:transparent; --veil:rgba(250,246,232,.88); }
   .lyr-voice .lyr-box.haspic{ background:transparent; --veil:rgba(227,240,250,.88); }
-  .lyr-box.haspic .lyr-head, .lyr-box.haspic .lyr-bar, .lyr-box.haspic .lyr-opt{ background:var(--veil); box-shadow:0 0 0 6px var(--veil); border-radius:8px; }
+  .lyr-box.haspic .lyr-head, .lyr-box.haspic .lyr-bar, .lyr-box.haspic .lyr-opt{ background:transparent; box-shadow:none; border-radius:8px; }
+  .lyr-box.haspic .lyr-head .lb, .lyr-box.haspic .lyr-head .nm, .lyr-box.haspic .lyr-bar .bt{ color:#fff; text-shadow:-1px -1px 0 #1c1917, 1px -1px 0 #1c1917, -1px 1px 0 #1c1917, 1px 1px 0 #1c1917, 0 0 4px #000; }
   .lyr-box.haspic [data-pane=view]{ justify-content:flex-end; }
   .lyr-box.haspic .lyr-view, .lyr-voice .lyr-box.haspic .lyr-view{ flex:none; height:calc(3em + 58px); background:transparent; border-color:transparent; }
   .lyr-box.haspic .lyr-ln{ color:#fff; text-shadow:-2px -2px 0 #1c1917, 2px -2px 0 #1c1917, -2px 2px 0 #1c1917, 2px 2px 0 #1c1917, 0 -2px 0 #1c1917, 0 2px 0 #1c1917, -2px 0 0 #1c1917, 2px 0 0 #1c1917; font-weight:700; }
@@ -795,6 +796,9 @@
   .lyr-box .sy-row.sy-ly .pk.e{ border:2px dashed #7c3aed; background:#f5f3ff; color:#7c3aed; display:flex; align-items:center; justify-content:center; font-size:16pt; font-weight:700; }
   .lyr-box .sy-row.sy-ly .tm{ white-space:nowrap; }
   .lyr-box .sy-row.sy-ly.dropto{ outline:3px solid #1e3a8a; outline-offset:-3px; }
+  .lyr-box .sy-list .gp{ height:22px; margin:2px 6px; border:1.5px dashed #7c3aed; border-radius:8px; background:#f5f3ff; color:#7c3aed; font-weight:700; font-size:11pt; display:flex; align-items:center; justify-content:center; line-height:1; cursor:pointer; flex:none; }
+  .lyr-box .sy-list .gp.open{ height:auto; padding:3px 6px; background:#ede9fe; }
+  .lyr-box .sy-list .gp input{ width:100%; box-sizing:border-box; font:inherit; font-size:14pt; padding:4px 8px; }
   .pk-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:6px; }
   .pk-g .pk-t{ padding:0; border:3px solid transparent; border-radius:8px; background:#fff; cursor:pointer; height:56px; overflow:hidden; }
   .pk-g .pk-t.on{ border-color:#1e3a8a; }
@@ -5228,10 +5232,31 @@ function mixTotalDuration(){
       pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
       back.appendChild(pop);
     }
+    function insertLine(at, text){
+      at = Math.max(0, Math.min(at, syT.length));
+      syT.splice(at, 0, text); syStamp.splice(at, 0, null); syAbs.splice(at, 0, null);
+      picL = picL.map(v => v != null && v >= at ? v + 1 : v); savePT();
+      if(syPos > at) syPos++;
+      lyrPersist(); syRender();
+    }
+    function mkGap(at){
+      const g = mkEl('div', 'gp', at === 0 ? '＋ 여기에 줄 넣기 (전주)' : '＋'); g.title = '여기에 줄 넣기 (전주·간주 등)';
+      g.addEventListener('click', () => {
+        if(g.querySelector('input')) return;
+        g.textContent = ''; g.classList.add('open');
+        const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.placeholder = '예) (간주)  — 쓰고 Enter'; g.appendChild(inp); inp.focus();
+        let done = false;
+        const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(v) insertLine(at, v); else syRender(); };
+        inp.addEventListener('blur', commit);
+        inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; syRender(); } });
+      });
+      return g;
+    }
     function syRender(){
       closeCtx();
       syList.textContent = ''; syRows = []; syList.classList.remove('pics'); syList.classList.add('ly');
       syT.forEach((t, x) => {
+        syList.appendChild(mkGap(x));
         const r = mkEl('div', 'sy-row sy-ly');
         const hd = mkEl('span', 'hd', '⠿'); hd.title = '끌어서 순서 바꾸기 (시간은 줄을 따라갑니다)';
         const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; syMark(false); });
