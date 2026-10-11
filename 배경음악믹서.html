@@ -796,9 +796,6 @@
   .lyr-box .sy-row.sy-ly .pk.e{ border:2px dashed #7c3aed; background:#f5f3ff; color:#7c3aed; display:flex; align-items:center; justify-content:center; font-size:16pt; font-weight:700; }
   .lyr-box .sy-row.sy-ly .tm{ white-space:nowrap; }
   .lyr-box .sy-row.sy-ly.dropto{ outline:3px solid #1e3a8a; outline-offset:-3px; }
-  .lyr-box .sy-list .gp{ height:22px; margin:2px 6px; border:1.5px dashed #7c3aed; border-radius:8px; background:#f5f3ff; color:#7c3aed; font-weight:700; font-size:11pt; display:flex; align-items:center; justify-content:center; line-height:1; cursor:pointer; flex:none; }
-  .lyr-box .sy-list .gp.open{ height:auto; padding:3px 6px; background:#ede9fe; }
-  .lyr-box .sy-list .gp input{ width:100%; box-sizing:border-box; font:inherit; font-size:14pt; padding:4px 8px; }
   .pk-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:6px; }
   .pk-g .pk-t{ padding:0; border:3px solid transparent; border-radius:8px; background:#fff; cursor:pointer; height:56px; overflow:hidden; }
   .pk-g .pk-t.on{ border-color:#1e3a8a; }
@@ -5243,31 +5240,10 @@ function mixTotalDuration(){
       pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
       back.appendChild(pop);
     }
-    function insertLine(at, text){
-      at = Math.max(0, Math.min(at, syT.length));
-      syT.splice(at, 0, text); syStamp.splice(at, 0, null); syAbs.splice(at, 0, null);
-      picL = picL.map(v => v != null && v >= at ? v + 1 : v); savePT();
-      if(syPos > at) syPos++;
-      lyrPersist(); syRender();
-    }
-    function mkGap(at){
-      const g = mkEl('div', 'gp', at === 0 ? '＋ 여기에 줄 넣기 (전주)' : '＋'); g.title = '여기에 줄 넣기 (전주·간주 등)';
-      g.addEventListener('click', () => {
-        if(g.querySelector('input')) return;
-        g.textContent = ''; g.classList.add('open');
-        const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.placeholder = '예) (간주)  — 쓰고 Enter'; g.appendChild(inp); inp.focus();
-        let done = false;
-        const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(v) insertLine(at, v); else syRender(); };
-        inp.addEventListener('blur', commit);
-        inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; syRender(); } });
-      });
-      return g;
-    }
     function syRender(){
       closeCtx();
       syList.textContent = ''; syRows = []; syList.classList.remove('pics'); syList.classList.add('ly');
       syT.forEach((t, x) => {
-        syList.appendChild(mkGap(x));
         const r = mkEl('div', 'sy-row sy-ly');
         const hd = mkEl('span', 'hd', '⠿'); hd.title = '끌어서 순서 바꾸기 (시간은 줄을 따라갑니다)';
         const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; syMark(false); });
@@ -5283,11 +5259,9 @@ function mixTotalDuration(){
         r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cell); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
       });
       const ad = mkEl('div', 'addl'); const t2 = mkEl('textarea', 'sy-add'); t2.rows = 1;
-      t2.placeholder = syT.length ? '＋ 가사 추가 (여러 줄을 붙여넣으면 줄마다 나뉩니다)' : '＋ 가사를 붙여넣으세요 (여러 줄을 붙여넣으면 줄마다 나뉩니다)';
-      const go = () => { const v = t2.value; t2.value = ''; if(v.trim()) addLines(v); };
-      t2.addEventListener('paste', () => setTimeout(go, 0));
-      t2.addEventListener('blur', go);
-      t2.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); go(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); t2.value = ''; t2.blur(); } });
+      t2.placeholder = syT.length ? '＋ 가사 추가 (쓰거나 붙여넣고 Enter)' : '＋ 가사를 쓰거나 붙여넣고 Enter를 누르세요';
+      const go = () => { const v = t2.value.replace(/\s*[\r\n]+\s*/g, ' ').trim(); if(!v) return; t2.value = ''; addLines(v); }; // 붙여넣어도 자동으로 나누지 않음: Enter를 눌러야 한 줄로 들어감
+      t2.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); go(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); t2.value = ''; t2.blur(); } });
       ad.appendChild(t2); syList.appendChild(ad);
       syMark(true);
     }
