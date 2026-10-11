@@ -5260,7 +5260,9 @@ function mixTotalDuration(){
       closeCtx();
       const pop = document.createElement('div'); pop.className = 'pk-back';
       pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">이 줄에 붙일 사진을 고르세요</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
-      const g = pop.querySelector('.pk-g'), cur = attachedPic(x);
+      const g = pop.querySelector('.pk-g');
+      const fill = selK => {
+      g.innerHTML = ''; const cur = attachedPic(x);
       pics.forEach((u, k) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (k === cur ? ' on' : '');
         let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
@@ -5275,17 +5277,21 @@ function mixTotalDuration(){
           picL = picL.map(v => v === x ? null : v); picL[k] = x; if(syStamp[x] != null) picT[k] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender();
         });
         g.appendChild(b);
+        if(k === selK) b.click();
       });
+      };
+      fill(null);
+      const addToList = async fs => { fs = Array.from(fs || []); if(!fs.length) return; const n0 = pics.length; await putImages(fs); if(!pop.isConnected) return; fill(pics.length > n0 ? n0 : null); const gt = g.querySelector('.pk-t.sel'); if(gt){ try{ gt.scrollIntoView({ block: 'nearest' }); }catch(e){} } };
       const fi = pop.querySelector('input');
       pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
-      fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); pop.remove(); if(fs.length) attachFiles(fs, x); });
+      fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); fi.value = ''; addToList(fs); });
       pop.querySelector('.pk-x').addEventListener('click', () => pop.remove());
       pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
       const pbox = pop.querySelector('.pk-box');
       pop.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); e.stopPropagation(); pbox.classList.add('dz'); } });
       pop.addEventListener('dragleave', e => { if(!pop.contains(e.relatedTarget)) pbox.classList.remove('dz'); });
-      pop.addEventListener('drop', e => { e.stopPropagation(); pbox.classList.remove('dz'); const fs = imgsOf(e.dataTransfer); e.preventDefault(); if(fs.length){ pop.remove(); attachFiles(fs, x); } });
-      pkCur = { x, pop };
+      pop.addEventListener('drop', e => { e.stopPropagation(); pbox.classList.remove('dz'); const fs = imgsOf(e.dataTransfer); e.preventDefault(); if(fs.length) addToList(fs); });
+      pkCur = { x, pop, add: addToList };
       back.appendChild(pop);
     }
     const BLANK = '\u200b'; // 빈 줄 표시(보이지 않는 글자)
@@ -5591,7 +5597,7 @@ function mixTotalDuration(){
     // 사이트에서 복사한 이미지 붙여넣기(Ctrl+V) / 끌어다 놓기
     const imgsOf = dt => { if(!dt) return []; const fl = Array.from(dt.files || []).filter(x => /^(image|video)\//.test(x.type)); if(fl.length) return fl; const it = Array.from(dt.items || []).filter(x => x.kind === 'file' && /^(image|video)\//.test(x.type)).map(x => x.getAsFile()).filter(Boolean); return it; };
     const onPaste = e => {
-      const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); if(pkCur && pkCur.pop.isConnected){ const q = pkCur; q.pop.remove(); attachFiles(fs, q.x); return; } putImages(fs); return; }
+      const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); if(pkCur && pkCur.pop.isConnected){ pkCur.add(fs); return; } putImages(fs); return; }
       const tx = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
       if(tx.indexOf('bgm-pics:') === 0 && window.__picClip && window.__picClip.length){ e.preventDefault(); e.stopPropagation(); putItems(window.__picClip.slice()); }
     };
