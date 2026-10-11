@@ -808,12 +808,23 @@
   .pk-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:6px; }
   .pk-g .pk-t{ padding:0; border:3px solid transparent; border-radius:8px; background:#fff; cursor:pointer; height:56px; overflow:hidden; }
   .pk-g .pk-t.on{ border-color:#1e3a8a; }
+  .pk-g .pk-t{ position:relative; }
+  .pk-g .pk-t.sel{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
+  .pk-g .pk-tx{ position:absolute; top:3px; right:3px; width:26px; height:26px; border-radius:50%; background:rgba(127,29,29,.92); color:#fff; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; line-height:1; }
+  .pk-top{ display:flex; align-items:center; gap:10px; }
+  .pk-top .pk-h{ flex:1; }
+  .pk-top .pk-i{ flex:none; white-space:nowrap; }
+  .pk-top .pk-x{ flex:none; align-self:auto; width:38px; height:38px; padding:0; font-size:16pt; line-height:1; }
+  @media (max-width:600px){ .pk-top{ flex-wrap:wrap; } .pk-top .pk-h{ order:3; flex-basis:100%; } .pk-top .pk-x{ margin-left:auto; } }
+  .lyr-box .sy-row.sy-ly .pkw{ position:relative; flex:none; display:flex; }
+  .lyr-box .sy-row.sy-ly .pk-off{ position:absolute; top:-8px; right:-8px; width:20px; height:20px; padding:0; border-radius:50%; border:1px solid #f87171; background:#fee2e2; color:#991b1b; font-size:12px; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .pk-box.dz{ outline:3px dashed #2563eb; outline-offset:-3px; }
   .pk-g .pk-t img, .pk-g .pk-t video{ width:100%; height:100%; object-fit:cover; display:block; }
-  .pk-back:has(.pk-g){ align-items:stretch; justify-content:stretch; }
-  .pk-box:has(.pk-g){ width:100%; height:100%; max-height:none; border-radius:0; padding:10px 12px; box-sizing:border-box; }
+  .pk-back:has(.pk-g){ padding:5vh 5vw; box-sizing:border-box; align-items:stretch; justify-content:stretch; }
+  .pk-box:has(.pk-g){ width:100%; height:100%; max-height:none; border-radius:12px; padding:10px 12px; box-sizing:border-box; }
   .pk-box:has(.pk-g) .pk-g{ flex:1; min-height:0; overflow:auto; align-content:start; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
   .pk-box:has(.pk-g) .pk-g .pk-t{ height:110px; }
-  @media (max-width:600px){ .pk-box:has(.pk-g) .pk-g{ grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); } .pk-box:has(.pk-g) .pk-g .pk-t{ height:80px; } }
+  @media (max-width:600px){ .pk-box:has(.pk-g) .pk-g{ grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); } .pk-box:has(.pk-g) .pk-g .pk-t{ height:80px; } }
   @media (max-width:600px){ .lyr-box .sy-row.sy-ly.now .tx2::after{ content:none; } .lyr-box .sy-row.sy-ly{ gap:6px; padding:6px 6px; } .lyr-box .sy-row.sy-ly .tm{ min-width:3.6em; font-size:11pt; } .lyr-box .sy-row.sy-ly .hd{ font-size:14pt; } }
   @media (max-width:600px){
     .lyr-box .sy-bar.sy-one{ gap:4px; }
@@ -5244,24 +5255,37 @@ function mixTotalDuration(){
       if(pics.length > n0){ picL = picL.map(v => v === x ? null : v); picL[n0] = x; if(syStamp[x] != null) picT[n0] = syStamp[x]; savePT(); chipsUpd(); }
       syRender();
     }
+    let pkCur = null;
     function lineChooser(x){
       closeCtx();
       const pop = document.createElement('div'); pop.className = 'pk-back';
-      pop.innerHTML = '<div class="pk-box"><div class="pk-h">이 줄에 붙일 사진을 고르세요</div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden><button type="button" class="pk-i" data-new>📁 새 사진 고르기</button><button type="button" class="pk-i" data-none>사진 빼기 (이 줄에서 떼기)</button><button type="button" class="pk-x">닫기</button></div>';
+      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">이 줄에 붙일 사진을 고르세요</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g'), cur = attachedPic(x);
       pics.forEach((u, k) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (k === cur ? ' on' : '');
         let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         b.appendChild(im);
-        b.addEventListener('click', () => { picL = picL.map(v => v === x ? null : v); picL[k] = x; if(syStamp[x] != null) picT[k] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender(); });
+        b.addEventListener('click', () => {
+          if(!b.classList.contains('sel')){
+            g.querySelectorAll('.pk-t.sel').forEach(o => { o.classList.remove('sel'); const q = o.querySelector('.pk-tx'); if(q) q.remove(); });
+            b.classList.add('sel'); const xb = document.createElement('span'); xb.className = 'pk-tx'; xb.textContent = '✕'; xb.title = '이 사진 지우기'; b.appendChild(xb);
+            xb.addEventListener('click', async ev => { ev.stopPropagation(); pop.remove(); pics.splice(k, 1); picT.splice(k, 1); picL.splice(k, 1); savePT(); if(picPos > k) picPos--; picPos = Math.min(picPos, pics.length); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(); lineChooser(x); });
+            return;
+          }
+          picL = picL.map(v => v === x ? null : v); picL[k] = x; if(syStamp[x] != null) picT[k] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender();
+        });
         g.appendChild(b);
       });
       const fi = pop.querySelector('input');
       pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
       fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); pop.remove(); if(fs.length) attachFiles(fs, x); });
-      pop.querySelector('[data-none]').addEventListener('click', () => { picL = picL.map(v => v === x ? null : v); savePT(); pop.remove(); syRender(); });
       pop.querySelector('.pk-x').addEventListener('click', () => pop.remove());
       pop.addEventListener('pointerdown', e => { if(e.target === pop) pop.remove(); });
+      const pbox = pop.querySelector('.pk-box');
+      pop.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); e.stopPropagation(); pbox.classList.add('dz'); } });
+      pop.addEventListener('dragleave', e => { if(!pop.contains(e.relatedTarget)) pbox.classList.remove('dz'); });
+      pop.addEventListener('drop', e => { e.stopPropagation(); pbox.classList.remove('dz'); const fs = imgsOf(e.dataTransfer); e.preventDefault(); if(fs.length){ pop.remove(); attachFiles(fs, x); } });
+      pkCur = { x, pop };
       back.appendChild(pop);
     }
     const BLANK = '\u200b'; // 빈 줄 표시(보이지 않는 글자)
@@ -5290,7 +5314,8 @@ function mixTotalDuration(){
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
         r.addEventListener('drop', e => { r.classList.remove('dropto'); const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
-        r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cell); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
+        let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(); }); cw.appendChild(off); }
+        r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cw); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
       });
       addTa.placeholder = syT.length ? '＋ 가사 추가 (줄마다 Enter, 다 쓰면 ⬆️ 올리기)' : '＋ 가사를 쓰거나 붙여넣고 ⬆️ 올리기를 누르세요 (줄마다 Enter)';
       syMark(true);
@@ -5566,7 +5591,7 @@ function mixTotalDuration(){
     // 사이트에서 복사한 이미지 붙여넣기(Ctrl+V) / 끌어다 놓기
     const imgsOf = dt => { if(!dt) return []; const fl = Array.from(dt.files || []).filter(x => /^(image|video)\//.test(x.type)); if(fl.length) return fl; const it = Array.from(dt.items || []).filter(x => x.kind === 'file' && /^(image|video)\//.test(x.type)).map(x => x.getAsFile()).filter(Boolean); return it; };
     const onPaste = e => {
-      const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); putImages(fs); return; }
+      const fs = imgsOf(e.clipboardData); if(fs.length){ e.preventDefault(); e.stopPropagation(); if(pkCur && pkCur.pop.isConnected){ const q = pkCur; q.pop.remove(); attachFiles(fs, q.x); return; } putImages(fs); return; }
       const tx = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
       if(tx.indexOf('bgm-pics:') === 0 && window.__picClip && window.__picClip.length){ e.preventDefault(); e.stopPropagation(); putItems(window.__picClip.slice()); }
     };
