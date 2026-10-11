@@ -5189,7 +5189,18 @@ function mixTotalDuration(){
       let done = false;
       const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(); };
       inp.addEventListener('blur', commit);
-      inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; syRender(); } });
+      inp.addEventListener('keydown', e => {
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          const v = inp.value, ps = inp.selectionStart, A = v.slice(0, ps).trim(), B = v.slice(ps).trim();
+          if(!done && A && B && ps != null){ // 글 가운데에서 Enter → 그 자리에서 두 줄로 나눔 (앞 줄은 시간·사진 유지, 뒤 줄은 새 줄)
+            done = true; syT[x] = A; syT.splice(x + 1, 0, B); syStamp.splice(x + 1, 0, null); syAbs.splice(x + 1, 0, null);
+            picL = picL.map(q => q != null && q > x ? q + 1 : q); savePT(); if(syPos > x) syPos++;
+            lyrPersist(); syRender(); return;
+          }
+          commit();
+        } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; syRender(); }
+      });
     }
     function delLine(x){
       syT.splice(x, 1); syStamp.splice(x, 1); syAbs.splice(x, 1);
