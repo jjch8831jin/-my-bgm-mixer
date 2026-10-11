@@ -738,7 +738,10 @@
   .lyr-box .sy-seg button.on{ background:#c2410c; color:#fff; }
   .lyr-box .sy-row.sy-pic{ display:flex; align-items:center; gap:14px; }
   .lyr-box .sy-row.sy-pic .tm{ min-width:4.2em; font-family:ui-monospace,Menlo,Consolas,monospace; color:#9a3412; }
-  .lyr-box .sy-row.sy-pic img, .lyr-box .sy-row.sy-pic video{ height:52px; width:auto; max-width:120px; object-fit:cover; border-radius:6px; }
+  .lyr-box .sy-row.sy-pic{ padding:8px 10px; gap:12px; }
+  .lyr-box .sy-row.sy-pic img, .lyr-box .sy-row.sy-pic video{ height:150px; width:auto; max-width:220px; object-fit:cover; border-radius:6px; }
+  .lyr-box .sy-list.pics{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; align-content:start; }
+  @media (max-width:600px){ .lyr-box .sy-list.pics{ grid-template-columns:minmax(0,1fr); } .lyr-box .sy-row.sy-pic img, .lyr-box .sy-row.sy-pic video{ height:110px; max-width:160px; } }
   .pk-back{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10001; display:flex; align-items:center; justify-content:center; }
   .pk-box{ background:#faf6e8; border-radius:12px; padding:14px; width:min(560px,92vw); max-height:80vh; display:flex; flex-direction:column; gap:8px; }
   .pk-h{ font-size:14pt; font-weight:700; color:#1c1917; }
@@ -5044,7 +5047,7 @@ function mixTotalDuration(){
     let syMode = 'lyric', picPos = 0, pRows = [];
     function absOf(t){ const cur = curInfo(kind); if(!cur) return null; const its = kind === 'voice' ? voiceItems : musicItems; let acc = 0; for(const it of its){ if(it === cur.item) break; acc += it.buffer.duration; } return acc + Math.max(0, t); }
     function picSyRender(){
-      syList.textContent = ''; pRows = [];
+      syList.textContent = ''; pRows = []; syList.classList.add('pics');
       if(!pics.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '사진이 없습니다. "입력"에서 사진을 넣어 주세요.'; syList.appendChild(e); }
       pics.forEach((u, x) => {
         const r = document.createElement('div'); r.className = 'sy-row sy-pic';
@@ -5072,7 +5075,7 @@ function mixTotalDuration(){
     }
     back.querySelectorAll('[data-sym]').forEach(b => b.addEventListener('click', () => setSyMode(b.dataset.sym)));
     function syRender(){
-      syList.textContent = ''; syRows = [];
+      syList.textContent = ''; syRows = []; syList.classList.remove('pics');
       if(!syT.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '먼저 "입력"에서 가사를 붙여넣어 주세요.'; syList.appendChild(e); }
       syT.forEach((t, x) => {
         const r = document.createElement('div'); r.className = 'sy-row';
