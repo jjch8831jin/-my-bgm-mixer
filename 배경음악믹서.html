@@ -4821,7 +4821,7 @@ function mixTotalDuration(){
     const name = i.item.name, c = lyrCalc(kind, i);
     let p0 = 1, pl = true; try{ p0 = origPos(kind); pl = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).isPlaying(); }catch(e){}
     if(p0 < 0.05 && !pl) return { text:dispName(kind, name), lyric:false, name:dispName(kind, name), has:c.has }; // 재생 전 맨 처음에는 제목
-    if(c.has && c.idx >= 0) return { text: c.items[c.idx], lyric:true, name, has:true };
+    if(c.has && c.idx >= 0 && String(c.items[c.idx] || '').replace(/[\u200b\s]/g, '')) return { text: c.items[c.idx], lyric:true, name, has:true }; // 빈 줄(전주·간주)이면 제목
     return { text:dispName(kind, name), lyric:false, name:dispName(kind, name), has:c.has };
   }
   const IMG_KEY = 'bgmMixerLyrImgs';
