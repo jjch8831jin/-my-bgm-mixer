@@ -4796,7 +4796,7 @@ function mixTotalDuration(){
   // ---- 곡 제목 고치기 (파일 이름은 그대로, 보이는 제목만 바꿈) ----
   const TTL_KEY = 'bgmMixerTitles';
   function loadTtl(){ try{ return JSON.parse(localStorage.getItem(TTL_KEY) || '{}') || {}; }catch(e){ return {}; } }
-  function dispName(kind, name){ const t = loadTtl()[keyOf(kind, name)]; return t ? t : name; }
+  function dispName(kind, name){ const t = loadTtl()[keyOf(kind, name)]; return t ? t : String(name || '').replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, ''); }
   // 지금 위치에서 어느 줄인지 계산 (idx -1 = 가사 구간 아님)
   function lyrCalc(kind, i){
     const L = loadLyr()[keyOf(kind, i.item.name)], lines = lyrLines(L);
