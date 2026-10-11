@@ -5300,17 +5300,22 @@ function mixTotalDuration(){
       };
       fill(null);
       libGet().then(a => { if(!pop.isConnected || !a.length) return; lib = a; fill(null); });
+      const nrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u); // 파일 이름이 달라도 그림이 같으면 같은 사진
       const addToList = async fs => {
         fs = Array.from(fs || []); if(!fs.length) return;
-        const add = []; let selDup = null;
+        const add = []; let selDup = null, selLib = null; const libNow = await libGet();
         for(const f of fs){
-          if(/^image\//.test(f.type)){ let d = null; try{ d = await shrinkImage(f); }catch(e){} const k0 = d ? pics.indexOf(d) : -1;
-            if(k0 >= 0 && confirm('같은 사진이 이미 있습니다. 덮어쓸까요?\n(확인 = 덮어쓰기, 취소 = 한 장 더 추가)')){ if(selDup == null) selDup = k0; continue; } }
+          if(/^image\//.test(f.type)){ let d = null; try{ d = await shrinkImage(f); }catch(e){} const nd = d ? nrm(d) : null;
+            if(nd){ const k0 = pics.findIndex(u => nrm(u) === nd), kl = k0 >= 0 ? -1 : libNow.findIndex(u => nrm(u) === nd);
+              if((k0 >= 0 || kl >= 0) && confirm('같은 사진이 이미 있습니다. 덮어쓸까요?\n(확인 = 덮어쓰기, 취소 = 한 장 더 추가)')){ if(k0 >= 0){ if(selDup == null) selDup = k0; } else if(selLib == null) selLib = libNow[kl]; continue; } } }
           add.push(f);
         }
         const n0 = pics.length; if(add.length) await putImages(add);
-        { const nw = pics.slice(n0).filter(u => typeof u === 'string'); if(nw.length){ const l2 = await libGet(); nw.forEach(u => { if(!l2.includes(u)) l2.push(u); }); await libSet(l2); lib = l2; } }
-        if(!pop.isConnected) return; fill(pics.length > n0 ? n0 : selDup);
+        { const nw = pics.slice(n0).filter(u => typeof u === 'string'); if(nw.length){ const l2 = await libGet(); nw.forEach(u => { if(!l2.some(v => nrm(v) === nrm(u))) l2.push(u); }); await libSet(l2); lib = l2; } else lib = libNow; }
+        if(!pop.isConnected) return;
+        let sk = pics.length > n0 ? n0 : selDup;
+        if(sk == null && selLib != null){ const lo = lib.filter(u => !pics.includes(u)), li = lo.indexOf(selLib); if(li >= 0) sk = pics.length + li; }
+        fill(sk);
         const gt = g.querySelector('.pk-t.sel'); if(gt){ try{ gt.scrollIntoView({ block: 'nearest' }); }catch(e){} }
       };
       const fi = pop.querySelector('input');
