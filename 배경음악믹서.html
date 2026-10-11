@@ -716,6 +716,8 @@
   .pl-left{ width:240px !important; }
   body section .player-btn.on{ background:#ffb547; color:#131f2c; border-color:#ffd08a; box-shadow:0 0 10px rgba(255,181,71,.55), 0 2px 0 #0b141c; }
   body section .dl-row .record-btn.busy, body section .dl-row .record-btn.busy:disabled, body section .dl-row .record-btn.busy:hover:not(:disabled){ background:#ef4a3a; border-color:#ff8a7c; color:#fff; box-shadow:0 0 10px rgba(239,74,58,.7); filter:none; }
+@media (min-width:601px){#voiceList,#musicList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:8px}#voiceList .file-item,#musicList .file-item{min-width:0}}
+.lyr-chip{ position:fixed; right:12px; bottom:12px; z-index:9998; background:#1e3a8a; color:#fff; border:0; border-radius:22px; padding:10px 16px; font-size:14pt; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.4); }
 </style>
 </head>
 <body>
@@ -2309,7 +2311,7 @@ async function addFiles(fileList, kind){
   loadErrorEl.style.color = '';
   const label = kind === 'voice' ? '음성' : '배경음악';
   try{
-    const added = []; // 이번에 불러온 파일들 (선택한 순서 그대로, 목록 맨 앞에 끼워 넣음)
+    const added = []; // 이번에 불러온 파일들 (선택한 순서 그대로, 목록 맨 뒤에 이어 붙임)
     for(let i=0; i<files.length; i++){
       const file = files[i];
       loadErrorEl.textContent = label + ' 파일 불러오는 중… (' + (i+1) + '/' + files.length + ') ' + file.name;
@@ -2323,10 +2325,10 @@ async function addFiles(fileList, kind){
     }
     if(loadErrorEl.textContent.includes('불러오는 중')) loadErrorEl.textContent = '';
     const items = kind === 'voice' ? voiceItems : musicItems;
-    items.unshift(...added);
+    items.push(...added);
     const live = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).captureLive();
-    // 앞에 끼워 넣으면 듣던 소리가 그만큼 뒤로 밀리므로, 이어 듣는 위치도 같이 옮김
-    if(live) live.shift = added.reduce((a, it) => a + it.buffer.duration, 0);
+    // 뒤에 이어 붙이므로 듣던 위치는 그대로
+    if(live) live.shift = 0;
     rebuild(kind, live);
   } catch(err){
     loadErrorEl.textContent = label + ' 처리 중 오류가 발생했습니다: ' + err.message;
@@ -3545,11 +3547,11 @@ document.getElementById('dropVoice').addEventListener('click', () => openFilesFo
 document.getElementById('dropMusic').addEventListener('click', () => openFilesFor('music'));
 
 document.getElementById('voiceInput').addEventListener('change', e => {
-  addFiles(e.target.files, 'voice');
+  addFiles(Array.from(e.target.files).reverse(), 'voice'); // 선택창이 나중에 고른 파일을 앞에 주므로 뒤집어서 처음 고른 파일이 1번
   e.target.value = '';
 });
 document.getElementById('musicInput').addEventListener('change', e => {
-  addFiles(e.target.files, 'music');
+  addFiles(Array.from(e.target.files).reverse(), 'music'); // 선택창이 나중에 고른 파일을 앞에 주므로 뒤집어서 처음 고른 파일이 1번
   e.target.value = '';
 });
 
@@ -4765,7 +4767,7 @@ function mixTotalDuration(){
     const L = loadLyr()[keyOf(kind, name)] || {};
     const back = document.createElement('div'); back.className = 'lyr-back' + (kind === 'voice' ? ' lyr-voice' : '');
     back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
-      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="trk trkH" data-trkbox title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span><button type="button" data-sw></button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
+      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="trk trkH" data-trkbox title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span><button type="button" data-sw></button><button type="button" class="rb" data-hide title="숨기기(믹서 보기)">－</button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
       '<div class="lyr-bar"><span class="bt" data-ct>00:00</span><input type="range" class="sk" data-sk min="0" max="1000" value="0" step="1"><span class="bt" data-dt>00:00</span>' +
       '<span class="bg"><button type="button" class="rb" data-pl title="재생">▶</button><button type="button" class="rb" data-st2 title="정지(처음으로)">■</button><button type="button" class="rb" data-nx title="다음곡">⏭</button></span>' +
       (kind === 'voice' ? '<span class="rate" title="속도 조절"><button type="button" data-rm>−</button><b data-rv>1.00x</b><button type="button" data-rp>+</button></span>' : '') +
@@ -5021,7 +5023,14 @@ function mixTotalDuration(){
       back.querySelector('[data-rp]').addEventListener('click', () => adj(0.01));
     }
     const timer = setInterval(() => { barUpd(); picTick(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
-    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    let chipEl = null;
+    back.querySelector('[data-hide]').addEventListener('click', () => {
+      back.style.display = 'none'; document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1];
+      chipEl = document.createElement('button'); chipEl.type = 'button'; chipEl.className = 'lyr-chip'; chipEl.textContent = '🎤 가사창 열기';
+      chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
+      document.body.appendChild(chipEl);
+    });
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
