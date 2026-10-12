@@ -764,6 +764,9 @@
   .lyr-box .sy-row.sy-ly .tm{ min-width:5.2em; }
   .lyr-box .sy-row.sy-ly .tx2{ flex:1; min-width:0; cursor:text; overflow-wrap:anywhere; }
   .lyr-box .sy-row.sy-ly .hd{ font-size:18pt; color:#9a3412; cursor:grab; padding:0 2px; flex:none; touch-action:none; user-select:none; }
+  .lyr-box .sy-row.insl{ background:#bfdbfe !important; box-shadow:0 0 0 3px #2563eb inset !important; }
+  .lyr-box .sy-row.drg{ background:#fef3c7 !important; opacity:.55; }
+  .sy-ghost{ position:fixed; z-index:100000; pointer-events:none; margin:0 !important; background:#fde68a !important; border:2px solid #d97706; border-radius:8px; box-shadow:0 8px 22px rgba(0,0,0,.35); opacity:.96; box-sizing:border-box; }
   .lyr-box .sy-row.sy-ly.drg{ opacity:.45; } .lyr-box .sy-row.sy-ly.insl{ box-shadow:-5px 0 0 0 #1e3a8a; }
   .lyr-box .sy-row.sy-ly .rx{ position:static; flex:none; width:30px; height:30px; padding:0; border-radius:50%; background:#fee2e2; border:1px solid #b91c1c; color:#991b1b; font-size:12pt; line-height:1; display:flex; align-items:center; justify-content:center; }
   .lyr-box .sy-row.sy-ly.now .tx2::after, .lyr-box .sy-row.sy-pic.now .tx2::after{ content:'  ← 다음 차례'; color:#047857; font-size:.75em; }
@@ -5044,7 +5047,7 @@ function mixTotalDuration(){
       });
       if(!hasPic){ const ph = document.createElement('div'); ph.className = 'thph'; ph.textContent = '여기에 사진·동영상을 놓으세요'; thumbsEl.appendChild(ph); }
       thumbsEl.style.display = 'flex'; thumbsEl.scrollLeft = sl0; chipsUpd();
-      try{ if(curTab === 'sync' && syMode === 'pic') picSyRender(); }catch(e){}
+      try{ if(curTab === 'sync' && syMode === 'pic') picSyRender(true); }catch(e){}
       back.querySelector('[data-imgdel]').disabled = !hasPic;
       if(!hasPic) showBg(-1);
       try{ lastIdx = -2; upd(); picTick(); }catch(e){}
@@ -5195,8 +5198,8 @@ function mixTotalDuration(){
       m.style.left = Math.max(4, Math.min(cx, innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, innerHeight - h - 4)) + 'px';
     }
     back.addEventListener('pointerdown', e => { if(ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
-    function picSyRender(){
-      closeCtx();
+    function picSyRender(keep){
+      const keepTop = syList.scrollTop; closeCtx();
       syList.textContent = ''; pRows = []; syList.classList.add('pics'); syList.classList.remove('ly');
       if(!pics.length){ const e = document.createElement('div'); e.className = 'lyr-empty'; e.textContent = '사진이 없습니다. 아래 칸을 누르거나 사진을 끌어다 놓으세요.'; syList.appendChild(e); }
       pics.forEach((u, x) => {
@@ -5233,32 +5236,38 @@ function mixTotalDuration(){
       });
       const ad = document.createElement('button'); ad.type = 'button'; ad.className = 'addc'; ad.textContent = '🖼 사진·동영상 추가'; ad.addEventListener('click', () => back.querySelector('[data-imgf]').click());
       syList.appendChild(ad);
-      picSyMark(true); paintSyPics();
+      picSyMark(!keep); paintSyPics(); if(keep) syList.scrollTop = keepTop;
     }
     // 가사 줄 고치기·지우기·추가
     function editLine(x, span){
       const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.value = syT[x] === BLANK ? '' : syT[x]; span.replaceWith(inp); inp.focus(); inp.select();
       let done = false;
-      const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ if(syT[x] === BLANK){ syRender(); return; } delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(); };
+      const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ if(syT[x] === BLANK){ syRender(true); return; } delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(true); };
       inp.addEventListener('blur', commit);
       inp.addEventListener('keydown', e => {
+        if((e.ctrlKey || e.metaKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !done){
+          e.preventDefault(); e.stopPropagation();
+          const to = e.key === 'ArrowUp' ? x - 1 : x + 1; if(to < 0 || to >= syT.length) return;
+          const v0 = inp.value.trim(); done = true; if(v0) syT[x] = v0; else if(syT[x] !== BLANK) syT[x] = BLANK;
+          moveLyric(x, to); const sp = syRows[to] && syRows[to].querySelector('.tx2'); if(sp) editLine(to, sp); return;
+        }
         if(e.key === 'Enter'){
           e.preventDefault();
           const v = inp.value, ps = inp.selectionStart, A = v.slice(0, ps).trim(), B = v.slice(ps).trim();
           if(!done && A && B && ps != null){ // 글 가운데에서 Enter → 그 자리에서 두 줄로 나눔 (앞 줄은 시간·사진 유지, 뒤 줄은 새 줄)
             done = true; syT[x] = A; syT.splice(x + 1, 0, B); syStamp.splice(x + 1, 0, null); syAbs.splice(x + 1, 0, null);
             picL = picL.map(q => q != null && q > x ? q + 1 : q); savePT(); if(syPos > x) syPos++;
-            lyrPersist(); syRender(); return;
+            lyrPersist(); syRender(true); return;
           }
           commit();
-        } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; syRender(); }
+        } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; syRender(true); }
       });
     }
     function delLine(x){
       syT.splice(x, 1); syStamp.splice(x, 1); syAbs.splice(x, 1);
       picL = picL.map(v => v == null ? null : (v === x ? null : (v > x ? v - 1 : v))); savePT();
       if(syPos > x) syPos--; syPos = Math.max(0, Math.min(syPos, syT.length));
-      lyrPersist(); syRender();
+      lyrPersist(); syRender(true);
     }
     function addLines(txt){
       const L2 = String(txt || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(tparse); if(!L2.length) return false;
@@ -5505,11 +5514,38 @@ function mixTotalDuration(){
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
         r.addEventListener('drop', e => { r.classList.remove('dropto'); const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
+        r.addEventListener('contextmenu', e => { if(e.target.closest && e.target.closest('input, .pk')) return; e.preventDefault(); lineMenu(e.clientX, e.clientY, x); });
         let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); }); cw.appendChild(off); }
         r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cw); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
       });
       addTa.placeholder = syT.length ? '＋ 가사 추가 (줄마다 Enter, 다 쓰면 ⬆️ 올리기)' : '＋ 가사를 쓰거나 붙여넣고 ⬆️ 올리기를 누르세요 (줄마다 Enter)';
       syMark(!keep); if(keep) syList.scrollTop = keepTop;
+    }
+    // 줄 한 칸 이동 / 줄 끼워 넣기 (시간·붙인 사진은 줄을 따라감)
+    function moveLyric(f, t){
+      if(f === t || f < 0 || t < 0 || f >= syT.length || t >= syT.length) return;
+      [syT, syStamp, syAbs].forEach(a => { const v = a.splice(f, 1)[0]; a.splice(t, 0, v); });
+      picL = picL.map(v => v == null ? null : (v === f ? t : (f < t && v > f && v <= t ? v - 1 : (f > t && v >= t && v < f ? v + 1 : v)))); savePT();
+      syPos = firstEmpty(syStamp); lyrPersist(); syRender(true);
+    }
+    function insertLine(at){
+      at = Math.max(0, Math.min(at, syT.length));
+      syT.splice(at, 0, BLANK); syStamp.splice(at, 0, null); syAbs.splice(at, 0, null);
+      picL = picL.map(v => (v != null && v >= at) ? v + 1 : v); savePT();
+      syPos = firstEmpty(syStamp); lyrPersist(); syRender(true);
+      const sp = syRows[at] && syRows[at].querySelector('.tx2'); if(sp){ try{ sp.scrollIntoView({ block: 'nearest' }); }catch(e){} editLine(at, sp); }
+    }
+    function lineMenu(cx, cy, x){
+      closeCtx();
+      const m = mkEl('div', 'ctxm'); ctxEl = m;
+      const add = (t, fn) => { const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => { closeCtx(); fn(); }); m.appendChild(b); };
+      add('⬆ 위에 줄 넣기', () => insertLine(x));
+      add('⬇ 아래에 줄 넣기', () => insertLine(x + 1));
+      if(x > 0) add('↑ 한 줄 위로', () => moveLyric(x, x - 1));
+      if(x < syT.length - 1) add('↓ 한 줄 아래로', () => moveLyric(x, x + 1));
+      back.appendChild(m);
+      const w = m.offsetWidth, h = m.offsetHeight;
+      m.style.left = Math.max(4, Math.min(cx, innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, innerHeight - h - 4)) + 'px';
     }
     // 끌어서 순서 바꾸기 (가사: 시간이 줄을 따라감 / 사진: 시간은 자리에 그대로)
     (function(){
@@ -5519,9 +5555,11 @@ function mixTotalDuration(){
         const h = e.target.closest && e.target.closest('.hd'); if(!h) return;
         const row = h.closest('.sy-row'), from = rowsOf().indexOf(row); if(from < 0) return;
         pd = { id: e.pointerId, from, to: from, mode: syMode }; row.classList.add('drg'); try{ syList.setPointerCapture(e.pointerId); }catch(x){} e.preventDefault();
+        { const rc0 = row.getBoundingClientRect(); const g = row.cloneNode(true); g.classList.remove('drg', 'insl', 'now'); g.classList.add('sy-ghost'); g.style.width = rc0.width + 'px'; g.style.left = rc0.left + 'px'; g.style.top = rc0.top + 'px'; document.body.appendChild(g); pd.ghost = g; pd.dy = e.clientY - rc0.top; pd.dx = e.clientX - rc0.left; }
       });
       syList.addEventListener('pointermove', e => {
         if(!pd || e.pointerId !== pd.id) return;
+        if(pd.ghost){ pd.ghost.style.top = (e.clientY - pd.dy) + 'px'; pd.ghost.style.left = (e.clientX - pd.dx) + 'px'; }
         const rows = rowsOf();
         const el = document.elementFromPoint(e.clientX, e.clientY), r = el && el.closest && el.closest('.sy-row'), j = rows.indexOf(r);
         if(j >= 0){ pd.to = j; rows.forEach((q, k) => q.classList.toggle('insl', k === j && j !== pd.from)); }
@@ -5529,15 +5567,13 @@ function mixTotalDuration(){
       });
       const endp = async e => {
         if(!pd || e.pointerId !== pd.id) return;
-        const s0 = pd; pd = null; rowsOf().forEach(q => q.classList.remove('insl', 'drg'));
+        const s0 = pd; pd = null; try{ if(s0.ghost) s0.ghost.remove(); }catch(x){} rowsOf().forEach(q => q.classList.remove('insl', 'drg'));
         if(s0.to === s0.from) return;
         if(s0.mode === 'pic'){
           const it = pics.splice(s0.from, 1)[0]; pics.splice(s0.to, 0, it); // 시간(picT)은 자리에 그대로 → 옮긴 사진이 그 자리의 시간에 나옴
           await setImgs(keyOf(kind, name), pics); renderPics();
         } else {
-          [syT, syStamp, syAbs].forEach(a => { const v = a.splice(s0.from, 1)[0]; a.splice(s0.to, 0, v); }); // 가사는 시간이 줄을 따라감
-          { const f = s0.from, t = s0.to; picL = picL.map(v => v == null ? null : (v === f ? t : (f < t && v > f && v <= t ? v - 1 : (f > t && v >= t && v < f ? v + 1 : v)))); savePT(); }
-          syPos = firstEmpty(syStamp); lyrPersist(); syRender();
+          moveLyric(s0.from, s0.to); // 가사는 시간이 줄을 따라감
         }
       };
       syList.addEventListener('pointerup', endp); syList.addEventListener('pointercancel', endp);
