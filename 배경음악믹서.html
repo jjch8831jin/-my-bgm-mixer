@@ -919,9 +919,9 @@
     <div class="section-head">
       <h2>4.</h2>
       <div class="segmented big" id="toolSelect">
-        <button type="button" data-track="voice" class="active" title="음성">🎙 음성</button>
-        <button type="button" data-track="music" title="배경음악">🎵 배경음악</button>
-        <button type="button" data-track="all" title="통합 (음성+배경음악 동시 재생)">▶ 통합</button>
+        <button type="button" data-track="voice" class="active" title="음성 (키 1)">🎙 음성</button>
+        <button type="button" data-track="music" title="배경음악 (키 2)">🎵 배경음악</button>
+        <button type="button" data-track="all" title="통합 (음성+배경음악 동시 재생) (키 3)">▶ 통합</button>
         <label class="seg-speed" title="배경음악 재생 속도 (x)"><span class="ic">⚡</span><input type="number" id="musicSpeedSlider" min="0.5" max="2.5" step="0.01" value="1" aria-label="배경음악 재생 속도"><span class="val" id="musicSpeedVal" style="display:none">1.00x</span></label>
       </div>
       <div class="head-title" id="headTitle"><div class="tx" id="voiceTrackTitle"><span></span></div><div class="tx" id="musicTrackTitle"><span></span></div></div>
@@ -4951,12 +4951,12 @@ function mixTotalDuration(){
     const L = loadLyr()[keyOf(kind, name)] || {};
     const back = document.createElement('div'); back.className = 'lyr-back' + (kind === 'voice' ? ' lyr-voice' : '');
     back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
-      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit" style="display:none">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="trk trkH" data-trkbox title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span><button type="button" data-sw></button><button type="button" class="rb" data-hide title="숨기기(믹서 보기)">－</button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
+      '<div class="lyr-tabs"><button type="button" data-tab="view">가사 보기</button><button type="button" data-tab="edit" style="display:none">입력</button><button type="button" data-tab="sync">⏱ 시간 맞추기</button><span class="trk trkH" data-trkbox title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice" title="키 1">음성</button><button type="button" data-trk="music" title="키 2">음악</button><button type="button" data-trk="all" title="키 3">통합</button></span><button type="button" data-sw></button><button type="button" class="rb" data-hide title="숨기기(믹서 보기)">－</button><button type="button" class="rb" data-x title="닫기">✕</button></div></div>' +
       '<div class="lyr-bar"><span class="bt" data-ct>00:00</span><input type="range" class="sk" data-sk min="0" max="1000" value="0" step="1"><span class="bt" data-dt>00:00</span>' +
       '<span class="bg"><button type="button" class="rb" data-pl title="재생">▶</button><button type="button" class="rb" data-st2 title="정지(처음으로)">■</button><button type="button" class="rb" data-nx title="다음곡">⏭</button></span>' +
       (kind === 'voice' ? '<span class="rate" title="속도 조절"><button type="button" data-rm>−</button><b data-rv>1.00x</b><button type="button" data-rp>+</button></span>' : '') +
       '<span class="fs" data-fs title="글자 크기"><button type="button" data-fm>−</button><b data-fv title="숫자를 눌러 직접 입력"></b><button type="button" data-fp>+</button></span>' +
-      '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice">음성</button><button type="button" data-trk="music">음악</button><button type="button" data-trk="all">통합</button></span>' +
+      '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice" title="키 1">음성</button><button type="button" data-trk="music" title="키 2">음악</button><button type="button" data-trk="all" title="키 3">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
       '<div data-pane="sync"><div class="sy-list"></div><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
@@ -5612,20 +5612,24 @@ function mixTotalDuration(){
       if(del > 0){ if(tOrig >= r.start + del) t = tOrig - del; else if(tOrig > r.start) t = r.start; }
       return Math.max(0, Math.min(1, t / Math.max(0.001, buf.duration - del)));
     }
-    function syUndo(){
+    function syUndo(back10){
+      const nowO = back10 === true ? origPos(kind) : null; // Alt 키: 누른 순간 위치에서 10초 전으로
+      const stopBack = () => { try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){} try{ ctl.seekToFraction(origToFrac(Math.max(0, nowO - 10))); }catch(e){} try{ plShow(false); }catch(e){} };
       if(syMode === 'pic'){
-        if(picPos <= 0) return;
+        if(picPos <= 0){ if(nowO != null) stopBack(); return; }
         picPos--; const t0 = picT[picPos]; picT[picPos] = null; savePT(); picSyMark(true); chipsUpd();
+        if(nowO != null){ stopBack(); return; }
         try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
         if(t0 != null){ const ab = absOf(t0); if(ab != null){ try{ ctl.seekToFraction(origToFrac(ab)); }catch(e){} } }
         try{ plShow(false); }catch(e){}
         return;
       }
-      if(syPos <= 0) return;
+      if(syPos <= 0){ if(nowO != null) stopBack(); return; }
       syPos--; const s0 = syStamp[syPos]; const back0 = syAbs[syPos] != null ? syAbs[syPos] : (s0 != null ? absOf(s0) : null);
       syStamp[syPos] = null; syAbs[syPos] = null;
       { const kp = attachedPic(syPos); if(kp >= 0){ picT[kp] = null; savePT(); chipsUpd(); } }
       lyrPersist(); syMark(true);
+      if(nowO != null){ stopBack(); return; }
       try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
       if(back0 != null){ try{ ctl.seekToFraction(origToFrac(back0)); }catch(e){} }
       try{ plShow(false); }catch(e){}
@@ -5664,7 +5668,7 @@ function mixTotalDuration(){
       back.addEventListener('pointerdown', e => { if(pop && !pop.contains(e.target) && e.target !== mb) closeP(); }, true);
     })();
     stampBtn.addEventListener('pointerdown', e => { e.preventDefault(); doStamp(); });
-    undoBtn.addEventListener('click', syUndo);
+    undoBtn.addEventListener('click', () => syUndo());
     finBtn.addEventListener('click', syFinish);
     const onSpace = e => {
       if(curTab !== 'sync' || e.code !== 'Space') return;
@@ -5676,10 +5680,19 @@ function mixTotalDuration(){
     document.addEventListener('keydown', onDel, true);
     const onAlt = e => {
       if(curTab !== 'sync' || e.key !== 'Alt') return;
-      e.preventDefault(); e.stopPropagation(); if(!e.repeat) syUndo();
+      e.preventDefault(); e.stopPropagation(); if(!e.repeat) syUndo(true);
     };
     const onAltUp = e => { if(curTab === 'sync' && e.key === 'Alt'){ e.preventDefault(); e.stopPropagation(); } };
+    const onEnter = e => {
+      if(curTab !== 'sync' || (e.key !== 'Enter' && e.code !== 'NumpadEnter') || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+      const tg = e.target; if(tg && ((tg.tagName === 'INPUT' && tg.type !== 'range') || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
+      if(document.querySelector('.pk-back')) return; // 사진 고르는 창이 열려 있으면 건드리지 않음
+      e.preventDefault(); e.stopPropagation();
+      if(e.repeat) return;
+      try{ if(!ctl.isPlaying()) ctl.play(); }catch(x){}
+    };
     document.addEventListener('keydown', onAlt, true);
+    document.addEventListener('keydown', onEnter, true);
     document.addEventListener('keyup', onAltUp, true);
     // ---- 기능 줄 (시간 바·재생·속도) ----
     const sk = back.querySelector('[data-sk]'), ct = back.querySelector('[data-ct]'), dt = back.querySelector('[data-dt]');
@@ -5716,7 +5729,7 @@ function mixTotalDuration(){
       chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
       document.body.appendChild(chipEl);
     });
-    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keydown', onEnter, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
@@ -6178,8 +6191,16 @@ function mixTotalDuration(){
   document.addEventListener('keydown', e => {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target;
-    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable) && !(t.tagName === 'INPUT' && t.type === 'range' && t.hasAttribute('data-sk') && (e.code === 'ArrowLeft' || e.code === 'ArrowRight'))) return; // 시간바에 포커스가 있어도 ←/→는 5초 이동
     if(document.getElementById('zoomModal').classList.contains('active')) return;
+    const dk = /^(?:Digit|Numpad)([123])$/.exec(e.code);
+    if(dk && !e.shiftKey){
+      const tk = ({ '1': 'voice', '2': 'music', '3': 'all' })[dk[1]];
+      let btn = Array.from(document.querySelectorAll('.lyr-box [data-trk="' + tk + '"]')).find(x => x.offsetParent); // 가사창이 열려 있으면 그 창의 버튼
+      if(!btn) btn = document.querySelector('#toolSelect [data-track="' + tk + '"]');
+      if(btn){ e.preventDefault(); if(t && t.tagName === 'BUTTON') t.blur(); btn.click(); }
+      return;
+    }
     if(e.code === 'Space'){
       const id = activeTrack === 'all' ? 'togetherBtn' : (activeTrack === 'voice' ? 'voicePlayBtn' : 'musicPlayBtn');
       const b = document.getElementById(id);
