@@ -838,6 +838,10 @@
   .pk-back.pk-float .pk-box{ position:fixed; pointer-events:auto; left:5vw; top:5vh; width:90vw; height:90vh; min-width:240px; min-height:160px; max-width:98vw; max-height:94vh; resize:both; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,.45); border:2px solid #1e3a8a; box-sizing:border-box; }
   .pk-back.pk-float .pk-top{ cursor:move; touch-action:none; background:#dbeafe; margin:-14px -14px 0; padding:8px 14px; border-radius:10px 10px 0 0; user-select:none; }
   .pk-back.pk-float .pk-l{ flex:1; min-height:0; }
+  .pk-back.pk-win{ position:fixed; inset:0; background:#faf6e8 !important; pointer-events:auto; display:block !important; padding:0 !important; z-index:1; }
+  .pk-back.pk-win .pk-box{ position:static; width:100%; height:100%; max-width:none; max-height:none; resize:none; border:0; border-radius:0; box-shadow:none; box-sizing:border-box; }
+  .pk-back.pk-win .pk-top{ cursor:default; }
+  .pk-back.pk-win [data-win]{ display:none; }
   .pk-back:has(.pk-g){ padding:5vh 5vw; box-sizing:border-box; align-items:stretch; justify-content:stretch; }
   .pk-box:has(.pk-g){ width:100%; height:100%; max-height:none; border-radius:12px; padding:10px 12px; box-sizing:border-box; }
   .pk-box:has(.pk-g) .pk-g{ flex:1; min-height:0; overflow:auto; align-content:start; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
@@ -5345,8 +5349,9 @@ function mixTotalDuration(){
     function lineChooser(x, f0, swapAt){
       closeCtx();
       back.querySelectorAll('.pk-float').forEach(o => o.remove());
+      try{ if(window.__pkWin && !window.__pkWin.closed) window.__pkWin.document.querySelectorAll('.pk-float').forEach(o => o.remove()); }catch(e){}
       const pop = document.createElement('div'); pop.className = 'pk-back pk-float';
-      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">' + (typeof swapAt === 'number' ? '바꿀 사진을 고르세요 (시간은 그대로)' : (x == null ? '사진 보관함 (끌어다 놓기·붙여넣기)' : '이 줄에 붙일 사진을 고르세요')) + '</div><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
+      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><button type="button" class="pk-i" data-new>📁 사진불러오기</button><div class="pk-h">' + (typeof swapAt === 'number' ? '바꿀 사진을 고르세요 (시간은 그대로)' : (x == null ? '사진 보관함 (끌어다 놓기·붙여넣기)' : '이 줄에 붙일 사진을 고르세요')) + '</div><button type="button" class="pk-i" data-win title="별도 창으로 띄우기 (다른 모니터로 끌어 옮길 수 있습니다)">⧉ 새 창</button><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
       let lib = [], folders = [], fLoaded = false, curF = (typeof f0 === 'number' ? f0 : null), pkDrag = null, msel = new Set();
       const nrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u); // 파일 이름이 달라도 그림이 같으면 같은 사진
@@ -5444,13 +5449,13 @@ function mixTotalDuration(){
       const fi = pop.querySelector('input');
       pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
       fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); fi.value = ''; addToList(fs); });
-      pop.querySelector('.pk-x').addEventListener('click', () => pop.remove());
+      pop.querySelector('.pk-x').addEventListener('click', () => { const w = pop.ownerDocument.defaultView; pop.remove(); if(w !== window){ try{ w.close(); }catch(e){} } });
       const pbox = pop.querySelector('.pk-box');
       { // 떠 있는 창: 제목줄을 끌어 옮기고, 오른쪽 아래 모서리로 크기 조절 (위치·크기는 다음에 열 때도 유지)
         const P = window.__pkPos;
         const place = (l, t) => { const w = pbox.offsetWidth, h = pbox.offsetHeight; l = Math.max(120 - w, Math.min(innerWidth - 120, l)); t = Math.max(0, Math.min(innerHeight - 48, t)); /* 큰 창을 옆으로 밀어 둘 수 있게 제목줄 일부만 화면에 남으면 됨 */ pbox.style.left = l + 'px'; pbox.style.top = t + 'px'; pbox.style.right = 'auto'; pbox.style.bottom = 'auto'; return [l, t]; };
         if(P){ pbox.style.width = P.w + 'px'; pbox.style.height = P.h + 'px'; place(P.l, P.t); }
-        const saveP = () => { const r = pbox.getBoundingClientRect(); window.__pkPos = { l: r.left, t: r.top, w: r.width, h: r.height }; };
+        const saveP = () => { if(pop.ownerDocument !== document) return; const r = pbox.getBoundingClientRect(); window.__pkPos = { l: r.left, t: r.top, w: r.width, h: r.height }; };
         const top = pbox.querySelector('.pk-top'); let dr = null;
         top.addEventListener('pointerdown', e => { if(e.target.closest('button')) return; const r = pbox.getBoundingClientRect(); dr = { dx: e.clientX - r.left, dy: e.clientY - r.top }; try{ top.setPointerCapture(e.pointerId); }catch(x){} e.preventDefault(); });
         top.addEventListener('pointermove', e => { if(dr) place(e.clientX - dr.dx, e.clientY - dr.dy); });
@@ -5466,7 +5471,7 @@ function mixTotalDuration(){
         pop.querySelectorAll('.pk-ctx').forEach(m => m.remove());
         const m = document.createElement('div'); m.className = 'pk-ctx';
         m.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:4px;';
-        const close = () => { m.remove(); document.removeEventListener('pointerdown', away, true); };
+        const PD = pop.ownerDocument, PW = PD.defaultView; const close = () => { m.remove(); PD.removeEventListener('pointerdown', away, true); };
         const away = ev => { if(!m.contains(ev.target)) close(); };
         entries.forEach(([label, fn]) => {
           const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
@@ -5476,9 +5481,9 @@ function mixTotalDuration(){
         });
         pop.appendChild(m);
         const r = m.getBoundingClientRect();
-        m.style.left = Math.max(4, Math.min(e.clientX, window.innerWidth - r.width - 4)) + 'px';
-        m.style.top = Math.max(4, Math.min(e.clientY, window.innerHeight - r.height - 4)) + 'px';
-        setTimeout(() => document.addEventListener('pointerdown', away, true), 0);
+        m.style.left = Math.max(4, Math.min(e.clientX, PW.innerWidth - r.width - 4)) + 'px';
+        m.style.top = Math.max(4, Math.min(e.clientY, PW.innerHeight - r.height - 4)) + 'px';
+        setTimeout(() => PD.addEventListener('pointerdown', away, true), 0);
       };
       const doPaste = async () => {
         try{
@@ -5546,11 +5551,12 @@ function mixTotalDuration(){
           if(!moved && Math.abs(mx - e.clientX) + Math.abs(my - e.clientY) < 5) return;
           moved = true; draw(); if(!raf) raf = requestAnimationFrame(tick);
         };
-        const up = () => { document.removeEventListener('pointermove', mv, true); document.removeEventListener('pointerup', up, true); if(raf) cancelAnimationFrame(raf); if(rb) rb.remove(); if(!moved){ msel.clear(); paintMs(); } };
-        document.addEventListener('pointermove', mv, true); document.addEventListener('pointerup', up, true);
+        const DD = pop.ownerDocument;
+        const up = () => { DD.removeEventListener('pointermove', mv, true); DD.removeEventListener('pointerup', up, true); if(raf) cancelAnimationFrame(raf); if(rb) rb.remove(); if(!moved){ msel.clear(); paintMs(); } };
+        DD.addEventListener('pointermove', mv, true); DD.addEventListener('pointerup', up, true);
       });
       const onCtrlA = e => {
-        if(!pop.isConnected){ document.removeEventListener('keydown', onCtrlA, true); return; }
+        if(!pop.isConnected){ document.removeEventListener('keydown', onCtrlA, true); try{ if(window.__pkWin) window.__pkWin.document.removeEventListener('keydown', onCtrlA, true); }catch(x){} return; }
         if(!(e.ctrlKey || e.metaKey) || (e.key !== 'a' && e.key !== 'A')) return;
         const tg = e.target; if(tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA')) return;
         e.preventDefault(); e.stopPropagation();
@@ -5559,7 +5565,23 @@ function mixTotalDuration(){
       };
       document.addEventListener('keydown', onCtrlA, true);
       pkCur = { x, pop, add: addToList };
-      back.appendChild(pop);
+      const toWin = w => { // 별도 창(보조창)으로 옮김: 다른 모니터로 끌어 놓고 쓸 수 있음
+        const d = w.document;
+        if(!d.getElementById('pkWinInit')){
+          d.title = '사진불러오기'; const mk = d.createElement('meta'); mk.id = 'pkWinInit'; mk.name = 'viewport'; mk.content = 'width=device-width,initial-scale=1'; d.head.appendChild(mk);
+          document.querySelectorAll('style, link[rel=stylesheet]').forEach(n => { d.head.appendChild(n.cloneNode(true)); });
+          d.body.style.cssText = 'margin:0;background:#faf6e8;font-family:' + getComputedStyle(document.body).fontFamily;
+          w.addEventListener('unload', () => { w.document.querySelectorAll('.pk-float').forEach(o => o.remove()); window.__pkWin = null; });
+          window.addEventListener('unload', () => { try{ w.close(); }catch(e){} });
+        }
+        pop.classList.add('pk-win'); d.body.appendChild(pop); d.addEventListener('keydown', onCtrlA, true); window.__pkWin = w;
+      };
+      pop.querySelector('[data-win]').addEventListener('click', () => {
+        const w = window.open('', 'bgmPicker', 'popup=yes,width=900,height=720,left=80,top=60');
+        if(!w){ alert('새 창이 막혔습니다. 주소창 오른쪽의 팝업 차단을 허용해 주세요.'); return; }
+        toWin(w); try{ w.focus(); }catch(e){}
+      });
+      if(window.__pkWin && !window.__pkWin.closed) toWin(window.__pkWin); else back.appendChild(pop);
     }
     const BLANK = '\u200b'; // 빈 줄 표시(보이지 않는 글자)
     const addTa = back.querySelector('.sy-add'), addWrap = back.querySelector('.addl'), upBtn = back.querySelector('[data-up]');
@@ -5586,7 +5608,7 @@ function mixTotalDuration(){
         cell.addEventListener('click', e => { e.stopPropagation(); lineChooser(x); });
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
-        r.addEventListener('drop', e => { r.classList.remove('dropto'); if(window.__pkDragU != null){ e.preventDefault(); e.stopPropagation(); const du = window.__pkDragU; window.__pkDragU = null; attachPicTo(du, x).then(() => { const pf = back.querySelector('.pk-float'); if(pf && pf.__fill) pf.__fill(); }); return; } const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
+        r.addEventListener('drop', e => { r.classList.remove('dropto'); if(window.__pkDragU != null){ e.preventDefault(); e.stopPropagation(); const du = window.__pkDragU; window.__pkDragU = null; attachPicTo(du, x).then(() => { const pf = pkCur && pkCur.pop; if(pf && pf.isConnected && pf.__fill) pf.__fill(); }); return; } const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
         r.addEventListener('contextmenu', e => { if(e.target.closest && e.target.closest('input, .pk')) return; e.preventDefault(); lineMenu(e.clientX, e.clientY, x); });
         let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); }); cw.appendChild(off); }
         r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cw); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
