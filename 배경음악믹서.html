@@ -349,7 +349,7 @@
   .lyr-hl.mv{ transition:top .8s ease, height .8s ease, opacity .6s ease; }
   .lyr-voice .lyr-hl{ background:#bfdbfe; }
   .lyr-voice .lyr-ln.on{ color:#1e3a8a; }
-  .lyr-voice .sy-row.play{ background:#bfdbfe; }
+  .lyr-voice .sy-row.play{ background:none; }
   .lyr-voice .sy-row.play .tx2, .lyr-voice .sy-row.play .tm{ color:#1e3a8a; }
   .lyr-ln.on > span{ transform:scale(1.18); }
   .sy-list{ font-size:16pt; position:relative; flex:1; min-height:0; overflow:auto; background:#fffdf5; border:1px solid #d6d3c4; border-radius:8px; padding:8px; }
@@ -4855,6 +4855,15 @@ function mixTotalDuration(){
   async function libSet(arr){ try{ const db = await libOpen(); return await new Promise(res => { const tx = db.transaction('lib', 'readwrite'); tx.objectStore('lib').put(arr, 'list'); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
   async function libFGet(){ try{ const db = await libOpen(); return await new Promise(res => { const q = db.transaction('lib').objectStore('lib').get('folders'); q.onsuccess = () => res(Array.isArray(q.result) ? q.result.filter(f => f && typeof f.name === 'string' && Array.isArray(f.items)) : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
   async function libFSet(arr){ try{ const db = await libOpen(); return await new Promise(res => { const tx = db.transaction('lib', 'readwrite'); tx.objectStore('lib').put(arr, 'folders'); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
+  const libNrm = u => (typeof u === 'string' ? u.replace(/^(data:[^;,]*);name=[^;,]*/, '$1') : u);
+  async function libAddImages(items){ // 어디로 넣은 사진이든 보관함(사진불러오기 창)에도 저장 — 같은 그림은 한 번만
+    try{
+      const nw = (items || []).filter(u => typeof u === 'string'); if(!nw.length) return;
+      const l2 = await libGet(); let ch = false;
+      nw.forEach(u => { if(!l2.some(v => libNrm(v) === libNrm(u))){ l2.push(u); ch = true; } });
+      if(ch) await libSet(l2);
+    }catch(e){}
+  }
   async function getImgs(key){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').get(key); q.onsuccess = () => res(Array.isArray(q.result) ? q.result : []); q.onerror = () => res([]); }); }catch(e){ return []; } }
   async function setImgs(key, arr){ try{ const db = await idbOpen(); return await new Promise(res => { const tx = db.transaction('imgs', 'readwrite'), st = tx.objectStore('imgs'); if(arr.length) st.put(arr, key); else st.delete(key); tx.oncomplete = () => res(true); tx.onerror = () => res(false); tx.onabort = () => res(false); }); }catch(e){ return false; } }
   let imgMigrated = null;
@@ -5825,14 +5834,14 @@ function mixTotalDuration(){
       const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0; const added = [];
       for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 100 * 1024 * 1024){ bad++; continue; } added.push(f); } else added.push(await shrinkImage(f)); }catch(e){ bad++; } }
       const repl = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length === 1 && fs.length === 1; // 한 장이면 그 자리 사진을 바꿈(기존 사진 삭제, 시간은 자리에 그대로)
-      if(repl){ cur[rp] = added[0]; if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; } picT = getPT(key, cur.length); picL = getPL(key, cur.length); pics = cur; renderPics(); return; }
+      if(repl){ cur[rp] = added[0]; if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; } picT = getPT(key, cur.length); picL = getPL(key, cur.length); pics = cur; libAddImages(added); renderPics(); return; }
       const slot = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length; if(slot) at = rp; // 그 자리에 끼워 넣고 기존 사진은 뒤로 밀림 (시간은 자리에 그대로)
       const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...added);
       if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 100MB 이하만 됩니다)'); return; }
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
       if(bad) alert('읽지 못했거나 너무 큰(100MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
       { const pt0 = getPT(key, cur.length - added.length); if(slot){ while(pt0.length < cur.length) pt0.push(null); } else pt0.splice(pos, 0, ...added.map(() => null)); setPT(key, pt0); picT = pt0; const pl0 = getPL(key, cur.length - added.length); pl0.splice(pos, 0, ...added.map(() => null)); setPL(key, pl0); picL = pl0; }
-      pics = cur; renderPics();
+      pics = cur; libAddImages(added); renderPics();
     }
     const putImage = (f, at, rp) => putImages([f], at, rp);
     imgF.addEventListener('change', () => { const fs = Array.from(imgF.files || []); imgF.value = ''; putImages(fs); });
