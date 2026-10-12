@@ -5337,7 +5337,8 @@ function mixTotalDuration(){
           if(x == null) return; // 더보기에서 연 창: 붙일 줄이 없으므로 선택만
           let kk = k;
           if(!inSong){ await putItems([u]); kk = pics.length - 1; } // 보관함 사진은 이 곡 사진 목록에 넣고 붙임
-          picL = picL.map(v => v === x ? null : v); picL[kk] = x; if(syStamp[x] != null) picT[kk] = syStamp[x]; savePT(); chipsUpd(); pop.remove(); syRender(true);
+          let oldT = null; picL.forEach((v, q) => { if(v === x && q !== kk && q < pics.length){ if(oldT == null) oldT = picT[q]; picT[q] = null; } }); // 교체: 이전 사진의 시간·연결을 지워 재생 때 나오지 않게
+          picL = picL.map(v => v === x ? null : v); picL[kk] = x; if(syStamp[x] != null) picT[kk] = syStamp[x]; else if(oldT != null) picT[kk] = oldT; savePT(); chipsUpd(); pop.remove(); syRender(true);
         });
         g.appendChild(b);
         if(k === selK) b.click();
