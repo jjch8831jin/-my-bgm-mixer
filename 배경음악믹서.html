@@ -4490,7 +4490,7 @@ setActiveTrack('voice');
     const dl = document.querySelector('#panel_' + kind + ' .dl-row'); dl.before(d); dl.style.display = 'none';
     const e = els[kind] = { row: d, btn: d.querySelector('.imp-btn'), items: d.querySelector('.imp-items'), prev: d.querySelector('.ia-prev'), next: d.querySelector('.ia-next') };
     const nm = kind === 'voice' ? '음성' : '음악';
-    function btnDefault(){ S[kind].search = false; e.btn.classList.remove('searching'); e.btn.innerHTML = '<button type="button" class="ib-main" title="' + nm + ' 파일 불러오기">📁 ' + nm + '</button><button type="button" class="ib-find" title="이름으로 찾기">🔍</button>' + (kind === 'voice' ? '<button type="button" class="ib-bk" title="백업 파일(.bgmx) 불러오기 — 가사·시간·사진">📂 백업</button>' : ''); }
+    function btnDefault(){ S[kind].search = false; e.btn.classList.remove('searching'); e.btn.innerHTML = '<button type="button" class="ib-main" title="' + nm + ' 파일 불러오기">📁 ' + nm + '</button><button type="button" class="ib-find" title="이름으로 찾기">🔍</button>' + '<button type="button" class="ib-bk" title="백업 파일(.bgmx) 불러오기 — 가사·시간·사진">📂 백업</button>'; }
     btnDefault();
     d.addEventListener('click', ev => {
       const t = ev.target;
