@@ -4910,7 +4910,7 @@ function mixTotalDuration(){
   async function packSong(key, lyrOverride){
     const lyr = loadLyr(), ttl = loadTtl(), items = await getImgs(key), media = [], blobs = [];
     for(const it of items){ const b = await itemToBlob(it); media.push({ k: typeof it === 'string' ? 'i' : 'v', type: b.type || '', size: b.size }); blobs.push(b); }
-    return { head: { key, title: ttl[key] || '', lyr: lyrOverride || lyr[key] || null, media }, blobs };
+    return { head: { key, title: ttl[key] || '', lyr: lyrOverride || lyr[key] || null, media, pt: getPT(key, items.length), pl: getPL(key, items.length) }, blobs };
   }
   function buildBgmx(packs){
     const head = new TextEncoder().encode(JSON.stringify({ v: 1, songs: packs.map(x => x.head) }));
@@ -4945,6 +4945,12 @@ function mixTotalDuration(){
     for(const m of (sg.media || [])) items.push(m.k === 'i' ? await blobToDataUrl(m.blob) : new File([m.blob], 'video', { type: m.type || 'video/mp4' }));
     const cur = add ? await getImgs(key) : [];
     if(items.length || !add){ if(!(await setImgs(key, cur.concat(items)))) throw new Error('save'); }
+    if(items.length){
+      const n0 = cur.length, pt0 = getPT(key, n0), pl0 = getPL(key, n0);
+      const pt1 = Array.isArray(sg.pt) ? items.map((_, q) => (typeof sg.pt[q] === 'number' ? sg.pt[q] : null)) : items.map(() => null);
+      const pl1 = Array.isArray(sg.pl) ? items.map((_, q) => (typeof sg.pl[q] === 'number' ? sg.pl[q] : null)) : items.map(() => null);
+      setPT(key, pt0.concat(pt1)); setPL(key, pl0.concat(pl1));
+    } else if(!add){ setPT(key, []); setPL(key, []); }
     if(sg.lyr && sg.lyr.text){ const a = loadLyr(); a[key] = sg.lyr; saveLyr(a); }
     if(sg.title){ try{ const t = loadTtl(); t[key] = sg.title; localStorage.setItem(TTL_KEY, JSON.stringify(t)); }catch(e){} }
   }
