@@ -6512,6 +6512,49 @@ window.addEventListener('pagehide', flushWork);
   document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && busy()) acquire(); });
 })();
 
+// ---- 폰 백그라운드 재생: 재생 중에는 소리 없는 오디오 플레이어를 함께 돌리고, 알림창·잠금 화면에 곡 이름과 ▶/⏸ 표시 ----
+(function(){
+  let el = null, wasBusy = false;
+  function silentUrl(){ // 1초짜리 무음 WAV
+    const n = 8000, b = new ArrayBuffer(44 + n * 2), v = new DataView(b), w = (o, t) => { for(let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+  }
+  function busy(){ try{ return voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying() || (window.__tg && window.__tg.time().run); }catch(e){ return false; } }
+  function titleNow(){
+    const g = id => { const x = document.getElementById(id); return x ? x.textContent.trim() : ''; };
+    const t = g('allVoiceTitle') || g('allMusicTitle');
+    const act = document.querySelector('#toolSelect .active'), tr = act && act.dataset.track;
+    const v = g('voiceTrackTitle') || '', m = g('musicTrackTitle') || '';
+    return (tr === 'music' ? m : tr === 'voice' ? v : (v || m || t)) || '배경음악 믹서';
+  }
+  function pauseAll(){ try{ if(window.__tg) window.__tg.pause(); }catch(e){} try{ voicePlayerCtl.pause(); }catch(e){} try{ musicPlayerCtl.pause(); }catch(e){} }
+  function resume(){
+    const act = document.querySelector('#toolSelect .active'), tr = act && act.dataset.track;
+    try{ if(tr === 'all'){ document.getElementById('togetherBtn').click(); } else if(tr === 'music'){ musicPlayerCtl.play(); } else { voicePlayerCtl.play(); } }catch(e){}
+  }
+  const ms = navigator.mediaSession;
+  if(ms){
+    try{ ms.setActionHandler('play', resume); }catch(e){}
+    try{ ms.setActionHandler('pause', pauseAll); }catch(e){}
+    try{ ms.setActionHandler('stop', pauseAll); }catch(e){}
+    try{ ms.setActionHandler('previoustrack', () => { const b = document.getElementById('togetherPrevBtn'); if(b) b.click(); }); }catch(e){}
+    try{ ms.setActionHandler('nexttrack', () => { const b = document.getElementById('togetherNextBtn'); if(b) b.click(); }); }catch(e){}
+  }
+  setInterval(() => {
+    const on = busy();
+    if(on){
+      if(!el){ el = new Audio(silentUrl()); el.loop = true; el.setAttribute('playsinline', ''); window.__bgKeep = el; }
+      if(el.paused){ const r = el.play(); if(r && r.catch) r.catch(() => {}); }
+      if(ms){ try{ const t = titleNow(); if(!ms.metadata || ms.metadata.title !== t) ms.metadata = new MediaMetadata({ title: t, artist: '배경음악 믹서' }); ms.playbackState = 'playing'; }catch(e){} }
+    } else if(wasBusy){
+      if(el && !el.paused){ try{ el.pause(); }catch(e){} }
+      if(ms){ try{ ms.playbackState = 'paused'; }catch(e){} }
+    }
+    wasBusy = on;
+  }, 500);
+})();
+
 // 폰 홈 화면 앱 설치용 (파일을 저장하지 않는 최소 서비스워커)
 try{ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./bgm-sw.js').catch(()=>{}); }catch(e){}
 
