@@ -5064,6 +5064,8 @@ function mixTotalDuration(){
       } else {
         nxt.classList.remove('isv'); try{ v.pause(); }catch(e){} v.removeAttribute('src');
         nxt.querySelectorAll('i').forEach(q => { q.style.backgroundImage = 'url("' + it + '")'; });
+        const ff = nxt.querySelector('i.ff'); ff.style.backgroundSize = 'contain';
+        const im = new Image(); im.onload = () => { if(pics[i] === it && im.naturalWidth <= nxt.clientWidth && im.naturalHeight <= nxt.clientHeight) ff.style.backgroundSize = 'auto'; }; im.src = it;
       }
       nxt.style.opacity = '1';
       if(bgFront) bgFront.style.opacity = '0'; bgFront = nxt;
