@@ -5098,6 +5098,7 @@ function mixTotalDuration(){
           const tt = (activeTrack === 'all' && !ownPl) ? el : cur.t;
           ti.sort((a, b) => picT[a] - picT[b]);
           want = ti[0]; for(const i of ti){ if(picT[i] <= tt + 0.05) want = i; else break; }
+          if(picL[want] == null){ const tw = picT[want], ln = ti.filter(j => picL[j] != null && Math.abs(picT[j] - tw) < 0.06); if(ln.length) want = ln[ln.length - 1]; } // 같은 시간이면 가사 줄에 붙인 사진이 먼저
         } else want = Math.floor(Math.max(0, activeTrack === 'all' ? el : cur.t) / 10) % pics.length;
       }
       if(want !== picIdx){ picIdx = want; showBg(want); }
@@ -5363,7 +5364,7 @@ function mixTotalDuration(){
           let kk = k;
           if(!inSong){ await putItems([u]); kk = pics.length - 1; } // 보관함 사진은 이 곡 사진 목록에 넣고 붙임
           let oldT = null; picL.forEach((v, q) => { if(v === x && q !== kk && q < pics.length){ if(oldT == null) oldT = picT[q]; picT[q] = null; } }); // 교체: 이전 사진의 시간·연결을 지워 재생 때 나오지 않게
-          picL = picL.map(v => v === x ? null : v); picL[kk] = x; if(syStamp[x] != null) picT[kk] = syStamp[x]; else if(oldT != null) picT[kk] = oldT; savePT(); chipsUpd(); pop.remove(); syRender(true);
+          picL = picL.map(v => v === x ? null : v); picL[kk] = x; if(syStamp[x] != null) picT[kk] = syStamp[x]; else if(oldT != null) picT[kk] = oldT; if(picT[kk] != null) picT.forEach((v, q) => { if(q !== kk && v != null && picL[q] == null && Math.abs(v - picT[kk]) < 0.06) picT[q] = null; }); savePT(); chipsUpd(); pop.remove(); syRender(true);
         });
         g.appendChild(b);
         if(k === selK) b.click();
