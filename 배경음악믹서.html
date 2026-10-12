@@ -4913,6 +4913,10 @@ function mixTotalDuration(){
         const im = new Image();
         im.onerror = () => rej(new Error('img'));
         im.onload = () => {
+          if(file && file.size <= 15 * 1024 * 1024 && /^data:image\/(png|jpeg|webp|gif);/.test(fr.result)){ // 원본 그대로 저장 (줄이거나 다시 압축하지 않음)
+            let nm0 = String(file.name || '').replace(/\.[^.]*$/, '').trim(); if(!nm0 || /^(image|blob|스크린샷|screenshot)(\s*\(\d+\))?$/i.test(nm0)) nm0 = '';
+            res(fr.result.replace(/^(data:image\/[a-z]+;)/, '$1' + (nm0 ? 'name=' + encodeURIComponent(nm0) + ';' : ''))); return;
+          }
           const m = 1600, k = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement('canvas');
           c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
           const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
