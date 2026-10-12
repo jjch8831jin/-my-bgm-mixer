@@ -4445,7 +4445,7 @@ function autoPlayFor(k){
 document.getElementById('toolSelect').addEventListener('click', e => {
   const b = e.target.closest('button[data-track]');
   if(b){ const nt = b.dataset.track; if(nt === activeTrack) return; setActiveTrack(nt);
-    if(nt === 'all'){ autoPlayFor('all'); } // 통합은 믹싱 설정대로 처음부터
+    if(nt === 'all'){ try{ if(window.__tg){ window.__tg.pause(); window.__tg.start(); } }catch(err){ console.warn(err); } } // 통합도 멈춘 자리에서 이어서 (끝까지 갔었으면 처음부터)
     else { try{ if(window.__tg) window.__tg.pause(); }catch(err){} try{ if(nt === 'voice'){ if(voiceBuffer) voicePlayerCtl.play(); } else if(musicBuffer) musicPlayerCtl.play(); }catch(err){ console.warn(err); } } } // 음성/배경음악은 멈춘 자리에서 이어서
 });
 ['voice','music'].forEach(t => document.getElementById('card_' + t).addEventListener('pointerdown', () => setActiveTrack(t)));
