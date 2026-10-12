@@ -1162,7 +1162,20 @@ function getMeter(name){
   if(meterNodes[name]) return meterNodes[name];
   const ctx = getCtx();
   const an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0;
-  if(name === 'master'){ an.connect(ctx.destination); }
+  if(name === 'master'){
+    // 안드로이드: 최종 소리를 오디오 플레이어로 내보내 화면을 꺼도·다른 앱으로 가도 재생이 이어지게 함 (PC는 그대로)
+    let viaEl = false;
+    if(/Android/i.test(navigator.userAgent) && ctx.createMediaStreamDestination){
+      try{
+        const d = ctx.createMediaStreamDestination(); an.connect(d);
+        const a = new Audio(); a.srcObject = d.stream; a.setAttribute('playsinline', ''); window.__bgKeep = a; viaEl = true;
+        const go = () => { if(a.paused){ const r = a.play(); if(r && r.catch) r.catch(() => {}); } };
+        ['pointerdown', 'touchstart', 'keydown', 'click'].forEach(ev => document.addEventListener(ev, go, { passive: true }));
+        go();
+      }catch(e){ viaEl = false; }
+    }
+    if(!viaEl) an.connect(ctx.destination);
+  }
   else { an.connect(getMasterGain()); }
   meterNodes[name] = an;
   return an;
@@ -6544,11 +6557,11 @@ window.addEventListener('pagehide', flushWork);
   setInterval(() => {
     const on = busy();
     if(on){
-      if(!el){ el = new Audio(silentUrl()); el.loop = true; el.setAttribute('playsinline', ''); window.__bgKeep = el; }
+      if(!el){ el = window.__bgKeep || null; if(!el){ el = new Audio(silentUrl()); el.loop = true; el.setAttribute('playsinline', ''); window.__bgKeep = el; } }
       if(el.paused){ const r = el.play(); if(r && r.catch) r.catch(() => {}); }
       if(ms){ try{ const t = titleNow(); if(!ms.metadata || ms.metadata.title !== t) ms.metadata = new MediaMetadata({ title: t, artist: '배경음악 믹서' }); ms.playbackState = 'playing'; }catch(e){} }
     } else if(wasBusy){
-      if(el && !el.paused){ try{ el.pause(); }catch(e){} }
+      if(el && !el.paused && !el.srcObject){ try{ el.pause(); }catch(e){} }
       if(ms){ try{ ms.playbackState = 'paused'; }catch(e){} }
     }
     wasBusy = on;
