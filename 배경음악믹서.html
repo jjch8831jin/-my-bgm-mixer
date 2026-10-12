@@ -620,6 +620,7 @@
   .imp-btn{ flex:none; display:inline-flex; align-items:center; height:42px; box-sizing:border-box; border-radius:8px; background:#ecdcb0; border:1px solid #c9a24f; color:#4a3515; font-weight:700; font-size:14pt; overflow:hidden; }
   .imp-btn button{ border:0; background:transparent; color:inherit; font:inherit; height:100%; padding:0 12px; cursor:pointer; }
   .imp-btn .ib-find{ border-left:1px solid #c9a24f; padding:0 10px; }
+  .imp-btn .ib-bk{ border-left:1px solid #c9a24f; padding:0 10px; white-space:nowrap; }
   .imp-btn.searching{ background:#fff; }
   .imp-btn .ib-ic{ padding:0 0 0 10px; }
   .imp-btn .ib-q{ border:0; outline:0; background:transparent; font-size:13pt; width:9em; padding:0 8px; color:#1c1917; height:100%; }
@@ -4489,11 +4490,12 @@ setActiveTrack('voice');
     const dl = document.querySelector('#panel_' + kind + ' .dl-row'); dl.before(d); dl.style.display = 'none';
     const e = els[kind] = { row: d, btn: d.querySelector('.imp-btn'), items: d.querySelector('.imp-items'), prev: d.querySelector('.ia-prev'), next: d.querySelector('.ia-next') };
     const nm = kind === 'voice' ? '음성' : '음악';
-    function btnDefault(){ S[kind].search = false; e.btn.classList.remove('searching'); e.btn.innerHTML = '<button type="button" class="ib-main">📁 ' + nm + ' 불러오기</button><button type="button" class="ib-find" title="이름으로 찾기">🔍</button>'; }
+    function btnDefault(){ S[kind].search = false; e.btn.classList.remove('searching'); e.btn.innerHTML = '<button type="button" class="ib-main" title="' + nm + ' 파일 불러오기">📁 ' + nm + '</button><button type="button" class="ib-find" title="이름으로 찾기">🔍</button>' + (kind === 'voice' ? '<button type="button" class="ib-bk" title="백업 파일(.bgmx) 불러오기 — 가사·시간·사진">📂 백업</button>' : ''); }
     btnDefault();
     d.addEventListener('click', ev => {
       const t = ev.target;
       if(t.closest('.ib-main')) openFilesFor(kind);
+      else if(t.closest('.ib-bk')){ let fi = document.getElementById('bkMainFile'); if(!fi){ fi = document.createElement('input'); fi.type = 'file'; fi.id = 'bkMainFile'; fi.style.display = 'none'; document.body.appendChild(fi); fi.addEventListener('change', () => { const f = fi.files && fi.files[0]; fi.value = ''; if(f && window.__bgmxImport) window.__bgmxImport(f); }); } fi.click(); }
       else if(t.closest('.ib-find')){ S[kind].search = true; e.btn.classList.add('searching'); e.btn.innerHTML = '<span class="ib-ic">🔍</span><input type="text" class="ib-q" placeholder="곡 이름"><button type="button" class="ib-x" title="닫기">✕</button>'; const q = e.btn.querySelector('.ib-q'); q.value = S[kind].q; q.focus(); }
       else if(t.closest('.ib-x')){ S[kind].q = ''; btnDefault(); let ci = -1; try{ ci = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).getCurIdx(); }catch(x){} S[kind].start = ci > 0 ? ci : 0; render(kind); }
       else if(t.closest('.ia-prev')){ S[kind].start = Math.max(0, S[kind].start - per()); render(kind); }
@@ -4954,6 +4956,19 @@ function mixTotalDuration(){
     if(sg.lyr && sg.lyr.text){ const a = loadLyr(); a[key] = sg.lyr; saveLyr(a); }
     if(sg.title){ try{ const t = loadTtl(); t[key] = sg.title; localStorage.setItem(TTL_KEY, JSON.stringify(t)); }catch(e){} }
   }
+  window.__bgmxImport = async function(f){ // 메인 화면의 📂 백업 버튼: 곡을 열지 않고 .bgmx 안의 곡 이름대로 바로 불러옴
+    if(!/\.bgmx$/i.test(f.name)){ alert('.bgmx 백업 파일을 골라 주세요.'); return; }
+    try{
+      busyMsg('불러오는 중…'); const songs = await readBgmx(f); busyMsg('');
+      if(!songs.length){ alert('들어 있는 곡이 없습니다.'); return; }
+      let add = false;
+      if(songs.length === 1){
+        if((await getImgs(songs[0].key)).length > 0) add = !confirm('이 곡에 이미 사진·동영상이 있습니다.\n확인 = 기존 것을 지우고 불러온 것으로 바꾸기\n취소 = 기존 것 뒤에 추가하기');
+      } else if(!confirm('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?')) return;
+      busyMsg('불러오는 중…'); for(const sg of songs) await applySong(sg, sg.key, add); busyMsg('');
+      alert('불러왔습니다. (곡 ' + songs.length + '개)');
+    }catch(e){ busyMsg(''); alert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
+  };
   function busyMsg(txt){ let d = document.getElementById('bgmxBusy'); if(!txt){ if(d) d.remove(); return; } if(!d){ d = document.createElement('div'); d.id = 'bgmxBusy'; d.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;background:#1c1917;color:#fff;padding:14px 22px;border-radius:12px;font-size:14pt;box-shadow:0 6px 24px rgba(0,0,0,.4)'; document.body.appendChild(d); } d.textContent = txt; }
   function animScroll(el, to){
     if(el.__anim) cancelAnimationFrame(el.__anim);
