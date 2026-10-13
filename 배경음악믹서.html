@@ -5742,7 +5742,6 @@ function mixTotalDuration(){
         add('이미지 잘라내기', async () => { window.__imgClip = pics[kp]; imgToClipboard(pics[kp]); await removePicAt(kp); syRender(true); });
       }
       add('이미지 붙여넣기', () => pasteImgToLine(x));
-      if(kp >= 0) add('이미지 빼기', () => { picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); });
       add('이미지 고르기', () => lineChooser(x));
       back.appendChild(m);
       const w = m.offsetWidth, h = m.offsetHeight;
@@ -5757,6 +5756,7 @@ function mixTotalDuration(){
       add('줄 붙여넣기 (아래에)', () => pasteLine(x + 1));
       add('줄 붙여넣기 (위에)', () => pasteLine(x));
       add('줄 지우기', () => delLine(x));
+      add('가사 글 전체 복사', () => { clipW(syT.map(t => t === BLANK ? '' : t).join('\n')); });
       add('⬆ 위에 줄 넣기', () => insertLine(x));
       add('⬇ 아래에 줄 넣기', () => insertLine(x + 1));
       if(x > 0) add('↑ 한 줄 위로', () => moveLyric(x, x - 1));
