@@ -828,6 +828,9 @@
   .pk-top .pk-sort{ flex:none; font:inherit; font-size:14pt; padding:6px 10px; border-radius:8px; border:1px solid #d6d3c4; background:#fff; color:#1c1917; cursor:pointer; }
   .pk-top .pk-x{ margin-left:auto; }
   .pk-top .pk-out[hidden]{ display:none; }
+  .pk-top .pk-undo, .pk-top .pk-out{ max-width:100%; white-space:nowrap; }
+  .pk-top .pk-i:disabled{ opacity:.4; cursor:default; }
+  .pk-st{ flex:none; padding:6px 10px; margin:6px -14px -14px; border-top:1px solid #e7e5e4; background:#f5f1de; color:#44403c; font-size:12pt; font-weight:600; line-height:1.4; border-radius:0 0 10px 10px; }
   .pk-g .pk-t .pk-cap{ position:absolute; left:0; right:0; bottom:0; padding:2px 5px; background:rgba(0,0,0,.62); color:#fff; font-size:12px; font-weight:600; line-height:1.3; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pk-g .pk-t .pk-ren{ position:absolute; left:0; right:0; bottom:0; z-index:2; width:100%; box-sizing:border-box; padding:3px 5px; border:2px solid #2563eb; background:#fff; color:#1c1917; font:inherit; font-size:13px; font-weight:600; text-align:center; outline:none; }
   .pk-box:has(.pk-g) .pk-g .pk-t:not(.pk-fd){ height:auto; display:flex; flex-direction:column; align-items:stretch; overflow:hidden; }
@@ -853,10 +856,11 @@
   @media (max-width:600px){ .pk-back .pk-top .pk-ic{ display:none; } }
   .pk-back .pk-top [data-new]{ background:#2563eb; border-color:#1d4ed8; color:#fff; font-weight:700; }
   .pk-back .pk-top .pk-sort{ background:#fef3c7; border-color:#f59e0b; color:#78350f; font-weight:700; }
+  .pk-back .pk-top .pk-undo{ background:#0d9488; border-color:#0f766e; color:#fff; font-weight:700; }
   .pk-back .pk-top .pk-out{ background:#ea580c; border-color:#c2410c; color:#fff; font-weight:700; }
   .pk-back .pk-top .pk-x{ background:#dc2626; border-color:#b91c1c; color:#fff; }
   .pk-top .pk-out.over{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
-  @media (max-width:600px){ .pk-back .pk-top.pk-top{ flex-wrap:wrap !important; row-gap:6px; } .pk-back .pk-top .pk-out{ order:9; } }
+  @media (max-width:600px){ .pk-back .pk-top.pk-top{ flex-wrap:wrap !important; row-gap:6px; } .pk-back .pk-top .pk-out, .pk-back .pk-top .pk-undo{ order:9; } }
   @media (max-width:600px){ .pk-back .pk-top{ flex-wrap:nowrap !important; gap:3px; } .pk-back .pk-top .pk-ttl{ font-size:10pt; padding:0 1px; } .pk-back .pk-top .pk-i, .pk-back .pk-top .pk-sort{ font-size:10pt; padding:6px 4px; } .pk-back .pk-top .pk-x{ width:32px; height:32px; font-size:14pt; } }
   @media (max-width:600px){ .pk-top{ gap:6px; } .pk-top .pk-i, .pk-top .pk-cr{ font-size:12pt; } .pk-top .pk-i{ padding:6px 8px; } .pk-top .pk-cr{ gap:4px; } }
   .pk-top .pk-cr button.over{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
@@ -5508,7 +5512,7 @@ function mixTotalDuration(){
       back.querySelectorAll('.pk-float').forEach(o => o.remove());
       try{ if(window.__pkWin && !window.__pkWin.closed) window.__pkWin.document.querySelectorAll('.pk-float').forEach(o => o.remove()); }catch(e){}
       const pop = document.createElement('div'); pop.className = 'pk-back pk-float';
-      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><span class="pk-ttl"><span class="pk-ic">🖼️ </span>사진불러오기</span><button type="button" class="pk-i" data-new>🖥️ PC사진</button><select class="pk-sort" title="여러 장을 불러올 때 저장하는 순서"><option value="pick">🔀 선택한 순서</option><option value="name">🔤 이름순</option><option value="date">📅 날짜순</option><option value="size">📏 크기순</option></select><button type="button" class="pk-i pk-out" hidden title="열린 폴더에서 나가기 (사진을 끌어다 놓으면 폴더에서 빠집니다)">↩ 폴더 나가기</button><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
+      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><span class="pk-ttl"><span class="pk-ic">🖼️ </span>사진불러오기</span><button type="button" class="pk-i" data-new>🖥️ PC사진</button><select class="pk-sort" title="여러 장을 불러올 때 저장하는 순서"><option value="pick">🔀 선택한 순서</option><option value="name">🔤 이름순</option><option value="date">📅 날짜순</option><option value="size">📏 크기순</option></select><button type="button" class="pk-i pk-undo" disabled title="방금 지운 사진을 되살립니다 (Ctrl+Z)">↶ 되돌리기</button><button type="button" class="pk-i pk-out" disabled title="열린 폴더에서 나가기 (사진을 끌어다 놓으면 폴더에서 빠집니다)">↩ 폴더 나가기</button><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><div class="pk-st"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
       let lib = [], folders = [], fLoaded = false, curF = (typeof f0 === 'number' ? f0 : null), pkDrag = null, msel = new Set(), anchorK = null;
       const hs = str => { let h = 5381; for(let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return str.length + ':' + h; };
@@ -5536,7 +5540,7 @@ function mixTotalDuration(){
       if(fLoaded && curF != null && !folders[curF]) curF = null;
       const vf = (curF != null && folders[curF]) ? curF : null;
       const fOf = u => (typeof u === 'string' ? folders.findIndex(f => f.items.includes(nrm(u))) : -1);
-      { const ob = pop.querySelector('.pk-out'); if(ob) ob.hidden = (vf == null); }
+      { const ob = pop.querySelector('.pk-out'); if(ob) ob.disabled = (vf == null); }
       if(vf != null){
       } else {
         folders.forEach((f, i) => {
@@ -5552,6 +5556,8 @@ function mixTotalDuration(){
           g.appendChild(fb);
         });
       }
+      { const st = pop.querySelector('.pk-st'); if(st){ let by = 0, n = 0; all.forEach(u => { if(typeof u === 'string'){ n++; by += Math.round((u.length - u.indexOf(',') - 1) * 3 / 4); } }); st.textContent = '🖼️ 전체 사진 ' + n + '장  ·  💾 ' + (by >= 1073741824 ? (by / 1073741824).toFixed(1) + 'GB' : by >= 1048576 ? (by / 1048576).toFixed(1) + 'MB' : Math.max(0, Math.round(by / 1024)) + 'KB'); } }
+      { const ub = pop.querySelector('.pk-undo'); if(ub) ub.disabled = !(window.__pkUndo && window.__pkUndo.length); }
       const shownKeys = new Set();
       sortIdx(all).forEach(k => { const u = all[k];
         if(vf == null ? fOf(u) >= 0 : fOf(u) !== vf) return; // 폴더에 넣은 사진은 그 폴더 안에서만 보임
@@ -5634,6 +5640,7 @@ function mixTotalDuration(){
       const fi = pop.querySelector('input[type=file]');
       pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
       fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); fi.value = ''; addToList(fs); });
+      pop.querySelector('.pk-undo').addEventListener('click', () => undoDelete());
       { const ob = pop.querySelector('.pk-out');
         ob.addEventListener('click', () => { curF = null; msel.clear(); fill(null); });
         ob.addEventListener('dragover', e => { if(pkDrag != null){ e.preventDefault(); e.stopPropagation(); ob.classList.add('over'); } });
@@ -5730,13 +5737,24 @@ function mixTotalDuration(){
       };
       const deleteSelected = async () => {
         const inf = selImgs(); if(!inf.length) return;
-        if(!PW0().confirm('선택한 사진 ' + inf.length + '장을 지울까요?\n(사진불러오기 목록과 이 곡에서 모두 지워집니다)')) return;
         const keys = new Set(inf.map(i => nrm(i.u)));
+        { const rec = { song: keyOf(kind, name), items: inf.map(i => { const kk = nrm(i.u), si = pics.findIndex(p => typeof p === 'string' && nrm(p) === kk), fo = folders.find(f => f.items.includes(kk)); return { u: i.u, si, t: si >= 0 ? picT[si] : null, l: si >= 0 ? picL[si] : null, fname: fo ? fo.name : null, inLib: lib.some(v => nrm(v) === kk) }; }) };
+          (window.__pkUndo = window.__pkUndo || []).push(rec); if(window.__pkUndo.length > 10) window.__pkUndo.shift(); }
         const l2 = (await libGet()).filter(v => !keys.has(nrm(v))); await libSet(l2); lib = l2;
         folders.forEach(f => { f.items = f.items.filter(v => !keys.has(v)); }); await libFSet(folders);
         let ch = false; for(let q = pics.length - 1; q >= 0; q--){ if(typeof pics[q] === 'string' && keys.has(nrm(pics[q]))){ pics.splice(q, 1); picT.splice(q, 1); picL.splice(q, 1); if(picPos > q) picPos--; ch = true; } }
         if(ch){ picPos = Math.min(picPos, pics.length); savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(true); }
         msel.clear(); fill(null);
+      };
+      const undoDelete = async () => { // 삭제 되돌리기: 사진 · 곡 안 자리 · 폴더를 되살림
+        const st = window.__pkUndo; if(!st || !st.length) return; const rec = st.pop();
+        const l2 = await libGet(); rec.items.forEach(it => { if(it.inLib && !l2.some(v => nrm(v) === nrm(it.u))) l2.push(it.u); }); await libSet(l2); lib = l2;
+        rec.items.forEach(it => { if(it.fname){ const f = folders.find(q => q.name === it.fname); if(f && !f.items.includes(nrm(it.u))) f.items.push(nrm(it.u)); } }); await libFSet(folders);
+        if(rec.song === keyOf(kind, name)){
+          const back = rec.items.filter(it => it.si >= 0 && !pics.some(p => typeof p === 'string' && nrm(p) === nrm(it.u))).sort((p, q) => p.si - q.si);
+          if(back.length){ back.forEach(it => { const at = Math.min(it.si, pics.length); pics.splice(at, 0, it.u); picT.splice(at, 0, it.t); picL.splice(at, 0, it.l); }); savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); syRender(true); }
+        }
+        msel = new Set(rec.items.map(it => nrm(it.u))); fill(null);
       };
       const copySelected = async () => {
         const inf = selImgs(); if(!inf.length) return;
@@ -5833,6 +5851,7 @@ function mixTotalDuration(){
         const vw = pop.querySelector('.pk-view');
         if(e.key === 'Escape'){ if(vw){ e.preventDefault(); e.stopPropagation(); vw.remove(); } return; }
         if(vw) return;
+        if((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')){ e.preventDefault(); e.stopPropagation(); undoDelete(); return; }
         if(e.key === 'F2'){ if(msel.size === 1){ const t = tilesNow().find(t => msel.has(t._key)); if(t){ e.preventDefault(); e.stopPropagation(); startRename(t); } } return; }
         if(e.key === 'Delete'){ e.preventDefault(); e.stopPropagation(); deleteSelected(); return; }
         if(e.key === 'Enter'){ if(msel.size && canAttach()){ e.preventDefault(); e.stopPropagation(); attachSelected(); } return; }
