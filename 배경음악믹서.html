@@ -940,6 +940,12 @@
   .lyr-box.syncmode [data-x]{ display:none !important; }
   .lyr-box .sy-one button.cancel{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
   .lyr-box:not(.syncmode) [data-cancel]{ display:none !important; }
+  .lyr-box.syncmode .lyr-head .lb{ font-size:16pt !important; }
+  .lyr-box.syncmode .lyr-head .nm{ font-size:14pt !important; }
+  .lyr-box.syncmode .sy-list{ font-size:16pt !important; }
+  .lyr-box.syncmode .sy-row.sy-ly .tx2.blank{ font-size:12pt !important; }
+  .lyr-box .lyr-head [data-cancel]{ flex:none; margin-left:auto; flex-direction:row; align-items:center; justify-content:center; gap:6px; height:30px; padding:0 12px; font-size:16px; white-space:nowrap; background:#fee2e2 !important; border:1px solid #b91c1c !important; color:#991b1b !important; font-weight:700; border-radius:8px; }
+  .lyr-box .lyr-head [data-cancel] .ic{ font-size:16px; line-height:1; }
 </style>
 </head>
 <body>
@@ -6272,6 +6278,7 @@ function mixTotalDuration(){
     back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
     back.querySelector('[data-x]').addEventListener('click', close);
     back.querySelector('[data-cancel]').addEventListener('click', cancelSync);
+    { const cb = back.querySelector('[data-cancel]'), hd = back.querySelector('.lyr-head'); if(cb && hd) hd.appendChild(cb); } // 취소 버튼은 제목줄 오른쪽에
     const swBtn = back.querySelector('[data-sw]'), other = kind === 'voice' ? 'music' : 'voice';
     swBtn.textContent = kind === 'voice' ? '음악 가사 보기' : '음성 보기';
     swBtn.disabled = !curInfo(other);
