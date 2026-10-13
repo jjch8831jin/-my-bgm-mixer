@@ -864,6 +864,35 @@
     .lyr-box .sy-one button.ok{ margin-left:auto; padding:0 10px; }
     .lyr-box .sy-one button.stamp{ order:-1; flex:1 1 100%; }
   }
+  /* 시간 맞추기: 승인된 이미지 모양 (한 줄씩 넓게 / 큰 이미지 칸) */
+  .lyr-box .sy-list.ly{ grid-template-columns:minmax(0,1fr) !important; gap:8px; }
+  .lyr-box .sy-row.sy-ly .rx{ display:none !important; }
+  .lyr-box .sy-row.sy-ly{ padding:8px 12px; gap:14px; }
+  .lyr-box .sy-row.sy-ly .pk{ width:120px; height:68px; border-radius:8px; }
+  .lyr-box .sy-row.sy-ly .pk.e{ font-size:11pt; font-weight:700; text-align:center; line-height:1.2; }
+  .lyr-box .sy-row.sy-ly .pk.e.cont{ font-size:9pt; font-weight:400; }
+  .lyr-box .sy-row.sy-ly .pkw .pkn{ position:absolute; left:0; right:0; bottom:0; text-align:center; font-size:9pt; font-weight:700; color:#fff; background:rgba(0,0,0,.45); border-radius:0 0 7px 7px; padding:1px 0; pointer-events:none; }
+  @media (max-width:600px){ .lyr-box .sy-row.sy-ly .pk{ width:84px; height:48px; } .lyr-box .sy-row.sy-ly .pk.e{ font-size:8pt; } .lyr-box .sy-row.sy-ly .pk.e.cont{ font-size:7pt; } .lyr-box .sy-row.sy-ly .pkw .pkn{ font-size:7pt; } }
+  /* 시간 맞추기: 승인된 이미지의 색·제목줄·버튼 */
+  .lyr-back.syb, .lyr-back.syb .lyr-box.syncmode{ background:#faf6e8 !important; }
+  .lyr-back.syb .lyr-bg{ display:none !important; }
+  .lyr-box.syncmode{ padding:0; }
+  .lyr-box.syncmode .lyr-head{ margin:0; padding:12px 16px; background:#7c2d12 !important; border-radius:0 !important; flex-wrap:nowrap; box-shadow:none; }
+  .lyr-box.syncmode .lyr-head .lb{ color:#ffedd5 !important; text-shadow:none !important; font-size:20px; }
+  .lyr-box.syncmode .lyr-head .nm{ color:#fed7aa !important; text-shadow:none !important; font-size:17px; }
+  .lyr-box.syncmode .lyr-bar{ margin:0; padding:10px 16px; background:transparent !important; box-shadow:none; }
+  .lyr-box.syncmode .lyr-bar .bt{ color:#1c1917 !important; text-shadow:none !important; }
+  .lyr-box.syncmode .lyr-bar .bg button.rb:not(.playing){ background:#efe8d2 !important; border-color:#c9bd9b !important; color:#1c1917 !important; }
+  .lyr-box.syncmode [data-pane=sync]{ padding:0 16px 14px; }
+  .lyr-box.syncmode .sy-list{ font-size:14pt; background:#fffdf5; border-color:#d9cfb0; border-radius:10px; }
+  .lyr-box.syncmode .sy-row.sy-ly .tm{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:15px; }
+  .lyr-box.syncmode .sy-row.sy-ly.done .tm{ color:#047857; }
+  .lyr-box.syncmode .sy-row.sy-ly .tm{ min-width:5.6em !important; flex:none; }
+  @media (max-width:600px){ .lyr-box.syncmode .sy-row.sy-ly .tm{ min-width:5.2em !important; font-size:12px; } }
+  .lyr-box.syncmode .sy-row.sy-ly .hd, .lyr-box.syncmode .sy-row.sy-ly .pk-off, .lyr-box.syncmode [data-more]{ display:none !important; }
+  .lyr-box.syncmode .sy-one{ margin-top:10px; }
+  .lyr-box.syncmode .sy-one button[data-undo], .lyr-box.syncmode .sy-one button.more{ background:#e7dfc6; border-color:#b8ad8a; color:#1c1917; font-weight:700; }
+  .lyr-box.syncmode .sy-one button.stamp, .lyr-box.syncmode .sy-one button.ok{ background:#f59e0b; border-color:#f59e0b; color:#1c1917; font-weight:700; }
 </style>
 </head>
 <body>
@@ -5022,7 +5051,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice" title="키 1">음성</button><button type="button" data-trk="music" title="키 2">음악</button><button type="button" data-trk="all" title="키 3">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><button type="button" class="ok" data-fin><span>끝내기</span></button></div></div>' +
       '<div data-pane="edit" style="display:none !important"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
@@ -5160,7 +5189,7 @@ function mixTotalDuration(){
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
-      { const bx = back.querySelector('.lyr-box'), lbx = back.querySelector('.lyr-head .lb'); if(bx) bx.classList.toggle('syncmode', k === 'sync'); if(lbx) lbx.textContent = (k === 'sync') ? '시간 맞추기' : '제목'; }
+      { const bx = back.querySelector('.lyr-box'), lbx = back.querySelector('.lyr-head .lb'); if(bx) bx.classList.toggle('syncmode', k === 'sync'); back.classList.toggle('syb', k === 'sync'); if(lbx) lbx.textContent = (k === 'sync') ? '시간 맞추기' : '제목'; }
       curTab = k; try{ applyAuto(); }catch(e){}
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
@@ -5640,14 +5669,14 @@ function mixTotalDuration(){
         const kp = attachedPic(x); let cell;
         if(kp >= 0){ const u = pics[kp]; if(isVid(u)){ cell = document.createElement('video'); cell.muted = true; cell.preload = 'metadata'; cell.playsInline = true; cell.src = urlOfItem(u) + '#t=0.1'; } else { cell = document.createElement('img'); cell.src = u; cell.alt = ''; } cell.className = 'pk'; cell.title = '붙인 사진 (눌러서 바꾸기)'; }
         else if(seenPic){ cell = mkEl('span', 'pk e cont', '↳ 앞 사진 계속'); cell.title = '앞 사진이 계속 나옵니다 (눌러서 이 줄에 새 사진 붙이기)'; }
-        else { cell = mkEl('span', 'pk e', '+'); cell.title = '사진 붙이기 (누르거나 사진을 끌어다 놓으세요)'; }
+        else { cell = mkEl('span', 'pk e', '＋ 이미지'); cell.title = '사진 붙이기 (누르거나 사진을 끌어다 놓으세요)'; }
         if(kp >= 0) seenPic = true;
         cell.addEventListener('click', e => { e.stopPropagation(); lineChooser(x); });
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
         r.addEventListener('drop', e => { r.classList.remove('dropto'); if(window.__pkDragU != null){ e.preventDefault(); e.stopPropagation(); const du = window.__pkDragU; window.__pkDragU = null; attachPicTo(du, x).then(() => { const pf = pkCur && pkCur.pop; if(pf && pf.isConnected && pf.__fill) pf.__fill(); }); return; } const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
         r.addEventListener('contextmenu', e => { if(e.target.closest && e.target.closest('input')) return; e.preventDefault(); if(e.target.closest && e.target.closest('.pk, .pkw')) imgMenu(e.clientX, e.clientY, x); else lineMenu(e.clientX, e.clientY, x); });
-        let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); }); cw.appendChild(off); }
+        let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); cw.appendChild(mkEl('span', 'pkn', '🖼 사진 ' + (kp + 1))); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); }); cw.appendChild(off); }
         r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cw); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
       });
       if(!syT.length){ const er = mkEl('div', 'sy-row sy-empty', '✎ 여기를 눌러 첫 줄을 쓰세요 (줄이 끝나면 Enter → 다음 줄과 사진 칸이 생깁니다)'); er.style.cursor = 'pointer'; er.style.color = '#78716c'; er.addEventListener('click', () => insertLine(0)); syList.appendChild(er); }
