@@ -6167,8 +6167,8 @@ function mixTotalDuration(){
       const mb = back.querySelector('[data-more]'); let pop = null;
       const closeP = () => { if(pop){ pop.remove(); pop = null; } };
       const items = [
-        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
-        ['💾 곡 통째 저장', 'SONG'], ['🗑 가사·사진 지우기', '[data-del]']
+        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['💠 통합저장', 'SONG'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
+        ['🗑 가사·사진 지우기', '[data-del]']
       ];
       mb.addEventListener('click', e => {
         e.stopPropagation(); if(pop){ closeP(); return; }
