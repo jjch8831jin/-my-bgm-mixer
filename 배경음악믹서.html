@@ -5206,6 +5206,7 @@ function mixTotalDuration(){
     const syList = back.querySelector('.sy-list');
     const stampBtn = back.querySelector('[data-stamp]'), undoBtn = back.querySelector('[data-undo]'), finBtn = back.querySelector('[data-fin]');
     let syT = [], syStamp = [], syAbs = [], syPos = 0, syRows = [];
+    let afterStampPos = -1, syStack = []; const syFresh = new Set(); // 방금 찍은 줄(초록줄이 그 줄에 머묾) / 되돌리기 기록 / 이번에 새로 찍은 줄
     const mmss = x => { x = Math.max(0, x || 0); const m = Math.floor(x / 60); return m + ':' + String(Math.floor(x % 60)).padStart(2, '0'); };
     const stampStr = x => { const m = Math.floor(x / 60), r = x - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); };
     const mkEl = (tag, cls, txt) => { const e = document.createElement(tag); if(cls) e.className = cls; if(txt != null) e.textContent = txt; return e; };
@@ -5214,7 +5215,7 @@ function mixTotalDuration(){
     function syncInit(){
       const L2 = lyrLines({ text: ta.value }).map(tparse);
       syT = L2.map(o => o.t); syStamp = L2.map(o => o.s); syAbs = L2.map(() => null);
-      syPos = firstEmpty(syStamp); picPos = 0;
+      syPos = firstEmpty(syStamp); afterStampPos = -1; picPos = 0; syStack = []; syFresh.clear();
       if(syMode === 'pic') picSyRender(); else syRender();
     }
     function lyrPersist(){
@@ -5612,7 +5613,7 @@ function mixTotalDuration(){
       syT.forEach((t, x) => {
         const r = mkEl('div', 'sy-row sy-ly');
         const hd = mkEl('span', 'hd', '⠿'); hd.title = '끌어서 순서 바꾸기 (시간은 줄을 따라갑니다)';
-        const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; syMark(false); });
+        const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; afterStampPos = -1; syMark(false); });
         const tx = mkEl('span', t === BLANK ? 'tx2 blank' : 'tx2', t === BLANK ? '' : t); tx.title = '눌러서 고치기'; tx.addEventListener('click', () => editLine(x, tx));
         const rx = mkEl('button', 'rx', '✕'); rx.type = 'button'; rx.title = '이 줄 지우기'; rx.addEventListener('click', () => delLine(x));
         const kp = attachedPic(x); let cell;
@@ -5635,13 +5636,13 @@ function mixTotalDuration(){
       if(f === t || f < 0 || t < 0 || f >= syT.length || t >= syT.length) return;
       [syT, syStamp, syAbs].forEach(a => { const v = a.splice(f, 1)[0]; a.splice(t, 0, v); });
       picL = picL.map(v => v == null ? null : (v === f ? t : (f < t && v > f && v <= t ? v - 1 : (f > t && v >= t && v < f ? v + 1 : v)))); savePT();
-      syPos = firstEmpty(syStamp); lyrPersist(); syRender(true);
+      syPos = firstEmpty(syStamp); afterStampPos = -1; lyrPersist(); syRender(true);
     }
     function insertLine(at){
       at = Math.max(0, Math.min(at, syT.length));
       syT.splice(at, 0, BLANK); syStamp.splice(at, 0, null); syAbs.splice(at, 0, null);
       picL = picL.map(v => (v != null && v >= at) ? v + 1 : v); savePT();
-      syPos = firstEmpty(syStamp); lyrPersist(); syRender(true);
+      syPos = firstEmpty(syStamp); afterStampPos = -1; lyrPersist(); syRender(true);
       const sp = syRows[at] && syRows[at].querySelector('.tx2'); if(sp){ try{ sp.scrollIntoView({ block: 'nearest' }); }catch(e){} editLine(at, sp); }
     }
     // ---- 줄·이미지 복사 / 잘라내기 / 붙여넣기 (오른쪽 클릭 메뉴) ----
@@ -5662,7 +5663,7 @@ function mixTotalDuration(){
       items.forEach((it, i) => { syT.splice(at + i, 0, it.text); syStamp.splice(at + i, 0, null); syAbs.splice(at + i, 0, null); });
       picL = picL.map(v => (v != null && v >= at) ? v + items.length : v); savePT();
       for(let i = 0; i < items.length; i++){ if(items[i].pic != null){ const n0 = pics.length; await putItems([items[i].pic]); if(pics.length > n0){ picL[n0] = at + i; savePT(); } } }
-      chipsUpd(); syPos = firstEmpty(syStamp); lyrPersist(); syRender(true);
+      chipsUpd(); syPos = firstEmpty(syStamp); afterStampPos = -1; lyrPersist(); syRender(true);
     }
     async function imgToClipboard(u){
       try{
@@ -5780,7 +5781,7 @@ function mixTotalDuration(){
       back.querySelectorAll('[data-sym]').forEach(b => b.classList.toggle('on', b.dataset.sym === m));
       addWrap.style.display = m === 'pic' ? 'none' : ''; upBtn.disabled = m === 'pic';
       if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 장&nbsp;</span>되돌리기</span>'; picSyRender(); }
-      else { syPos = firstEmpty(syStamp); stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span>'; syRender(); }
+      else { syPos = firstEmpty(syStamp); afterStampPos = -1; stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span>'; syRender(); }
     }
     back.querySelectorAll('[data-sym]').forEach(b => b.addEventListener('click', () => setSyMode(b.dataset.sym)));
     function syMark(scroll){
@@ -5788,7 +5789,7 @@ function mixTotalDuration(){
         r.classList.toggle('done', syStamp[x] != null); r.classList.toggle('now', x === syPos);
         r.querySelector('.tm').textContent = syStamp[x] != null ? '✓ ' + stampStr(syStamp[x]) : '--:--';
       });
-      stampBtn.disabled = !syT.length || syPos >= syT.length; undoBtn.disabled = syPos <= 0;
+      stampBtn.disabled = !syT.length || syPos >= syT.length; undoBtn.disabled = !syStack.length && !syFresh.size && syPos <= 0;
       if(scroll && syRows[syPos]) { const el = syRows[syPos]; syList.scrollTo({ top: el.offsetTop - syList.clientHeight / 2 + el.offsetHeight / 2, behavior:'smooth' }); }
     }
     function doStamp(){
@@ -5800,11 +5801,21 @@ function mixTotalDuration(){
         if(picPos === 0){ for(let i = 0; i < pics.length; i++) picT[i] = null; } // 모두 찍힌 뒤 다시 누르면 이전 시간은 지우고 처음부터
         picT[picPos] = Math.max(0, c.t); picPos++; savePT(); picSyMark(true); chipsUpd(); return;
       }
+      if(!syT.length) return;
+      // 오디오북 시간 맞추기와 같은 방식: 방금 찍은 줄에 초록줄이 머물다가, 다음 스페이스를 누르면 한 줄 내려가면서 바로 찍는다
+      if(afterStampPos === syPos && syPos < syT.length - 1) syPos++;
       if(syPos >= syT.length) return;
       const cur = curInfo(kind); if(!cur) return;
-      syAbs[syPos] = absOf(cur.t);
-      { const kp = attachedPic(syPos); if(kp >= 0){ picT[kp] = Math.max(0, cur.t); savePT(); chipsUpd(); } }
-      syStamp[syPos] = Math.max(0, cur.t); syPos++; lyrPersist(); syMark(true);
+      const kp = attachedPic(syPos), absT = absOf(cur.t);
+      syStack.push({ i: syPos, oldS: syStamp[syPos], oldA: syAbs[syPos], kp, oldPT: kp >= 0 ? picT[kp] : null, t: absT, len: syT.length, text: syT[syPos] });
+      syAbs[syPos] = absT;
+      if(kp >= 0){ picT[kp] = Math.max(0, cur.t); savePT(); chipsUpd(); }
+      syStamp[syPos] = Math.max(0, cur.t); syFresh.add(syPos); afterStampPos = syPos; lyrPersist(); syMark(true);
+      // 윗줄·아랫줄(이번에 새로 찍은 줄끼리)과 시간 순서가 안 맞으면 자동 일시정지
+      { const vv = i => (syAbs[i] != null ? syAbs[i] : syStamp[i]), i = syPos;
+        if((i > 0 && syFresh.has(i - 1) && vv(i - 1) != null && vv(i) < vv(i - 1)) || (i < syT.length - 1 && syFresh.has(i + 1) && vv(i + 1) != null && vv(i) > vv(i + 1))){
+          try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){} try{ plShow(false); }catch(e){}
+        } }
     }
     function origToFrac(tOrig){
       const buf = kind === 'voice' ? voiceBuffer : musicBuffer; if(!buf) return 0;
@@ -5826,14 +5837,15 @@ function mixTotalDuration(){
         try{ plShow(false); }catch(e){}
         return;
       }
-      if(syPos <= 0){ if(nowO != null) stopBack(); return; }
-      syPos--; const s0 = syStamp[syPos]; const back0 = syAbs[syPos] != null ? syAbs[syPos] : (s0 != null ? absOf(s0) : null);
-      syStamp[syPos] = null; syAbs[syPos] = null;
-      { const kp = attachedPic(syPos); if(kp >= 0){ picT[kp] = null; savePT(); chipsUpd(); } }
-      lyrPersist(); syMark(true);
+      let u = syStack.pop();
+      if(u && (u.len !== syT.length || syT[u.i] !== u.text)){ syStack = []; u = null; } // 줄을 나누거나 옮긴 뒤에는 그 앞의 기록으로 되돌릴 수 없음
+      if(!u){ if(nowO != null) stopBack(); return; }
+      syStamp[u.i] = u.oldS; syAbs[u.i] = u.oldA; syFresh.delete(u.i);
+      if(u.kp >= 0 && u.kp < pics.length){ picT[u.kp] = u.oldPT; savePT(); chipsUpd(); }
+      syPos = u.i; afterStampPos = -1; lyrPersist(); syMark(true);
       if(nowO != null){ stopBack(); return; }
       try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){}
-      if(back0 != null){ try{ ctl.seekToFraction(origToFrac(back0)); }catch(e){} }
+      if(u.t != null){ try{ ctl.seekToFraction(origToFrac(u.t)); }catch(e){} }
       try{ plShow(false); }catch(e){}
     }
     function syFinish(){
@@ -5893,6 +5905,21 @@ function mixTotalDuration(){
       if(e.repeat) return;
       try{ if(!ctl.isPlaying()) ctl.play(); }catch(x){}
     };
+    const onShiftPlay = e => { // 오디오북 시간 맞추기와 같이: 쉬프트 = 멈춰 있을 때 재생
+      if(curTab !== 'sync' || e.key !== 'Shift' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+      const tg = e.target; if(tg && ((tg.tagName === 'INPUT' && tg.type !== 'range') || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
+      if(document.querySelector('.pk-back:not(.pk-float)')) return;
+      try{ if(!ctl.isPlaying()) ctl.play(); }catch(x){}
+    };
+    const onArrowLine = e => { // 위·아래 화살표 = 초록줄 한 줄씩 이동
+      if(curTab !== 'sync' || syMode !== 'lyric' || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+      const tg = e.target; if(tg && ((tg.tagName === 'INPUT' && tg.type !== 'range') || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
+      if(document.querySelector('.pk-back:not(.pk-float)') || !syT.length) return;
+      e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){}
+      syPos = Math.max(0, Math.min(syT.length - 1, syPos + (e.key === 'ArrowDown' ? 1 : -1))); afterStampPos = -1; syMark(true);
+    };
+    document.addEventListener('keydown', onShiftPlay, true);
+    document.addEventListener('keydown', onArrowLine, true);
     document.addEventListener('keydown', onAlt, true);
     document.addEventListener('keydown', onEnter, true);
     document.addEventListener('keyup', onAltUp, true);
@@ -5931,7 +5958,7 @@ function mixTotalDuration(){
       chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
       document.body.appendChild(chipEl);
     });
-    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keydown', onEnter, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const close = () => { document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keydown', onShiftPlay, true); document.removeEventListener('keydown', onArrowLine, true); document.removeEventListener('keydown', onEnter, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
