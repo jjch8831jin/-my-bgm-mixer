@@ -331,6 +331,11 @@
   .lyr-box.onerow .lyr-head .lyr-bar .bt, .lyr-box.onerow .lyr-head .lyr-bar .trk button{ white-space:nowrap; }
   .lyr-box.onerow .lyr-head .lyr-bar .rate, .lyr-box.onerow .lyr-head .lyr-bar .fs, .lyr-box.onerow .lyr-head .lyr-bar .bg, .lyr-box.onerow .lyr-head .lyr-bar .trk{ flex:none; }
   @media (max-width:600px){ .lyr-box:not(.syncmode) .lyr-tabs{ flex-wrap:nowrap !important; gap:4px !important; } .lyr-box:not(.syncmode) .lyr-tabs > button:not(.rb){ padding-left:8px !important; padding-right:8px !important; font-size:12pt !important; white-space:nowrap; } .lyr-box:not(.syncmode) .trk button{ padding:4px 8px !important; font-size:12pt !important; } .lyr-box:not(.syncmode) .lyr-tabs button.rb{ width:24px !important; } }
+  /* 사진 화면에서 메뉴가 숨었을 때: 곡 이름만 위쪽 가운데에 남김 (메뉴가 나타나면 원래 자리의 이름이 보임) */
+  .lyr-box.autohide:not(.ui-show) .lyr-head{ opacity:1 !important; pointer-events:none; }
+  .lyr-box.autohide:not(.ui-show) .lyr-head > *:not(.nm), .lyr-box.autohide:not(.ui-show) .lyr-bar{ opacity:0 !important; }
+  .lyr-box.autohide:not(.ui-show) .lyr-head .lb{ display:none !important; }
+  .lyr-box.autohide:not(.ui-show) .lyr-head .nm{ display:block; position:absolute; left:50%; transform:translateX(-50%); top:10px; max-width:calc(100% - 32px); text-align:center; font-size:14pt !important; color:#fff !important; text-shadow:-1px -1px 0 #1c1917, 1px -1px 0 #1c1917, -1px 1px 0 #1c1917, 1px 1px 0 #1c1917, 0 0 4px #000 !important; }
   .lyr-bar .rate{ display:flex; align-items:center; gap:4px; background:#fff; border:1px solid #f59e0b; border-radius:12px; padding:3px 4px; }
   .lyr-bar .rate b{ min-width:2.8em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; }
   .lyr-box .lyr-bar .rate button{ width:21px; height:32px; padding:0; border-radius:8px; background:#f59e0b; border-color:#f59e0b; color:#000; font-weight:800; }
