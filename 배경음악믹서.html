@@ -6095,14 +6095,14 @@ function mixTotalDuration(){
     async function putImages(fs, at, rp){
       fs = Array.from(fs || []).filter(Boolean); if(!fs.length) return;
       const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0; const added = [];
-      for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 100 * 1024 * 1024){ bad++; continue; } added.push(f); } else added.push(await shrinkImage(f)); }catch(e){ bad++; } }
+      for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 500 * 1024 * 1024){ bad++; continue; } added.push(f); } else added.push(await shrinkImage(f)); }catch(e){ bad++; } }
       const repl = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length === 1 && fs.length === 1; // 한 장이면 그 자리 사진을 바꿈(기존 사진 삭제, 시간은 자리에 그대로)
       if(repl){ cur[rp] = added[0]; if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; } picT = getPT(key, cur.length); picL = getPL(key, cur.length); pics = cur; libAddImages(added); renderPics(); return; }
       const slot = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length; if(slot) at = rp; // 그 자리에 끼워 넣고 기존 사진은 뒤로 밀림 (시간은 자리에 그대로)
       const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...added);
-      if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 100MB 이하만 됩니다)'); return; }
+      if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 500MB 이하만 됩니다)'); return; }
       if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
-      if(bad) alert('읽지 못했거나 너무 큰(100MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
+      if(bad) alert('읽지 못했거나 너무 큰(500MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
       { const pt0 = getPT(key, cur.length - added.length); if(slot){ while(pt0.length < cur.length) pt0.push(null); } else pt0.splice(pos, 0, ...added.map(() => null)); setPT(key, pt0); picT = pt0; const pl0 = getPL(key, cur.length - added.length); pl0.splice(pos, 0, ...added.map(() => null)); setPL(key, pl0); picL = pl0; }
       pics = cur; libAddImages(added); renderPics();
     }
