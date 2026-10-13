@@ -827,6 +827,15 @@
   .pk-top .pk-ttl{ font-size:14pt; font-weight:700; color:#1c1917; white-space:nowrap; padding:0 4px; flex:none; }
   .pk-top .pk-sort{ flex:none; font:inherit; font-size:14pt; padding:6px 10px; border-radius:8px; border:1px solid #d6d3c4; background:#fff; color:#1c1917; cursor:pointer; }
   .pk-top .pk-x{ margin-left:auto; }
+  .pk-top .pk-out[hidden]{ display:none; }
+  .pk-back .pk-top .pk-ttl{ color:#6d28d9; }
+  @media (max-width:600px){ .pk-back .pk-top .pk-ic{ display:none; } }
+  .pk-back .pk-top [data-new]{ background:#2563eb; border-color:#1d4ed8; color:#fff; font-weight:700; }
+  .pk-back .pk-top .pk-sort{ background:#fef3c7; border-color:#f59e0b; color:#78350f; font-weight:700; }
+  .pk-back .pk-top .pk-out{ background:#ea580c; border-color:#c2410c; color:#fff; font-weight:700; }
+  .pk-back .pk-top .pk-x{ background:#dc2626; border-color:#b91c1c; color:#fff; }
+  .pk-top .pk-out.over{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
+  @media (max-width:600px){ .pk-back .pk-top.pk-top{ flex-wrap:wrap !important; row-gap:6px; } .pk-back .pk-top .pk-out{ order:9; } }
   @media (max-width:600px){ .pk-back .pk-top{ flex-wrap:nowrap !important; gap:3px; } .pk-back .pk-top .pk-ttl{ font-size:10pt; padding:0 1px; } .pk-back .pk-top .pk-i, .pk-back .pk-top .pk-sort{ font-size:10pt; padding:6px 4px; } .pk-back .pk-top .pk-x{ width:32px; height:32px; font-size:14pt; } }
   @media (max-width:600px){ .pk-top{ gap:6px; } .pk-top .pk-i, .pk-top .pk-cr{ font-size:12pt; } .pk-top .pk-i{ padding:6px 8px; } .pk-top .pk-cr{ gap:4px; } }
   .pk-top .pk-cr button.over{ border-color:#2563eb; box-shadow:0 0 0 2px #93c5fd; }
@@ -5478,7 +5487,7 @@ function mixTotalDuration(){
       back.querySelectorAll('.pk-float').forEach(o => o.remove());
       try{ if(window.__pkWin && !window.__pkWin.closed) window.__pkWin.document.querySelectorAll('.pk-float').forEach(o => o.remove()); }catch(e){}
       const pop = document.createElement('div'); pop.className = 'pk-back pk-float';
-      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><span class="pk-ttl">사진불러오기</span><button type="button" class="pk-i" data-new>📁 PC사진</button><select class="pk-sort" title="여러 장을 불러올 때 저장하는 순서"><option value="pick">선택한 순서</option><option value="name">이름순</option><option value="date">날짜순</option><option value="size">크기순</option></select><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
+      pop.innerHTML = '<div class="pk-box"><div class="pk-top"><span class="pk-ttl"><span class="pk-ic">🖼️ </span>사진불러오기</span><button type="button" class="pk-i" data-new>🖥️ PC사진</button><select class="pk-sort" title="여러 장을 불러올 때 저장하는 순서"><option value="pick">🔀 선택한 순서</option><option value="name">🔤 이름순</option><option value="date">📅 날짜순</option><option value="size">📏 크기순</option></select><button type="button" class="pk-i pk-out" hidden title="열린 폴더에서 나가기 (사진을 끌어다 놓으면 폴더에서 빠집니다)">↩ 폴더 나가기</button><button type="button" class="pk-x" title="닫기">✕</button></div><div class="pk-l pk-g"></div><input type="file" accept="image/*,video/*" multiple hidden></div>';
       const g = pop.querySelector('.pk-g');
       let lib = [], folders = [], fLoaded = false, curF = (typeof f0 === 'number' ? f0 : null), pkDrag = null, msel = new Set(), anchorK = null;
       const hs = str => { let h = 5381; for(let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return str.length + ':' + h; };
@@ -5500,15 +5509,8 @@ function mixTotalDuration(){
       if(fLoaded && curF != null && !folders[curF]) curF = null;
       const vf = (curF != null && folders[curF]) ? curF : null;
       const fOf = u => (typeof u === 'string' ? folders.findIndex(f => f.items.includes(nrm(u))) : -1);
+      { const ob = pop.querySelector('.pk-out'); if(ob) ob.hidden = (vf == null); }
       if(vf != null){
-        const cr = document.createElement('div'); cr.className = 'pk-cr';
-        const bk = document.createElement('button'); bk.type = 'button'; bk.className = 'pk-i'; bk.textContent = '← 전체'; bk.title = '눌러서 돌아가기 (사진을 끌어다 놓으면 폴더에서 빼냅니다)';
-        bk.addEventListener('click', () => { curF = null; msel.clear(); fill(null); });
-        bk.addEventListener('dragover', e => { if(pkDrag != null){ e.preventDefault(); e.stopPropagation(); bk.classList.add('over'); } });
-        bk.addEventListener('dragleave', () => bk.classList.remove('over'));
-        bk.addEventListener('drop', e => { if(pkDrag == null) return; e.preventDefault(); e.stopPropagation(); bk.classList.remove('over'); moveTo(pkDrag, -1); });
-        const cn = document.createElement('span'); cn.textContent = '› 📁 ' + folders[vf].name;
-        cr.appendChild(bk); cr.appendChild(cn); pop.querySelector('.pk-top [data-new]').after(cr); // 제목줄(사진불러오기 옆)에 둬서 사진을 내려도 항상 보임
       } else {
         folders.forEach((f, i) => {
           const cnt = all.filter(u => fOf(u) === i).length;
@@ -5578,6 +5580,11 @@ function mixTotalDuration(){
       const fi = pop.querySelector('input[type=file]');
       pop.querySelector('[data-new]').addEventListener('click', () => fi.click());
       fi.addEventListener('change', () => { const fs = Array.from(fi.files || []); fi.value = ''; addToList(fs); });
+      { const ob = pop.querySelector('.pk-out');
+        ob.addEventListener('click', () => { curF = null; msel.clear(); fill(null); });
+        ob.addEventListener('dragover', e => { if(pkDrag != null){ e.preventDefault(); e.stopPropagation(); ob.classList.add('over'); } });
+        ob.addEventListener('dragleave', () => ob.classList.remove('over'));
+        ob.addEventListener('drop', e => { if(pkDrag == null) return; e.preventDefault(); e.stopPropagation(); ob.classList.remove('over'); moveTo(pkDrag, -1); }); }
       pop.querySelector('.pk-x').addEventListener('click', () => { const w = pop.ownerDocument.defaultView; pop.remove(); if(w !== window){ try{ w.close(); }catch(e){} } });
       const pbox = pop.querySelector('.pk-box');
       { // 떠 있는 창: 제목줄을 끌어 옮기고, 오른쪽 아래 모서리로 크기 조절 (위치·크기는 다음에 열 때도 유지)
@@ -5586,7 +5593,7 @@ function mixTotalDuration(){
         if(P){ pbox.style.width = P.w + 'px'; pbox.style.height = P.h + 'px'; place(P.l, P.t); }
         const saveP = () => { if(pop.ownerDocument !== document) return; const r = pbox.getBoundingClientRect(); window.__pkPos = { l: r.left, t: r.top, w: r.width, h: r.height }; };
         const top = pbox.querySelector('.pk-top'); let dr = null;
-        top.addEventListener('pointerdown', e => { if(e.target.closest('button')) return; const r = pbox.getBoundingClientRect(); dr = { dx: e.clientX - r.left, dy: e.clientY - r.top }; try{ top.setPointerCapture(e.pointerId); }catch(x){} e.preventDefault(); });
+        top.addEventListener('pointerdown', e => { if(e.target.closest('button, select, input')) return; const r = pbox.getBoundingClientRect(); dr = { dx: e.clientX - r.left, dy: e.clientY - r.top }; try{ top.setPointerCapture(e.pointerId); }catch(x){} e.preventDefault(); });
         top.addEventListener('pointermove', e => { if(dr) place(e.clientX - dr.dx, e.clientY - dr.dy); });
         const end = () => { if(dr){ dr = null; saveP(); } };
         top.addEventListener('pointerup', end); top.addEventListener('pointercancel', end);
