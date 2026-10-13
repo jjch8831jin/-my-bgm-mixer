@@ -889,14 +889,14 @@
   .lyr-box.syncmode .sy-row.sy-ly.done .tm{ color:#047857; }
   .lyr-box.syncmode .sy-row.sy-ly .tm{ min-width:5.6em !important; flex:none; }
   @media (max-width:600px){ .lyr-box.syncmode .sy-row.sy-ly .tm{ min-width:5.2em !important; font-size:12px; } }
-  .lyr-box.syncmode .sy-row.sy-ly .hd, .lyr-box.syncmode .sy-row.sy-ly .pk-off, .lyr-box.syncmode [data-more]{ display:none !important; }
+  .lyr-box.syncmode .sy-row.sy-ly .hd, .lyr-box.syncmode .sy-row.sy-ly .pk-off{ display:none !important; }
   .lyr-box.syncmode .sy-one{ margin-top:10px; }
   .lyr-box.syncmode .sy-one button[data-undo], .lyr-box.syncmode .sy-one button.more{ background:#e7dfc6; border-color:#b8ad8a; color:#1c1917; font-weight:700; }
   .lyr-box.syncmode .sy-one button.stamp, .lyr-box.syncmode .sy-one button.ok{ background:#f59e0b; border-color:#f59e0b; color:#1c1917; font-weight:700; }
   /* 가사(글 모드) / 사진(시간·이미지 모드) 전환 */
   .lyr-box .sy-txt{ display:none; }
   .lyr-back.txtm .lyr-box .sy-txt{ display:block; flex:1; min-height:0; font-size:14pt; line-height:1.7; }
-  .lyr-back.txtm .lyr-box .sy-list, .lyr-back.txtm .lyr-box [data-stamp], .lyr-back.txtm .lyr-box [data-undo]{ display:none !important; }
+  .lyr-back.txtm .lyr-box .sy-list{ display:none !important; }
   .lyr-box .sy-tg{ display:inline-flex; flex:none; border:1px solid #c2410c; border-radius:8px; overflow:hidden; }
   .lyr-box .sy-tg button{ border:0; border-radius:0; background:#fff; color:#9a3412; font-weight:700; }
   .lyr-box .sy-tg button.on{ background:#c2410c; color:#fff; }
@@ -5058,7 +5058,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice" title="키 1">음성</button><button type="button" data-trk="music" title="키 2">음악</button><button type="button" data-trk="all" title="키 3">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><span class="sy-tg"><button type="button" data-tg="txt" title="가사 글 쓰기·고치기 (메모장처럼)"><span class="ic">📝</span><span>가사</span></button><button type="button" data-tg="list" class="on" title="시간 찍기·이미지 넣기"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" class="ok" data-fin><span>끝내기</span></button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><span class="sy-tg"><button type="button" data-tg="txt" title="가사 글 쓰기·고치기 (메모장처럼)"><span class="ic">📝</span><span>가사</span></button><button type="button" data-tg="list" class="on" title="시간 찍기·이미지 넣기"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
       '<div data-pane="edit" style="display:none !important"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
@@ -5264,6 +5264,7 @@ function mixTotalDuration(){
       picL = picL.map(v => (v != null && v >= n) ? null : v); savePT();
       syPos = Math.max(0, Math.min(syPos, n - 1)); afterStampPos = -1; syStack = []; syFresh.clear();
       lyrPersist();
+      try{ syRender(true); }catch(e){}
     }
     function setTxt(on){
       if(on === txtMode) return;
@@ -5876,6 +5877,7 @@ function mixTotalDuration(){
       if(scroll && syRows[syPos]) { const el = syRows[syPos]; syList.scrollTo({ top: el.offsetTop - syList.clientHeight / 2 + el.offsetHeight / 2, behavior:'smooth' }); }
     }
     function doStamp(){
+      if(txtMode) txtApply();
       if(curTab !== 'sync') return;
       if(syMode === 'pic'){
         if(!pics.length) return;
@@ -5909,6 +5911,7 @@ function mixTotalDuration(){
       return Math.max(0, Math.min(1, t / Math.max(0.001, buf.duration - del)));
     }
     function syUndo(back10){
+      if(txtMode) txtApply();
       const nowO = back10 === true ? origPos(kind) : null; // Alt 키: 누른 순간 위치에서 10초 전으로
       const stopBack = () => { try{ if(ctl.isPlaying()) ctl.pause(); }catch(e){} try{ ctl.seekToFraction(origToFrac(Math.max(0, nowO - 10))); }catch(e){} try{ plShow(false); }catch(e){} };
       if(syMode === 'pic'){
@@ -5969,7 +5972,7 @@ function mixTotalDuration(){
     undoBtn.addEventListener('click', () => syUndo());
     finBtn.addEventListener('click', syFinish);
     const onSpace = e => {
-      if(curTab !== 'sync' || txtMode || e.code !== 'Space') return;
+      if(curTab !== 'sync' || e.code !== 'Space') return;
       { const t = e.target; if(t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && /^(text|search|number|)$/.test(t.type)))) return; }
       e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){} if(!e.repeat) doStamp();
     };
@@ -5977,12 +5980,12 @@ function mixTotalDuration(){
     const onDel = e => { if(curTab !== 'sync' || syMode !== 'pic' || e.key !== 'Delete' || !selSet.size) return; { const a = document.activeElement; if(a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')) return; } e.preventDefault(); removeSel(); };
     document.addEventListener('keydown', onDel, true);
     const onAlt = e => {
-      if(curTab !== 'sync' || txtMode || e.key !== 'Alt') return;
+      if(curTab !== 'sync' || (txtMode && e.target && e.target.tagName === 'TEXTAREA') || e.key !== 'Alt') return;
       e.preventDefault(); e.stopPropagation(); if(!e.repeat) syUndo(true);
     };
     const onAltUp = e => { if(curTab === 'sync' && e.key === 'Alt'){ e.preventDefault(); e.stopPropagation(); } };
     const onEnter = e => {
-      if(curTab !== 'sync' || txtMode || (e.key !== 'Enter' && e.code !== 'NumpadEnter') || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+      if(curTab !== 'sync' || (e.key !== 'Enter' && e.code !== 'NumpadEnter') || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
       const tg = e.target; if(tg && ((tg.tagName === 'INPUT' && tg.type !== 'range') || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
       if(document.querySelector('.pk-back:not(.pk-float)')) return; // 사진 고르는 창이 열려 있으면 건드리지 않음 (떠 있는 창은 제외)
       e.preventDefault(); e.stopPropagation();
@@ -5990,13 +5993,13 @@ function mixTotalDuration(){
       try{ if(!ctl.isPlaying()) ctl.play(); }catch(x){}
     };
     const onShiftPlay = e => { // 오디오북 시간 맞추기와 같이: 쉬프트 = 멈춰 있을 때 재생
-      if(curTab !== 'sync' || txtMode || e.key !== 'Shift' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+      if(curTab !== 'sync' || e.key !== 'Shift' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
       const tg = e.target; if(tg && ((tg.tagName === 'INPUT' && tg.type !== 'range') || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
       if(document.querySelector('.pk-back:not(.pk-float)')) return;
       try{ if(!ctl.isPlaying()) ctl.play(); }catch(x){}
     };
     const onArrowLine = e => { // 위·아래 화살표 = 초록줄 한 줄씩 이동
-      if(curTab !== 'sync' || txtMode || syMode !== 'lyric' || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+      if(curTab !== 'sync' || syMode !== 'lyric' || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
       const tg = e.target; if(tg && ((tg.tagName === 'INPUT' && tg.type !== 'range') || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
       if(document.querySelector('.pk-back:not(.pk-float)') || !syT.length) return;
       e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){}
