@@ -5312,6 +5312,12 @@ function mixTotalDuration(){
         if(e.key === 'Enter'){
           e.preventDefault();
           const v = inp.value, ps = inp.selectionStart, A = v.slice(0, ps).trim(), B = v.slice(ps).trim();
+          if(!done && A && !B && ps != null && ps >= v.length){ // 글 맨 끝에서 Enter → 아래에 새 줄(사진 칸 포함)을 만들어 바로 쓰게 함
+            done = true; if(A !== syT[x]){ syT[x] = A; lyrPersist(); } insertLine(x + 1); return;
+          }
+          if(!done && !A && B && ps != null && v.slice(0, ps).trim() === '' && syT[x] !== BLANK){ // 글 맨 앞에서 Enter → 위에 새 줄
+            done = true; insertLine(x); return;
+          }
           if(!done && A && B && ps != null){ // 글 가운데에서 Enter → 그 자리에서 두 줄로 나눔 (앞 줄은 시간·사진 유지, 뒤 줄은 새 줄)
             done = true; syT[x] = A; syT.splice(x + 1, 0, B); syStamp.splice(x + 1, 0, null); syAbs.splice(x + 1, 0, null);
             picL = picL.map(q => q != null && q > x ? q + 1 : q); savePT(); if(syPos > x) syPos++;
@@ -5616,10 +5622,11 @@ function mixTotalDuration(){
         r.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); r.classList.add('dropto'); } });
         r.addEventListener('dragleave', e => { if(!r.contains(e.relatedTarget)) r.classList.remove('dropto'); });
         r.addEventListener('drop', e => { r.classList.remove('dropto'); if(window.__pkDragU != null){ e.preventDefault(); e.stopPropagation(); const du = window.__pkDragU; window.__pkDragU = null; attachPicTo(du, x).then(() => { const pf = pkCur && pkCur.pop; if(pf && pf.isConnected && pf.__fill) pf.__fill(); }); return; } const fs = imgsOf(e.dataTransfer); if(fs.length){ e.preventDefault(); e.stopPropagation(); attachFiles(fs, x); } });
-        r.addEventListener('contextmenu', e => { if(e.target.closest && e.target.closest('input, .pk')) return; e.preventDefault(); lineMenu(e.clientX, e.clientY, x); });
+        r.addEventListener('contextmenu', e => { if(e.target.closest && e.target.closest('input')) return; e.preventDefault(); if(e.target.closest && e.target.closest('.pk, .pkw')) imgMenu(e.clientX, e.clientY, x); else lineMenu(e.clientX, e.clientY, x); });
         let cw = cell; if(kp >= 0){ cw = mkEl('span', 'pkw'); cw.appendChild(cell); const off = mkEl('button', 'pk-off', '✕'); off.type = 'button'; off.title = '이 줄에서 사진 빼기 (사진은 목록에 남음)'; off.addEventListener('click', e => { e.stopPropagation(); picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); }); cw.appendChild(off); }
         r.appendChild(hd); r.appendChild(tm); r.appendChild(tx); r.appendChild(cw); r.appendChild(rx); syList.appendChild(r); syRows.push(r);
       });
+      if(!syT.length){ const er = mkEl('div', 'sy-row sy-empty', '✎ 여기를 눌러 첫 줄을 쓰세요 (줄이 끝나면 Enter → 다음 줄과 사진 칸이 생깁니다)'); er.style.cursor = 'pointer'; er.style.color = '#78716c'; er.addEventListener('click', () => insertLine(0)); syList.appendChild(er); }
       addTa.placeholder = syT.length ? '＋ 가사 추가 (줄마다 Enter, 다 쓰면 ⬆️ 올리기)' : '＋ 가사를 쓰거나 붙여넣고 ⬆️ 올리기를 누르세요 (줄마다 Enter)';
       syMark(!keep); if(keep) syList.scrollTop = keepTop;
     }
@@ -5637,10 +5644,66 @@ function mixTotalDuration(){
       syPos = firstEmpty(syStamp); lyrPersist(); syRender(true);
       const sp = syRows[at] && syRows[at].querySelector('.tx2'); if(sp){ try{ sp.scrollIntoView({ block: 'nearest' }); }catch(e){} editLine(at, sp); }
     }
+    // ---- 줄·이미지 복사 / 잘라내기 / 붙여넣기 (오른쪽 클릭 메뉴) ----
+    const clipW = t => { try{ const pr = navigator.clipboard.writeText(t); if(pr && pr.catch) pr.catch(() => {}); }catch(e){} };
+    async function removePicAt(k){ pics.splice(k, 1); picT.splice(k, 1); picL.splice(k, 1); savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); }
+    async function copyLine(x, cut){
+      const t = syT[x] === BLANK ? '' : syT[x], kp = attachedPic(x);
+      window.__lineClip = { text: t, pic: kp >= 0 ? pics[kp] : null };
+      clipW(t);
+      if(cut){ if(kp >= 0) await removePicAt(kp); delLine(x); }
+    }
+    async function pasteLine(at){
+      let c = window.__lineClip || null, lines = null;
+      try{ const tx = await navigator.clipboard.readText(); if(tx && tx.trim()){ if(c && c.text === tx.trim()) lines = null; else { c = null; lines = tx.split(/\r?\n/).map(l => l.trim()).filter(Boolean); } } }catch(e){}
+      if(!c && !(lines && lines.length)) return;
+      const items = c ? [{ text: c.text === '' ? BLANK : c.text, pic: c.pic }] : lines.map(l => ({ text: l, pic: null }));
+      at = Math.max(0, Math.min(at, syT.length));
+      items.forEach((it, i) => { syT.splice(at + i, 0, it.text); syStamp.splice(at + i, 0, null); syAbs.splice(at + i, 0, null); });
+      picL = picL.map(v => (v != null && v >= at) ? v + items.length : v); savePT();
+      for(let i = 0; i < items.length; i++){ if(items[i].pic != null){ const n0 = pics.length; await putItems([items[i].pic]); if(pics.length > n0){ picL[n0] = at + i; savePT(); } } }
+      chipsUpd(); syPos = firstEmpty(syStamp); lyrPersist(); syRender(true);
+    }
+    async function imgToClipboard(u){
+      try{
+        let blob = isVid(u) ? u : await (await fetch(u)).blob();
+        if(!/^image\//.test(blob.type)) return;
+        if(blob.type !== 'image/png'){ const bm = await createImageBitmap(blob); const cv = document.createElement('canvas'); cv.width = bm.width; cv.height = bm.height; cv.getContext('2d').drawImage(bm, 0, 0); blob = await new Promise(r => cv.toBlob(r, 'image/png')); }
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }catch(e){}
+    }
+    async function pasteImgToLine(x){
+      let file = null;
+      try{ const its = await navigator.clipboard.read(); for(const it of its){ const ty = it.types.find(t => /^image\//.test(t)); if(ty){ const b = await it.getType(ty); file = new File([b], 'paste.' + (ty.split('/')[1] || 'png'), { type: ty }); break; } } }catch(e){}
+      if(!file && window.__imgClip != null){ const u = window.__imgClip; try{ const b = isVid(u) ? u : await (await fetch(u)).blob(); file = (b instanceof File) ? b : new File([b], 'paste', { type: b.type }); }catch(e){} }
+      if(!file){ alert('붙여넣을 이미지가 없습니다.\n이미지를 먼저 복사해 주세요.'); return; }
+      await attachFiles([file], x);
+    }
+    function imgMenu(cx, cy, x){
+      closeCtx();
+      const m = mkEl('div', 'ctxm'); ctxEl = m;
+      const add = (t, fn) => { const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => { closeCtx(); fn(); }); m.appendChild(b); };
+      const kp = attachedPic(x);
+      if(kp >= 0){
+        add('이미지 복사', () => { window.__imgClip = pics[kp]; imgToClipboard(pics[kp]); });
+        add('이미지 잘라내기', async () => { window.__imgClip = pics[kp]; imgToClipboard(pics[kp]); await removePicAt(kp); syRender(true); });
+      }
+      add('이미지 붙여넣기', () => pasteImgToLine(x));
+      if(kp >= 0) add('이미지 빼기', () => { picL = picL.map(v => v === x ? null : v); savePT(); chipsUpd(); syRender(true); });
+      add('이미지 고르기', () => lineChooser(x));
+      back.appendChild(m);
+      const w = m.offsetWidth, h = m.offsetHeight;
+      m.style.left = Math.max(4, Math.min(cx, innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, innerHeight - h - 4)) + 'px';
+    }
     function lineMenu(cx, cy, x){
       closeCtx();
       const m = mkEl('div', 'ctxm'); ctxEl = m;
       const add = (t, fn) => { const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => { closeCtx(); fn(); }); m.appendChild(b); };
+      add('줄 복사', () => copyLine(x, false));
+      add('줄 잘라내기', () => copyLine(x, true));
+      add('줄 붙여넣기 (아래에)', () => pasteLine(x + 1));
+      add('줄 붙여넣기 (위에)', () => pasteLine(x));
+      add('줄 지우기', () => delLine(x));
       add('⬆ 위에 줄 넣기', () => insertLine(x));
       add('⬇ 아래에 줄 넣기', () => insertLine(x + 1));
       if(x > 0) add('↑ 한 줄 위로', () => moveLyric(x, x - 1));
