@@ -828,6 +828,21 @@
   .pk-top .pk-sort{ flex:none; font:inherit; font-size:14pt; padding:6px 10px; border-radius:8px; border:1px solid #d6d3c4; background:#fff; color:#1c1917; cursor:pointer; }
   .pk-top .pk-x{ margin-left:auto; }
   .pk-top .pk-out[hidden]{ display:none; }
+  .pk-g .pk-t .pk-cap{ position:absolute; left:0; right:0; bottom:0; padding:2px 5px; background:rgba(0,0,0,.62); color:#fff; font-size:12px; font-weight:600; line-height:1.3; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pk-g .pk-t .pk-ren{ position:absolute; left:0; right:0; bottom:0; z-index:2; width:100%; box-sizing:border-box; padding:3px 5px; border:2px solid #2563eb; background:#fff; color:#1c1917; font:inherit; font-size:13px; font-weight:600; text-align:center; outline:none; }
+  .pk-ask{ position:fixed; inset:0; z-index:100002; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:12px; }
+  .pk-ask-c{ background:#fff; border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.4); width:min(460px,100%); max-height:92%; display:flex; flex-direction:column; padding:16px; gap:10px; color:#1c1917; }
+  .pk-ask-h{ font-size:15pt; font-weight:700; }
+  .pk-ask-l{ overflow:auto; max-height:34vh; border:1px solid #e7e5e4; border-radius:8px; padding:6px; background:#faf6e8; }
+  .pk-ask-r{ display:flex; align-items:center; gap:10px; padding:4px; font-size:12pt; }
+  .pk-ask-r img{ width:48px; height:48px; object-fit:cover; border-radius:6px; flex:none; }
+  .pk-ask-r span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pk-ask-x{ font-size:11pt; color:#57534e; white-space:pre-line; line-height:1.5; }
+  .pk-ask-b{ display:flex; gap:8px; }
+  .pk-ask-b button{ flex:1; font-size:13pt; font-weight:700; padding:10px 6px; border-radius:10px; border:1px solid; cursor:pointer; white-space:nowrap; }
+  .pk-ask-over{ background:#ea580c; border-color:#c2410c; color:#fff; }
+  .pk-ask-skip{ background:#2563eb; border-color:#1d4ed8; color:#fff; }
+  .pk-ask-cancel{ background:#fff; border-color:#a8a29e; color:#1c1917; }
   .pk-back .pk-top .pk-ttl{ color:#6d28d9; }
   @media (max-width:600px){ .pk-back .pk-top .pk-ic{ display:none; } }
   .pk-back .pk-top [data-new]{ background:#2563eb; border-color:#1d4ed8; color:#fff; font-weight:700; }
@@ -5493,6 +5508,12 @@ function mixTotalDuration(){
       const hs = str => { let h = 5381; for(let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return str.length + ':' + h; };
       const metaGet = () => { try{ return JSON.parse(localStorage.getItem('bgmPkMeta') || '{}') || {}; }catch(e){ return {}; } };
       const metaSet = M => { try{ localStorage.setItem('bgmPkMeta', JSON.stringify(M)); }catch(e){} };
+      const capText = u => { // 사진 밑 글자: 정렬 선택에 따라 이름 / 날짜 / 크기
+        const mode = (pop.querySelector('.pk-sort') || {}).value || 'pick';
+        if(mode === 'date'){ const t = typeof u === 'string' ? metaGet()[hs(nrm(u))] : (u && u.lastModified); if(!t) return '날짜 없음'; const d = new Date(t), z = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
+        if(mode === 'size'){ const n = typeof u === 'string' ? Math.round((u.length - u.indexOf(',') - 1) * 3 / 4) : ((u && u.size) || 0); return n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB'; }
+        return itemName(u) || '이름 없음';
+      };
       const sortIdx = all => { // 정렬 선택대로 보이는 순서 (k = 원래 번호는 그대로)
         const idx = all.map((u, k) => k), mode = (pop.querySelector('.pk-sort') || {}).value || 'pick'; if(mode === 'pick') return idx;
         const M = metaGet(), nm = k => (typeof all[k] === 'string' ? itemName(all[k]) : String(all[k] && all[k].name || '')), dt = k => (typeof all[k] === 'string' ? M[hs(nrm(all[k]))] : all[k] && all[k].lastModified), sz = k => (typeof all[k] === 'string' ? all[k].length : (all[k] && all[k].size) || 0);
@@ -5532,16 +5553,18 @@ function mixTotalDuration(){
         const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-t' + (inSong && k === cur ? ' on' : '');
         let im; if(isVid(u)){ im = document.createElement('video'); im.muted = true; im.preload = 'metadata'; im.playsInline = true; im.src = urlOfItem(u) + '#t=0.1'; } else { im = document.createElement('img'); im.src = u; im.alt = ''; }
         b.appendChild(im);
+        { const cp = document.createElement('span'); cp.className = 'pk-cap'; cp.textContent = capText(u); b.appendChild(cp); }
         if(typeof u === 'string'){ b.draggable = true; shownKeys.add(nrm(u)); if(msel.has(nrm(u))) b.classList.add('ms'); b.addEventListener('dragstart', e => { window.__pkDragU = u; pkDrag = msel.has(nrm(u)) ? Array.from(msel) : [nrm(u)]; try{ e.dataTransfer.setData('text/plain', 'pk'); e.dataTransfer.effectAllowed = 'move'; }catch(x){} }); b.addEventListener('dragend', () => { pkDrag = null; setTimeout(() => { window.__pkDragU = null; }, 50); }); b._key = nrm(u); } else { b._key = 'vid#' + k; if(msel.has(b._key)) b.classList.add('ms'); }
         b._info = { u, k, inSong };
         b.addEventListener('click', ev => { // 윈도우처럼: 클릭=선택, Ctrl+클릭=추가/빼기, Shift+클릭=범위
-          const key = b._key;
+          const key = b._key, wasOnly = msel.size === 1 && msel.has(key);
           if(ev.ctrlKey || ev.metaKey){ if(msel.has(key)) msel.delete(key); else msel.add(key); anchorK = key; }
           else if(ev.shiftKey && anchorK){ const ts = tilesNow().map(t => t._key), a = ts.indexOf(anchorK), c = ts.indexOf(key); if(a >= 0 && c >= 0) msel = new Set(ts.slice(Math.min(a, c), Math.max(a, c) + 1)); else { msel = new Set([key]); anchorK = key; } }
           else { msel = new Set([key]); anchorK = key; }
           paintMs();
+          if(wasOnly && !ev.ctrlKey && !ev.metaKey && !ev.shiftKey && ev.target.classList && ev.target.classList.contains('pk-cap')){ clearTimeout(b._rt); b._rt = setTimeout(() => startRename(b), 450); } // 선택된 사진의 이름을 한 번 더 누르면 고치기
         });
-        b.addEventListener('dblclick', () => openViewer(b._info));
+        b.addEventListener('dblclick', () => { clearTimeout(b._rt); openViewer(b._info); });
         g.appendChild(b);
         if(k === selK){ msel = new Set([b._key]); anchorK = b._key; }
       });
@@ -5551,19 +5574,44 @@ function mixTotalDuration(){
       pop.__fill = () => fill(null);
       fill(null);
       Promise.all([libGet(), libFGet()]).then(([a, fl]) => { if(!pop.isConnected) return; lib = a; folders = fl; fLoaded = true; fill(null); });
+      const dupAsk = dups => new Promise(res => { // 같은 사진 확인창: 덮어쓰기 / 가져오기(없는 사진만) / 취소
+        const D = pop.ownerDocument; pop.querySelectorAll('.pk-ask').forEach(o => o.remove());
+        const ov = D.createElement('div'); ov.className = 'pk-ask';
+        const card = D.createElement('div'); card.className = 'pk-ask-c';
+        const h = D.createElement('div'); h.className = 'pk-ask-h'; h.textContent = '🔁 같은 사진이 ' + dups.length + '장 있습니다'; card.appendChild(h);
+        const ls = D.createElement('div'); ls.className = 'pk-ask-l';
+        dups.forEach(it => { const r = D.createElement('div'); r.className = 'pk-ask-r'; const im = D.createElement('img'); im.src = it.d; im.alt = ''; const sp = D.createElement('span'); sp.textContent = itemName(it.d) || String(it.f.name || '').replace(/\.[^.]*$/, '') || '이름 없음'; r.appendChild(im); r.appendChild(sp); ls.appendChild(r); });
+        card.appendChild(ls);
+        const ex = D.createElement('div'); ex.className = 'pk-ask-x'; ex.textContent = '덮어쓰기: 같은 사진을 새 사진으로 바꾸고 나머지도 가져옵니다.\n가져오기: 같은 사진은 넣지 않고, 없는 사진만 가져옵니다.\n취소: 아무것도 가져오지 않습니다.'; card.appendChild(ex);
+        const bar = D.createElement('div'); bar.className = 'pk-ask-b';
+        const done = v => { D.removeEventListener('keydown', kd, true); ov.remove(); res(v); };
+        [['over', '🔄 덮어쓰기'], ['skip', '📥 가져오기'], ['cancel', '✖ 취소']].forEach(([v, t]) => { const b = D.createElement('button'); b.type = 'button'; b.className = 'pk-ask-' + v; b.textContent = t; b.addEventListener('click', () => done(v)); bar.appendChild(b); });
+        card.appendChild(bar); ov.appendChild(card); pop.appendChild(ov);
+        const kd = e => { if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done('cancel'); } else if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); } };
+        D.addEventListener('keydown', kd, true);
+      });
       const addToList = async fs => {
         fs = Array.from(fs || []); if(!fs.length) return;
         { const sm = (pop.querySelector('.pk-sort') || {}).value || 'pick'; if(sm === 'name') fs.sort((p, q) => String(p.name || '').localeCompare(String(q.name || ''), 'ko', { numeric: true })); else if(sm === 'date') fs.sort((p, q) => (p.lastModified || 0) - (q.lastModified || 0)); else if(sm === 'size') fs.sort((p, q) => (q.size || 0) - (p.size || 0)); }
         const add = []; let selDup = null, selLib = null; const libNow = await libGet(); const MM = metaGet();
+        const items = [];
         for(const f of fs){
-          if(/^image\//.test(f.type)){ let d = null; try{ d = await shrinkImage(f); }catch(e){} const nd = d ? nrm(d) : null;
-            if(nd){ const k0 = pics.findIndex(u => nrm(u) === nd), kl = k0 >= 0 ? -1 : libNow.findIndex(u => nrm(u) === nd);
-              if(k0 >= 0 || kl >= 0){ MM[hs(nd)] = f.lastModified || Date.now();
-                if(!confirm('같은 사진이 이미 있습니다. 덮어쓸까요?\n(확인 = 덮어쓰기, 취소 = 가져오지 않음)')) continue; // 취소: 아무것도 넣지 않음
-                if(k0 >= 0){ pics[k0] = d; await setImgs(keyOf(kind, name), pics); renderPics(); const li = libNow.findIndex(u => nrm(u) === nd); if(li >= 0){ libNow[li] = d; await libSet(libNow); } if(selDup == null) selDup = k0; } // 확인: 그 자리의 사진을 새 사진으로 덮어씀
-                else { libNow[kl] = d; await libSet(libNow); if(selLib == null) selLib = d; }
-                continue;
-              } } }
+          let d = null, nd = null, k0 = -1, kl = -1;
+          if(/^image\//.test(f.type)){ try{ d = await shrinkImage(f); }catch(e){} nd = d ? nrm(d) : null;
+            if(nd){ k0 = pics.findIndex(u => nrm(u) === nd); kl = k0 >= 0 ? -1 : libNow.findIndex(u => nrm(u) === nd); } }
+          items.push({ f, d, nd, k0, kl, dup: k0 >= 0 || kl >= 0 });
+        }
+        let dmode = 'over'; const dups = items.filter(it => it.dup);
+        if(dups.length){ dmode = await dupAsk(dups); if(dmode === 'cancel') return; } // 취소: 아무것도 가져오지 않음
+        for(const it of items){
+          const { f, d, nd, k0, kl } = it;
+          if(it.dup){
+            if(dmode === 'skip') continue; // 가져오기: 같은 사진은 넣지 않고 없는 사진만
+            MM[hs(nd)] = f.lastModified || Date.now();
+            if(k0 >= 0){ pics[k0] = d; await setImgs(keyOf(kind, name), pics); renderPics(); const li = libNow.findIndex(u => nrm(u) === nd); if(li >= 0){ libNow[li] = d; await libSet(libNow); } if(selDup == null) selDup = k0; } // 덮어쓰기: 그 자리의 사진을 새 사진으로 바꿈
+            else { libNow[kl] = d; await libSet(libNow); if(selLib == null) selLib = d; }
+            continue;
+          }
           add.push(f);
         }
         const n0 = pics.length; if(add.length) await putImages(add);
@@ -5654,6 +5702,26 @@ function mixTotalDuration(){
         if(typeof u !== 'string' && !inSong) return;
         await attachPicTo(u, x); fill(null); // 창은 열어 둔 채로 (다른 줄에 계속 붙일 수 있게)
       };
+      const cleanName = t => String(t || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').trim().slice(0, 80);
+      const withName = (u, v) => u.replace(/^(data:[^;,]*)(?:;name=[^;,]*)?/, '$1' + (v ? ';name=' + encodeURIComponent(v) : ''));
+      const applyRename = async (u, v) => { // 이름만 바꿈 (사진·폴더 연결은 그대로)
+        const nk = nrm(u), nu = withName(u, v); let ch = false;
+        for(let q = 0; q < pics.length; q++){ if(typeof pics[q] === 'string' && nrm(pics[q]) === nk){ pics[q] = nu; ch = true; } }
+        if(ch){ await setImgs(keyOf(kind, name), pics); renderPics(); }
+        const l2 = await libGet(); let c2 = false; for(let q = 0; q < l2.length; q++){ if(nrm(l2[q]) === nk){ l2[q] = nu; c2 = true; } } if(c2){ await libSet(l2); lib = l2; }
+        fill(null);
+      };
+      const startRename = tile => { // 윈도우 탐색기처럼: 이름 글자를 바로 고침 (Enter=저장, Esc=취소)
+        const info = tile && tile._info; if(!info || typeof info.u !== 'string') return;
+        const cp = tile.querySelector('.pk-cap'); if(!cp || tile.querySelector('.pk-ren')) return;
+        const inp = pop.ownerDocument.createElement('input'); inp.type = 'text'; inp.className = 'pk-ren'; inp.maxLength = 80; inp.value = itemName(info.u); inp.placeholder = '이름';
+        cp.style.display = 'none'; tile.appendChild(inp); tile.draggable = false; inp.focus(); inp.select();
+        let fin = false;
+        const end = ok => { if(fin) return; fin = true; const v = cleanName(inp.value); inp.remove(); cp.style.display = ''; tile.draggable = true; if(ok && v !== itemName(info.u)) applyRename(info.u, v); };
+        ['pointerdown', 'mousedown', 'click', 'dblclick', 'contextmenu', 'keyup', 'dragstart'].forEach(ev => inp.addEventListener(ev, e => { e.stopPropagation(); }));
+        inp.addEventListener('keydown', e => { e.stopPropagation(); if(e.key === 'Enter'){ e.preventDefault(); end(true); } else if(e.key === 'Escape'){ e.preventDefault(); end(false); } });
+        inp.addEventListener('blur', () => end(true));
+      };
       const deleteSelected = async () => {
         const inf = selImgs(); if(!inf.length) return;
         if(!PW0().confirm('선택한 사진 ' + inf.length + '장을 지울까요?\n(사진불러오기 목록과 이 곡에서 모두 지워집니다)')) return;
@@ -5698,7 +5766,7 @@ function mixTotalDuration(){
           const ks = Array.from(msel);
           const ent = [];
           if(canAttach()) ent.push([typeof swapAt === 'number' ? '📌 이 자리에 바꾸기' : '📌 이 줄에 붙이기', attachSelected]);
-          ent.push(['📋 복사', copySelected], ['📋 붙여넣기', doPaste], ['🗑 삭제', deleteSelected], ['☑ 모두 선택', () => { msel = new Set(tilesNow().map(t => t._key)); paintMs(); }], ['💾 컴에 저장', saveSelected]);
+          ent.push(['📋 복사', copySelected], ['📋 붙여넣기', doPaste]); if(ks.length === 1 && typeof tl._info.u === 'string') ent.push(['✏️ 이름 바꾸기', () => startRename(tl)]); ent.push(['🗑 삭제', deleteSelected], ['☑ 모두 선택', () => { msel = new Set(tilesNow().map(t => t._key)); paintMs(); }], ['💾 컴에 저장', saveSelected]);
           folders.forEach((f, i) => { if(i !== curF) ent.push(['📁 ' + f.name + ' 폴더로 옮기기', () => moveTo(ks, i)]); });
           if(curF != null) ent.push(['↩ 폴더에서 빼기', () => moveTo(ks, -1)]);
           pkMenu(e, ent);
@@ -5755,9 +5823,11 @@ function mixTotalDuration(){
         if(!pop.isConnected){ document.removeEventListener('keydown', onCtrlA, true); try{ if(window.__pkWin) window.__pkWin.document.removeEventListener('keydown', onCtrlA, true); }catch(x){} return; }
         const tg = e.target; if(tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT')) return;
         if(!e.target || e.target.ownerDocument !== pop.ownerDocument) return; // 믹서 창에서 누른 키는 무시
+        if(pop.querySelector('.pk-ask')) return;
         const vw = pop.querySelector('.pk-view');
         if(e.key === 'Escape'){ if(vw){ e.preventDefault(); e.stopPropagation(); vw.remove(); } return; }
         if(vw) return;
+        if(e.key === 'F2'){ if(msel.size === 1){ const t = tilesNow().find(t => msel.has(t._key)); if(t){ e.preventDefault(); e.stopPropagation(); startRename(t); } } return; }
         if(e.key === 'Delete'){ e.preventDefault(); e.stopPropagation(); deleteSelected(); return; }
         if(e.key === 'Enter'){ if(msel.size && canAttach()){ e.preventDefault(); e.stopPropagation(); attachSelected(); } return; }
         if((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')){ if(msel.size){ e.preventDefault(); e.stopPropagation(); copySelected(); } return; }
