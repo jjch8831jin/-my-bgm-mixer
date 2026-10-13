@@ -2574,7 +2574,7 @@ async function addFiles(fileList, kind){
       try{
         const arrayBuf = await file.arrayBuffer();
         const buffer = await ctx.decodeAudioData(arrayBuf);
-        added.push({ id: ++itemIdCounter, name: file.name, buffer });
+        added.push({ id: ++itemIdCounter, name: file.name, buffer, raw: file }); // raw = 불러온 원본 파일 (곡 통째 저장에 넣음)
       } catch(err){
         loadErrorEl.textContent = label + ' 파일을 불러오지 못했습니다: ' + file.name + ' — ' + err.message;
       }
@@ -5021,10 +5021,12 @@ function mixTotalDuration(){
   }
   function blobToDataUrl(b){ return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(fr.error); fr.readAsDataURL(b); }); }
   async function listImgKeys(){ try{ const db = await idbOpen(); return await new Promise(res => { const q = db.transaction('imgs').objectStore('imgs').getAllKeys(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); }); }catch(e){ return []; } }
-  async function packSong(key, lyrOverride){
+  async function packSong(key, lyrOverride, audio){
     const lyr = loadLyr(), ttl = loadTtl(), items = await getImgs(key), media = [], blobs = [];
     for(const it of items){ const b = await itemToBlob(it); media.push({ k: typeof it === 'string' ? 'i' : 'v', type: b.type || '', size: b.size }); blobs.push(b); }
-    return { head: { key, title: ttl[key] || '', lyr: lyrOverride || lyr[key] || null, media, pt: getPT(key, items.length), pl: getPL(key, items.length) }, blobs };
+    const head = { key, title: ttl[key] || '', lyr: lyrOverride || lyr[key] || null, media, pt: getPT(key, items.length), pl: getPL(key, items.length) };
+    if(audio && audio.blob){ head.aud = { kind: audio.kind, name: audio.name, type: audio.type || '', size: audio.blob.size }; blobs.push(audio.blob); } // 노래 원본은 사진 뒤에 붙음
+    return { head, blobs };
   }
   function buildBgmx(packs){
     const head = new TextEncoder().encode(JSON.stringify({ v: 1, songs: packs.map(x => x.head) }));
@@ -5051,10 +5053,17 @@ function mixTotalDuration(){
     if(new TextDecoder().decode(hb.slice(0, 5)) !== BGMX_MAGIC) throw new Error('magic');
     const n = new DataView(hb.buffer, 5, 4).getUint32(0, true);
     const h = JSON.parse(await file.slice(9, 9 + n).text()); let pos = 9 + n;
-    h.songs.forEach(sg => { (sg.media || []).forEach(m => { m.blob = file.slice(pos, pos + m.size, m.type); pos += m.size; }); });
+    h.songs.forEach(sg => { (sg.media || []).forEach(m => { m.blob = file.slice(pos, pos + m.size, m.type); pos += m.size; }); if(sg.aud && sg.aud.size >= 0){ sg.aud.blob = file.slice(pos, pos + sg.aud.size, sg.aud.type || ''); pos += sg.aud.size; } });
     return h.songs;
   }
+  async function bgmxAudio(sg){ // 파일에 노래가 들어 있으면 믹서 목록에 올림 (같은 이름이 이미 있으면 그대로 둠)
+    const a = sg && sg.aud; if(!a || !a.blob) return;
+    const k = a.kind === 'voice' ? 'voice' : 'music', its = k === 'voice' ? voiceItems : musicItems;
+    if(its.some(it => it.name === a.name)) return;
+    await addFiles([new File([a.blob], a.name, { type: a.type || 'audio/mpeg' })], k);
+  }
   async function applySong(sg, key, add){
+    await bgmxAudio(sg);
     const items = [];
     for(const m of (sg.media || [])) items.push(m.k === 'i' ? await blobToDataUrl(m.blob) : new File([m.blob], 'video', { type: m.type || 'video/mp4' }));
     const cur = add ? await getImgs(key) : [];
@@ -5719,7 +5728,8 @@ function mixTotalDuration(){
           savePT(); const w = pop.ownerDocument.defaultView; pop.remove(); if(w !== window){ try{ w.close(); }catch(e){} } await setImgs(keyOf(kind, name), pics); renderPics(); chipsUpd(); return;
         }
         if(typeof u !== 'string' && !inSong) return;
-        await attachPicTo(u, x); fill(null); // 창은 열어 둔 채로 (다른 줄에 계속 붙일 수 있게)
+        await attachPicTo(u, x); // 붙인 뒤 사진불러오기 창을 닫고 시간 맞추기 창이 바로 보이게 함
+        { const w = pop.ownerDocument.defaultView; pop.remove(); if(w !== window){ try{ w.close(); }catch(e){} } try{ window.focus(); }catch(e){} }
       };
       const cleanName = t => String(t || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').trim().slice(0, 80);
       const withName = (u, v) => u.replace(/^(data:[^;,]*)(?:;name=[^;,]*)?/, '$1' + (v ? ';name=' + encodeURIComponent(v) : ''));
@@ -6158,7 +6168,7 @@ function mixTotalDuration(){
       const closeP = () => { if(pop){ pop.remove(); pop = null; } };
       const items = [
         ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
-        ['📁 사진 저장', '[data-imgsave]'], ['🗑 가사·사진 지우기', '[data-del]']
+        ['💾 곡 통째 저장', 'SONG'], ['🗑 가사·사진 지우기', '[data-del]']
       ];
       mb.addEventListener('click', e => {
         e.stopPropagation(); if(pop){ closeP(); return; }
@@ -6166,6 +6176,7 @@ function mixTotalDuration(){
         items.forEach(([t, sel]) => { if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => {
           closeP();
           if(sel === 'PICK'){ lineChooser(null); return; }
+          if(sel === 'SONG'){ saveSong(); return; }
           if(sel === '[data-del]'){ // 가사를 고른 상태면 가사만, 사진을 고른 상태면 사진만 지움 (확인창 없음 · 취소 버튼으로 되돌릴 수 있음)
             if(txtMode){
               if(!syT.length) return;
@@ -6601,6 +6612,20 @@ function mixTotalDuration(){
     trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ alert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
     syncTrk();
     // 백업 저장 / 불러오기
+    async function saveSong(){ // 이 곡의 노래(원본) + 가사 + 시간 + 사진·동영상을 한 파일로
+      try{
+        if(curTab === 'sync'){ if(txtMode) txtApply(); lyrPersist(); }
+        const key = keyOf(kind, name), cur = curInfo(kind), item = cur && cur.item;
+        const aud = (item && item.raw) ? { blob: item.raw, name: item.name, type: item.raw.type || '', kind } : null;
+        if(!pics.length && !loadLyr()[key] && !aud){ alert('저장할 내용이 없습니다.'); return; }
+        const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
+        const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream');
+        if(item && !aud) alert('이 노래는 원본 파일이 없어서 노래 없이 저장합니다.\n(노래를 다시 불러온 뒤 저장하면 노래도 들어갑니다)');
+        busyMsg('저장 파일 만드는 중…');
+        const pk = await packSong(key, null, aud);
+        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) alert('저장했습니다: ' + sv);
+      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) alert('저장 파일을 만들지 못했습니다.'); }
+    }
     back.querySelector('[data-bsave]').addEventListener('click', async () => {
       try{
         const key = keyOf(kind, name), txt = ta.value.trim();
@@ -6638,9 +6663,10 @@ function mixTotalDuration(){
         if(!songs.length){ alert('들어 있는 곡이 없습니다.'); return; }
         const key = keyOf(kind, name);
         if(songs.length === 1){
-          const had = (await getImgs(key)).length > 0; let add = false;
+          const kk = songs[0].aud ? songs[0].key : key; // 노래가 들어 있는 파일은 그 곡 이름대로 불러옴
+          const had = (await getImgs(kk)).length > 0; let add = false;
           if(had) add = !confirm('이 곡에 이미 사진·동영상이 있습니다.\n확인 = 기존 것을 지우고 불러온 것으로 바꾸기\n취소 = 기존 것 뒤에 추가하기');
-          busyMsg('불러오는 중…'); await applySong(songs[0], key, add);
+          busyMsg('불러오는 중…'); await applySong(songs[0], kk, add);
         } else {
           if(!confirm('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?')) return;
           busyMsg('불러오는 중…'); for(const sg of songs) await applySong(sg, sg.key, false);
