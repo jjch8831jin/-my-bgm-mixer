@@ -5115,7 +5115,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice" title="키 1">음성</button><button type="button" data-trk="music" title="키 2">음악</button><button type="button" data-trk="all" title="키 3">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><span class="sy-tg"><button type="button" data-tg="txt" title="가사 글 쓰기·고치기 (메모장처럼)"><span class="ic">📝</span><span>가사</span></button><button type="button" data-tg="list" class="on" title="시간 찍기·이미지 넣기"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" class="cancel" data-cancel><span class="ic">✕</span><span>취소</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><span class="sy-tg"><button type="button" data-tg="txt" title="가사 글 쓰기·고치기 (메모장처럼)"><span class="ic">📝</span><span>가사</span></button><button type="button" data-tg="list" class="on" title="시간 찍기·이미지 넣기"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" class="cancel" data-cancel><span class="ic">✕</span><span>취소</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
       '<div data-pane="edit" style="display:none !important"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
@@ -6086,8 +6086,8 @@ function mixTotalDuration(){
       syMode = m;
       back.querySelectorAll('[data-sym]').forEach(b => b.classList.toggle('on', b.dataset.sym === m));
       addWrap.style.display = m === 'pic' ? 'none' : ''; upBtn.disabled = m === 'pic';
-      if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = '▶ 이 사진 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 장&nbsp;</span>되돌리기</span>'; picSyRender(); }
-      else { syPos = firstEmpty(syStamp); afterStampPos = -1; stampBtn.innerHTML = '▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span>'; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span>'; syRender(); }
+      if(m === 'pic'){ picPos = 0; stampBtn.innerHTML = ''; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 장&nbsp;</span>되돌리기</span>'; picSyRender(); }
+      else { syPos = firstEmpty(syStamp); afterStampPos = -1; stampBtn.innerHTML = ''; undoBtn.innerHTML = '<span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span>'; syRender(); }
     }
     back.querySelectorAll('[data-sym]').forEach(b => b.addEventListener('click', () => setSyMode(b.dataset.sym)));
     function syMark(scroll){
@@ -6173,7 +6173,7 @@ function mixTotalDuration(){
       mb.addEventListener('click', e => {
         e.stopPropagation(); if(pop){ closeP(); return; }
         pop = mkEl('div', 'ctxm moreM');
-        items.forEach(([t, sel]) => { if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => {
+        items.forEach(([t, sel]) => { if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null); const sp = t.indexOf(' '); const ics = mkEl('span', null, t.slice(0, sp)); ics.style.cssText = 'display:inline-block;width:1.6em;text-align:center'; b.appendChild(ics); b.appendChild(document.createTextNode(t.slice(sp + 1))); b.type = 'button'; b.addEventListener('click', () => {
           closeP();
           if(sel === 'PICK'){ lineChooser(null); return; }
           if(sel === 'SONG'){ saveSong(); return; }
