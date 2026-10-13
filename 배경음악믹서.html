@@ -6163,14 +6163,17 @@ function mixTotalDuration(){
       mb.addEventListener('click', e => {
         e.stopPropagation(); if(pop){ closeP(); return; }
         pop = mkEl('div', 'ctxm moreM');
-        items.forEach(([t, sel]) => { const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => {
+        items.forEach(([t, sel]) => { if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null, t); b.type = 'button'; b.addEventListener('click', () => {
           closeP();
           if(sel === 'PICK'){ lineChooser(null); return; }
-          if(sel === '[data-del]'){
-            const nl = syT.length, np = pics.length; if(!nl && !np) return;
-            if(!confirm('이 곡의 가사 ' + nl + '줄과 사진·동영상 ' + np + '개를 모두 지울까요?\n(지우면 되돌릴 수 없습니다)')) return;
-            back.querySelector(sel).click();
-            (async () => { pics = []; picT = []; picL = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); syncInit(); })();
+          if(sel === '[data-del]'){ // 가사를 고른 상태면 가사만, 사진을 고른 상태면 사진만 지움 (확인창 없음 · 취소 버튼으로 되돌릴 수 있음)
+            if(txtMode){
+              if(!syT.length) return;
+              clearTimeout(txtTimer); txtEl.value = ''; syT.splice(0); syStamp.splice(0); syAbs.splice(0); picL = picL.map(() => null); savePT(); syPos = 0; afterStampPos = -1; syStack = []; lyrPersist(); syRender(true);
+            } else {
+              if(!pics.length) return;
+              (async () => { pics = []; picT = []; picL = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); syncInit(); })();
+            }
             return;
           }
           back.querySelector(sel).click();
