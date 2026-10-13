@@ -335,7 +335,8 @@
   .lyr-box.autohide:not(.ui-show) .lyr-head{ opacity:1 !important; pointer-events:none; }
   .lyr-box.autohide:not(.ui-show) .lyr-head > *:not(.nm), .lyr-box.autohide:not(.ui-show) .lyr-bar{ opacity:0 !important; }
   .lyr-box.autohide:not(.ui-show) .lyr-head .lb{ display:none !important; }
-  .lyr-box.autohide:not(.ui-show) .lyr-head .nm{ display:block; position:absolute; left:50%; transform:translateX(-50%); top:10px; max-width:calc(100% - 32px); text-align:center; font-size:14pt !important; color:#fff !important; text-shadow:-1px -1px 0 #1c1917, 1px -1px 0 #1c1917, -1px 1px 0 #1c1917, 1px 1px 0 #1c1917, 0 0 4px #000 !important; }
+  .lyr-box.autohide.ui-show .lyr-head .nm, .lyr-box.autohide.ui-show .lyr-head .lb{ font-size:14pt !important; }
+  .lyr-box.autohide:not(.ui-show) .lyr-head .nm{ display:block; position:absolute; left:50%; transform:translateX(-50%); top:10px; max-width:calc(100% - 32px); text-align:center; font-size:18pt !important; color:#0ea5e9 !important; text-shadow:-1px -1px 0 #1c1917, 1px -1px 0 #1c1917, -1px 1px 0 #1c1917, 1px 1px 0 #1c1917, 0 0 4px #000 !important; }
   .lyr-bar .rate{ display:flex; align-items:center; gap:4px; background:#fff; border:1px solid #f59e0b; border-radius:12px; padding:3px 4px; }
   .lyr-bar .rate b{ min-width:2.8em; text-align:center; color:#1c1917; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14pt; }
   .lyr-box .lyr-bar .rate button{ width:21px; height:32px; padding:0; border-radius:8px; background:#f59e0b; border-color:#f59e0b; color:#000; font-weight:800; }
