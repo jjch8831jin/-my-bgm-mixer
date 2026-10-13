@@ -337,8 +337,7 @@
   .lyr-box.haspic .lyr-ln.nx{ opacity:.95; }
   .lyr-box.haspic .lyr-view.blk .lyr-ln{ opacity:0 !important; }
   .lyr-box.haspic .lyr-view.blk .lyr-hl{ opacity:0 !important; }
-  .lyr-box.haspic .lyr-ln.on{ color:#ffe04a; }
-  .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#7fe3ff; }
+  .lyr-box.haspic .lyr-ln.on, .lyr-voice .lyr-box.haspic .lyr-ln.on{ color:#ff2a2a; text-shadow:-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 -2px 0 #fff, 0 2px 0 #fff, -2px 0 0 #fff, 2px 0 0 #fff; }
   .lyr-box.haspic .lyr-hl, .lyr-voice .lyr-box.haspic .lyr-hl{ display:none; }
   #btnReload{ display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; margin-left:8px; vertical-align:middle; border-radius:50%; border:2px solid #d9822b; background:#ffb454; color:#5a2d00; cursor:pointer; padding:0; }
   #btnReload:hover{ background:#ffc87a; }
@@ -900,6 +899,9 @@
   .lyr-box .sy-tg{ display:inline-flex; flex:none; border:1px solid #c2410c; border-radius:8px; overflow:hidden; }
   .lyr-box .sy-tg button{ border:0; border-radius:0; background:#fff; color:#9a3412; font-weight:700; }
   .lyr-box .sy-tg button.on{ background:#c2410c; color:#fff; }
+  .lyr-box.syncmode [data-x]{ display:none !important; }
+  .lyr-box .sy-one button.cancel{ background:#fee2e2; border-color:#b91c1c; color:#991b1b; font-weight:700; }
+  .lyr-box:not(.syncmode) [data-cancel]{ display:none !important; }
 </style>
 </head>
 <body>
@@ -5047,6 +5049,8 @@ function mixTotalDuration(){
     const i = curInfo(kind);
     if(!i) return;
     let name = i.item.name;
+    let pendRestore = null;
+    try{ const pk = 'bgmSyncSnap::' + keyOf(kind, name), raw = localStorage.getItem(pk); if(raw){ localStorage.removeItem(pk); const sn = JSON.parse(raw), a0 = loadLyr(), k0 = keyOf(kind, name); if(sn.lyr) a0[k0] = sn.lyr; else delete a0[k0]; saveLyr(a0); pendRestore = sn; } }catch(e){} // 저장 안 하고 닫힌 경우: 열기 전 상태로
     const L = loadLyr()[keyOf(kind, name)] || {};
     const back = document.createElement('div'); back.className = 'lyr-back' + (kind === 'voice' ? ' lyr-voice' : '');
     back.innerHTML = '<div class="lyr-box" role="dialog" aria-label="가사"><div class="lyr-head"><b class="lb">제목</b><span class="nm"></span>' +
@@ -5058,7 +5062,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice" title="키 1">음성</button><button type="button" data-trk="music" title="키 2">음악</button><button type="button" data-trk="all" title="키 3">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><span class="sy-tg"><button type="button" data-tg="txt" title="가사 글 쓰기·고치기 (메모장처럼)"><span class="ic">📝</span><span>가사</span></button><button type="button" data-tg="list" class="on" title="시간 찍기·이미지 넣기"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp>▶ 이 줄 시작!<span class="lg">&nbsp;(스페이스)</span></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><span class="sy-tg"><button type="button" data-tg="txt" title="가사 글 쓰기·고치기 (메모장처럼)"><span class="ic">📝</span><span>가사</span></button><button type="button" data-tg="list" class="on" title="시간 찍기·이미지 넣기"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" class="cancel" data-cancel><span class="ic">✕</span><span>취소</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
       '<div data-pane="edit" style="display:none !important"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
@@ -5192,11 +5196,13 @@ function mixTotalDuration(){
       syncVideo((activeTrack === 'all' ? (voicePlayerCtl.isPlaying() || musicPlayerCtl.isPlaying()) : pl) && !ended);
     }
     refreshPics();
+    if(pendRestore && pendRestore.picT){ const sn = pendRestore; refreshPics().then(() => { if(pics.length === sn.nPics){ picT = sn.picT.slice(); picL = (sn.picL || []).slice(); savePT(); try{ renderPics(); }catch(e){} } }); }
     ta.value = L.text || ''; si.value = L.start || 0; ei.value = L.end || Math.round(i.item.buffer.duration);
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
       { const bx = back.querySelector('.lyr-box'), lbx = back.querySelector('.lyr-head .lb'); if(bx) bx.classList.toggle('syncmode', k === 'sync'); back.classList.toggle('syb', k === 'sync'); if(lbx) lbx.textContent = (k === 'sync') ? '시간 맞추기' : '제목'; }
+      if(k === 'sync' && curTab !== 'sync' && !snap) takeSnap();
       curTab = k; try{ applyAuto(); }catch(e){}
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
@@ -5253,6 +5259,31 @@ function mixTotalDuration(){
     const mkEl = (tag, cls, txt) => { const e = document.createElement(tag); if(cls) e.className = cls; if(txt != null) e.textContent = txt; return e; };
     const tparse = l => { const m = TIME_RE.exec(l); return m && m[3].trim() ? { t: m[3].trim(), s: Number(m[1]) * 60 + Number(m[2].replace(',', '.')) } : { t: l, s: null }; };
     const firstEmpty = a => { const i = a.findIndex(v => v == null); return i < 0 ? 0 : i; };
+    let snap = null;
+    function snapKey(){ return 'bgmSyncSnap::' + keyOf(kind, name); }
+    function takeSnap(){ // 시간 맞추기에 들어갈 때의 상태를 기억해 둔다 (저장을 눌러야 확정, 안 누르면 이 상태로 돌아감)
+      const a = loadLyr(), k = keyOf(kind, name);
+      const sn = { lyr: a[k] ? JSON.parse(JSON.stringify(a[k])) : null, ta: ta.value, pics: null, picT: null, picL: null };
+      snap = sn;
+      try{ localStorage.setItem(snapKey(), JSON.stringify({ lyr: sn.lyr })); }catch(e){}
+      refreshPics().then(() => { if(snap === sn && !sn.pics){ sn.pics = pics.slice(); sn.picT = picT.slice(); sn.picL = picL.slice(); try{ localStorage.setItem(snapKey(), JSON.stringify({ lyr: sn.lyr, picT: sn.picT, picL: sn.picL, nPics: sn.pics.length })); }catch(e){} } });
+    }
+    function commitSnap(){ snap = null; try{ localStorage.removeItem(snapKey()); }catch(e){} }
+    function revertSync(){
+      if(!snap) return; const sn = snap; snap = null; clearTimeout(txtTimer);
+      try{ localStorage.removeItem(snapKey()); }catch(e){}
+      const a = loadLyr(), k = keyOf(kind, name);
+      if(sn.lyr) a[k] = sn.lyr; else delete a[k]; saveLyr(a);
+      ta.value = sn.ta;
+      if(sn.pics){
+        const changed = pics.length !== sn.pics.length || pics.some((u, q) => u !== sn.pics[q]);
+        pics = sn.pics.slice(); picT = sn.picT.slice(); picL = sn.picL.slice(); savePT();
+        if(changed) setImgs(k, pics).then(() => { try{ renderPics(); }catch(e){} });
+        try{ renderPics(); chipsUpd(); }catch(e){}
+      }
+      try{ tick(); }catch(e){}
+    }
+    function cancelSync(){ revertSync(); const A = loadLyr()[keyOf(kind, name)]; if(!A || !String(A.text || '').trim()) close(); else tab('view'); }
     const txtEl = back.querySelector('.sy-txt');
     function txtApply(){ // 글 칸 → 가사 줄 (위에서부터 같은 순서로 시간·사진을 유지)
       clearTimeout(txtTimer);
@@ -5936,6 +5967,7 @@ function mixTotalDuration(){
     }
     function syFinish(){
       if(txtMode) txtApply();
+      commitSnap();
       if(syMode === 'pic'){ savePT(); tab('view'); return; }
       lyrPersist(); tab('view');
     }
@@ -6045,7 +6077,7 @@ function mixTotalDuration(){
       chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
       document.body.appendChild(chipEl);
     });
-    const close = () => { try{ if(txtMode) txtApply(); }catch(e){} document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keydown', onShiftPlay, true); document.removeEventListener('keydown', onArrowLine, true); document.removeEventListener('keydown', onEnter, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
+    const close = () => { try{ if(snap) revertSync(); else if(txtMode) txtApply(); }catch(e){} document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keydown', onShiftPlay, true); document.removeEventListener('keydown', onArrowLine, true); document.removeEventListener('keydown', onEnter, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
@@ -6064,6 +6096,7 @@ function mixTotalDuration(){
     document.addEventListener('keydown', onKey, true);
     back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
     back.querySelector('[data-x]').addEventListener('click', close);
+    back.querySelector('[data-cancel]').addEventListener('click', cancelSync);
     const swBtn = back.querySelector('[data-sw]'), other = kind === 'voice' ? 'music' : 'voice';
     swBtn.textContent = kind === 'voice' ? '음악 가사 보기' : '음성 보기';
     swBtn.disabled = !curInfo(other);
@@ -6319,7 +6352,7 @@ function mixTotalDuration(){
           g.save(); g.globalAlpha = alpha; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
           if(!pic){ g.fillStyle = music ? 'rgba(255,200,130,.55)' : 'rgba(150,190,250,.6)'; const bh = cL.length * clh + 16, by = y0 - 8; g.beginPath(); g.roundRect ? g.roundRect(W * 0.06, by, W * 0.88, bh, 16) : g.rect(W * 0.06, by, W * 0.88, bh); g.fill(); }
           let y = y0;
-          cL.forEach(l => { y += clh / 2; g.font = '700 ' + cs + 'px ' + FONT; if(pic){ g.lineWidth = 9; g.strokeStyle = '#1c1917'; g.strokeText(l, W / 2, y); } g.fillStyle = pic ? hlC : (music ? '#9a3412' : '#1e3a8a'); g.fillText(l, W / 2, y); y += clh / 2; });
+          cL.forEach(l => { y += clh / 2; g.font = '700 ' + cs + 'px ' + FONT; if(pic){ g.lineWidth = 9; g.strokeStyle = '#ffffff'; g.strokeText(l, W / 2, y); } g.fillStyle = pic ? hlC : (music ? '#9a3412' : '#1e3a8a'); g.fillText(l, W / 2, y); y += clh / 2; });
           nL.forEach(l => { y += nlh / 2; g.font = '700 ' + ns + 'px ' + FONT; if(pic){ g.lineWidth = 8; g.strokeStyle = '#1c1917'; g.strokeText(l, W / 2, y); } g.fillStyle = pic ? '#ffffff' : '#1c1917'; g.fillText(l, W / 2, y); y += nlh / 2; });
           g.restore();
         };
@@ -6333,7 +6366,7 @@ function mixTotalDuration(){
             const src = o.v || o.im, k = Math.min(W / o.w, H / o.h), dw = o.w * k, dh = o.h * k;
             try{ g.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh); }catch(e){}
           }
-          const C = lyrCalc(vk, { item: inf.item, t: inf.t }), hlC = music ? '#ffe04a' : '#7fe3ff';
+          const C = lyrCalc(vk, { item: inf.item, t: inf.t }), hlC = '#ff2a2a';
           const key = name2;
           if(key !== lastKey){ lastKey = key; lastIdx = -2; fadeFrom = null; }
           const idx = C.has ? C.idx : -1;
