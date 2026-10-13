@@ -284,6 +284,12 @@
   .lyr-box.onerow .lyr-head .lyr-bar{ flex:1 1 auto; min-width:0; margin:0; flex-wrap:nowrap; }
   .lyr-box.onerow .lyr-head .lyr-bar .sk{ min-width:40px; flex:1 1 40px; }
   .lyr-box.onerow .lyr-head .lyr-tabs{ flex:none; }
+  /* 한 줄일 때: 시간 숫자를 진행 막대 뒤, 재생 버튼 옆으로 붙임 (0:00 / 2:00) */
+  .lyr-box.onerow .lyr-head .lyr-bar .sk{ order:0; margin-right:4px; }
+  .lyr-box.onerow .lyr-head .lyr-bar [data-ct]{ order:1; min-width:0; margin-right:-4px; }
+  .lyr-box.onerow .lyr-head .lyr-bar [data-dt]{ order:2; min-width:0; }
+  .lyr-box.onerow .lyr-head .lyr-bar [data-dt]::before{ content:'/ '; }
+  .lyr-box.onerow .lyr-head .lyr-bar .bg{ order:3; } .lyr-box.onerow .lyr-head .lyr-bar .rate{ order:4; } .lyr-box.onerow .lyr-head .lyr-bar .fs{ order:5; } .lyr-box.onerow .lyr-head .lyr-bar .trk{ order:6; }
   .lyr-head .nm{ color:#047857; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .lyr-box button{ font:inherit; font-size:14pt; color:#1c1917; background:#fff; border:1px solid #a8a29e; border-radius:8px; padding:6px 16px; cursor:pointer; }
   .lyr-box button.ok{ background:#047857; color:#fff; font-weight:700; border-color:#047857; padding:6px 26px; }
