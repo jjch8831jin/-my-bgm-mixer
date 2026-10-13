@@ -298,7 +298,7 @@
   /* 재생줄 버튼 통일: 세로 38px, 둥근 사각형 (시간 글자·진행 막대는 그대로) */
   .lyr-box:not(.syncmode) .lyr-bar .bg button.rb{ width:46px; height:38px; border-radius:8px; font-size:12pt; }
   .lyr-box:not(.syncmode) .lyr-bar .rate{ height:38px; padding:0 4px; border-radius:8px; box-sizing:border-box; } .lyr-box:not(.syncmode) .lyr-bar .rate button{ width:18px; height:28px; } .lyr-box:not(.syncmode) .lyr-bar .rate b{ font-size:10pt; min-width:2.6em; }
-  .lyr-box:not(.syncmode) .lyr-bar .fs{ height:38px; border-radius:8px; } .lyr-box:not(.syncmode) .lyr-bar .fs button{ width:17px; height:38px; font-size:10pt; } .lyr-box:not(.syncmode) .lyr-bar .fs b{ font-size:10pt; min-width:2.4em; }
+  .lyr-box:not(.syncmode) .lyr-bar .fs{ height:38px; border-radius:8px; } .lyr-box:not(.syncmode) .lyr-bar .fs button{ width:24px; height:38px; font-size:14pt; font-weight:900; } .lyr-box:not(.syncmode) .lyr-bar .fs b{ font-size:12pt; font-weight:900; min-width:2.8em; }
   .lyr-box:not(.syncmode) .lyr-bar .trk{ gap:4px; } .lyr-box:not(.syncmode) .lyr-bar .trk button{ height:38px; padding:0 9px; font-size:10pt; border-radius:8px; }
   .lyr-box:not(.syncmode) .lyr-tabs button.rb{ border:0 !important; background:transparent !important; border-radius:0; box-shadow:none; }
   .lyr-bar .rate{ display:flex; align-items:center; gap:4px; background:#fff; border:1px solid #f59e0b; border-radius:12px; padding:3px 4px; }
@@ -1232,6 +1232,81 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@breezystack/lamejs@1.2.7/dist/lamejs.iife.js"></script>
 <script>
+/* 안내창: 브라우저 기본 alert 대신 쓰는 앱 안 창 (주소 글자 없음) */
+window.bgmDlgCss = function(D){
+  if(D.getElementById('bgmAlertCss')) return;
+  const st = D.createElement('style'); st.id = 'bgmAlertCss';
+  st.textContent = '.bgm-al{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:12px;font-family:inherit}'
+        + '.bgm-al-c{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.4);width:min(460px,100%);max-height:92%;display:flex;flex-direction:column;padding:16px;gap:10px;color:#1c1917;box-sizing:border-box}'
+        + '.bgm-al-t{font-size:14pt;color:#1c1917;white-space:pre-line;line-height:1.5;overflow:auto;word-break:keep-all;overflow-wrap:anywhere}'
+        + '.bgm-al-b{font-size:13pt;font-weight:700;padding:10px 6px;border-radius:10px;border:1px solid #1d4ed8;background:#2563eb;color:#fff;cursor:pointer;width:100%}'
+        + '.bgm-al-r{display:flex;gap:8px}.bgm-al-r .bgm-al-b{flex:1;white-space:nowrap}.bgm-al-b.red{background:#dc2626;border-color:#991b1b}.bgm-al-b.or{background:#ea580c;border-color:#c2410c}.bgm-al-b.wh{background:#fff;border-color:#a8a29e;color:#1c1917}'
+        + '.bgm-al-i{font-size:14pt;padding:8px 10px;border:1px solid #a8a29e;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit;color:#1c1917;background:#fff}';
+  (D.head || D.documentElement).appendChild(st);
+};
+window.bgmAlert = function(msg, win){
+  try{
+    const w = win || window, D = w.document;
+    bgmDlgCss(D);
+    const ov = D.createElement('div'); ov.className = 'bgm-al';
+    const c = D.createElement('div'); c.className = 'bgm-al-c';
+    const t = D.createElement('div'); t.className = 'bgm-al-t'; t.textContent = String(msg); c.appendChild(t);
+    const b = D.createElement('button'); b.type = 'button'; b.className = 'bgm-al-b'; b.textContent = '확인'; c.appendChild(b);
+    ov.appendChild(c);
+    const close = () => { w.removeEventListener('keydown', kd, true); ov.remove(); };
+    const kd = e => { if(e.key === 'Enter' || e.key === 'Escape' || e.key === ' '){ e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); close(); } else { e.stopPropagation(); e.stopImmediatePropagation(); } };
+    w.addEventListener('keydown', kd, true);
+    b.addEventListener('click', e => { e.stopPropagation(); close(); });
+    ov.addEventListener('pointerdown', e => e.stopPropagation());
+    ov.addEventListener('mousedown', e => e.stopPropagation());
+    (D.body || D.documentElement).appendChild(ov);
+    b.focus();
+  }catch(e){ try{ (win || window).alert(String(msg)); }catch(_){} }
+};
+
+/* 확인창: 브라우저 기본 confirm 대신 쓰는 앱 안 창. 버튼마다 값을 돌려줌 (Enter = 첫 버튼, Esc = 마지막 버튼) */
+window.bgmAsk = function(msg, buttons, win){
+  return new Promise(res => {
+    try{
+      const w = win || window, D = w.document; bgmDlgCss(D);
+      const ov = D.createElement('div'); ov.className = 'bgm-al';
+      const c = D.createElement('div'); c.className = 'bgm-al-c';
+      const t = D.createElement('div'); t.className = 'bgm-al-t'; t.textContent = String(msg); c.appendChild(t);
+      const row = D.createElement('div'); row.className = 'bgm-al-r'; c.appendChild(row);
+      const done = v => { w.removeEventListener('keydown', kd, true); ov.remove(); res(v); };
+      let first = null;
+      buttons.forEach((bt, i) => { const b = D.createElement('button'); b.type = 'button'; b.className = 'bgm-al-b' + (bt.c ? ' ' + bt.c : ''); b.textContent = bt.t; b.addEventListener('click', e => { e.stopPropagation(); done(bt.v); }); row.appendChild(b); if(i === 0) first = b; });
+      const kd = e => { e.stopPropagation(); e.stopImmediatePropagation(); if(e.key === 'Enter'){ e.preventDefault(); done(buttons[0].v); } else if(e.key === 'Escape'){ e.preventDefault(); done(buttons[buttons.length - 1].v); } };
+      w.addEventListener('keydown', kd, true);
+      ov.addEventListener('pointerdown', e => e.stopPropagation()); ov.addEventListener('mousedown', e => e.stopPropagation());
+      ov.appendChild(c); (D.body || D.documentElement).appendChild(ov); if(first) first.focus();
+    }catch(e){ res((win || window).confirm(String(msg))); }
+  });
+};
+window.bgmYN = (msg, okText, win) => bgmAsk(msg, [{ t: okText || '확인', v: true, c: 'red' }, { t: '취소', v: false, c: 'wh' }], win);
+
+/* 입력창: 브라우저 기본 prompt 대신 쓰는 앱 안 창. 확인하면 글자, 취소하면 null (Enter = 확인, Esc = 취소) */
+window.bgmPrompt = function(msg, def, win){
+  return new Promise(res => {
+    try{
+      const w = win || window, D = w.document; bgmDlgCss(D);
+      const ov = D.createElement('div'); ov.className = 'bgm-al';
+      const c = D.createElement('div'); c.className = 'bgm-al-c';
+      const t = D.createElement('div'); t.className = 'bgm-al-t'; t.textContent = String(msg); c.appendChild(t);
+      const inp = D.createElement('input'); inp.type = 'text'; inp.className = 'bgm-al-i'; inp.value = def == null ? '' : String(def); inp.spellcheck = false; c.appendChild(inp);
+      const row = D.createElement('div'); row.className = 'bgm-al-r'; c.appendChild(row);
+      const done = v => { w.removeEventListener('keydown', kd, true); ov.remove(); res(v); };
+      const ok = D.createElement('button'); ok.type = 'button'; ok.className = 'bgm-al-b'; ok.textContent = '확인'; ok.addEventListener('click', e => { e.stopPropagation(); done(inp.value); });
+      const no = D.createElement('button'); no.type = 'button'; no.className = 'bgm-al-b wh'; no.textContent = '취소'; no.addEventListener('click', e => { e.stopPropagation(); done(null); });
+      row.appendChild(ok); row.appendChild(no);
+      const kd = e => { e.stopPropagation(); e.stopImmediatePropagation(); if(e.key === 'Enter'){ e.preventDefault(); done(inp.value); } else if(e.key === 'Escape'){ e.preventDefault(); done(null); } };
+      w.addEventListener('keydown', kd, true);
+      ov.addEventListener('pointerdown', e => e.stopPropagation()); ov.addEventListener('mousedown', e => e.stopPropagation());
+      ov.appendChild(c); (D.body || D.documentElement).appendChild(ov); inp.focus(); inp.select();
+    }catch(e){ res((win || window).prompt(String(msg), def)); }
+  });
+};
+
 let audioCtx = null;
 let voiceBuffer = null, musicBuffer = null;
 let durationMode = 'voice';
@@ -1716,14 +1791,14 @@ async function setVoiceAuto(on){
   document.getElementById('voiceAutoText').textContent = '00:00 / 00:00';
   scheduleSaveWork(300);
 }
-document.getElementById('autoVoiceSpeedBtn').addEventListener('click', () => {
+document.getElementById('autoVoiceSpeedBtn').addEventListener('click', async () => {
   if(_autoBusy) return;
   if(voiceAutoSpeed){ // 이미 적용된 상태에서 누르면 처음부터 다시 맞춤
     voiceAutoSpeed = false; voiceSpeedSegments = []; _voiceAutoKey = null;
     setVoiceAuto(true);
     return;
   }
-  if(voiceSpeedSegments.length > 0 && !confirm('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?')) return;
+  if(voiceSpeedSegments.length > 0 && !(await bgmYN('직접 정한 구간별 속도를 지우고 자동으로 맞출까요?', '지우기'))) return;
   setVoiceAuto(true);
 });
 
@@ -3759,9 +3834,9 @@ function loadSettings(){
 loadSettings();
 
 
-function resetTrack(track){
+async function resetTrack(track){
   const label = track === 'voice' ? '음성' : '배경음악';
-  if(!confirm(label + ' 파일과 편집 설정(자르기·구간별 속도)을 초기화할까요?')) return;
+  if(!(await bgmYN(label + ' 파일과 편집 설정(자르기·구간별 속도)을 초기화할까요?', '초기화'))) return;
   if(track === 'voice'){
     voiceItems = [];
     voiceBuffer = null;
@@ -4069,7 +4144,7 @@ async function handleRecordingStop(){
     let buffer = await ctx.decodeAudioData(arrayBuf);
     buffer = normalizeBuffer(buffer, 0.9);
     const defaultName = 'PC 녹음 (' + fmtTime(buffer.duration) + ')';
-    let title = window.prompt('이 녹음의 제목을 입력하세요', defaultName);
+    let title = await bgmPrompt('이 녹음의 제목을 입력하세요', defaultName);
     if(title === null) title = defaultName; // 취소해도 녹음은 목록에 추가
     title = title.trim() || defaultName;
     musicItems.unshift({ id: ++itemIdCounter, name: title, buffer });
@@ -5084,17 +5159,17 @@ function mixTotalDuration(){
     if(sg.title){ try{ const t = loadTtl(); t[key] = sg.title; localStorage.setItem(TTL_KEY, JSON.stringify(t)); }catch(e){} }
   }
   window.__bgmxImport = async function(f){ // 메인 화면의 📂 백업 버튼: 곡을 열지 않고 .bgmx 안의 곡 이름대로 바로 불러옴
-    if(!/\.bgmx$/i.test(f.name)){ alert('.bgmx 백업 파일을 골라 주세요.'); return; }
+    if(!/\.bgmx$/i.test(f.name)){ bgmAlert('.bgmx 백업 파일을 골라 주세요.'); return; }
     try{
       busyMsg('불러오는 중…'); const songs = await readBgmx(f); busyMsg('');
-      if(!songs.length){ alert('들어 있는 곡이 없습니다.'); return; }
+      if(!songs.length){ bgmAlert('들어 있는 곡이 없습니다.'); return; }
       let add = false;
       if(songs.length === 1){
-        if((await getImgs(songs[0].key)).length > 0) add = !confirm('이 곡에 이미 사진·동영상이 있습니다.\n확인 = 기존 것을 지우고 불러온 것으로 바꾸기\n취소 = 기존 것 뒤에 추가하기');
-      } else if(!confirm('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?')) return;
+        if((await getImgs(songs[0].key)).length > 0) { const ch = await bgmAsk('이 곡에 이미 사진·동영상이 있습니다.\n어떻게 할까요?', [{ t: '바꾸기', v: 'r', c: 'or' }, { t: '뒤에 추가', v: 'a' }, { t: '취소', v: null, c: 'wh' }]); if(!ch) return; add = ch === 'a'; }
+      } else if(!(await bgmYN('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?', '불러오기'))) return;
       busyMsg('불러오는 중…'); for(const sg of songs) await applySong(sg, sg.key, add); busyMsg('');
-      alert('불러왔습니다. (곡 ' + songs.length + '개)');
-    }catch(e){ busyMsg(''); alert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
+      bgmAlert('불러왔습니다. (곡 ' + songs.length + '개)');
+    }catch(e){ busyMsg(''); bgmAlert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
   };
   function busyMsg(txt){ let d = document.getElementById('bgmxBusy'); if(!txt){ if(d) d.remove(); return; } if(!d){ d = document.createElement('div'); d.id = 'bgmxBusy'; d.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;background:#1c1917;color:#fff;padding:14px 22px;border-radius:12px;font-size:14pt;box-shadow:0 6px 24px rgba(0,0,0,.4)'; document.body.appendChild(d); } d.textContent = txt; }
   function animScroll(el, to){
@@ -5180,7 +5255,7 @@ function mixTotalDuration(){
     }
     function pickLine(x){
       const timed = lyrTimed(lyrLines({ text: ta.value }));
-      if(!timed.length){ alert('가사에 시간이 없습니다. 먼저 "시간 맞추기"에서 가사 시간을 맞춰 주세요.'); return; }
+      if(!timed.length){ bgmAlert('가사에 시간이 없습니다. 먼저 "시간 맞추기"에서 가사 시간을 맞춰 주세요.'); return; }
       const pop = document.createElement('div'); pop.className = 'pk-back';
       pop.innerHTML = '<div class="pk-box"><div class="pk-h">이 사진이 나올 가사 줄을 고르세요</div><div class="pk-l"></div><button type="button" class="pk-x">닫기</button></div>';
       const lst = pop.querySelector('.pk-l');
@@ -5276,7 +5351,7 @@ function mixTotalDuration(){
     }
     back.querySelector('[data-fm]').addEventListener('click', () => setFs(fsz - 1));
     back.querySelector('[data-fp]').addEventListener('click', () => setFs(fsz + 1));
-    fv.addEventListener('click', () => { const v = Number(prompt('글자 크기(12~60)', fsz)); if(v >= 12 && v <= 60) setFs(Math.round(v)); });
+    fv.addEventListener('click', async () => { const r = await bgmPrompt('글자 크기(12~60)', fsz); if(r === null) return; const v = Number(r); if(v >= 12 && v <= 60) setFs(Math.round(v)); });
     function upd(){
       const cur = curInfo(kind); if(!cur) return;
       if(cur.item.name !== name){ name = cur.item.name; nm.textContent = dispName(kind, name); shownKey = null; refreshPics(); }
@@ -5707,8 +5782,8 @@ function mixTotalDuration(){
         try{
           const items = await navigator.clipboard.read(); const fs = [];
           for(const it of items){ const t = it.types.find(t => t.startsWith('image/')); if(t){ const bl = await it.getType(t); fs.push(new File([bl], 'paste.' + (t.split('/')[1] || 'png'), { type: t })); } }
-          if(fs.length) addToList(fs); else alert('클립보드에 사진이 없습니다.');
-        }catch(err){ alert('붙여넣기를 할 수 없습니다. Ctrl+V를 눌러 주세요.'); }
+          if(fs.length) addToList(fs); else bgmAlert('클립보드에 사진이 없습니다.', PW0());
+        }catch(err){ bgmAlert('붙여넣기를 할 수 없습니다. Ctrl+V를 눌러 주세요.', PW0()); }
       };
       const PW0 = () => pop.ownerDocument.defaultView;
       const selInfos = () => tilesNow().filter(t => msel.has(t._key)).map(t => t._info);
@@ -5781,18 +5856,18 @@ function mixTotalDuration(){
       const copySelected = async () => {
         const inf = selImgs(); if(!inf.length) return;
         window.__imgClip = inf[0].u; await imgToClipboard(inf[0].u);
-        if(inf.length > 1) PW0().alert('컴퓨터 클립보드에는 사진 한 장만 복사됩니다.\n선택한 첫 사진만 복사했습니다.');
+        if(inf.length > 1) bgmAlert('컴퓨터 클립보드에는 사진 한 장만 복사됩니다.\n선택한 첫 사진만 복사했습니다.', PW0());
       };
       const saveSelected = async () => { // 선택한 사진만 컴에 저장
-        const inf = selImgs(); if(!inf.length){ PW0().alert('저장할 사진을 먼저 선택하세요.'); return; }
+        const inf = selImgs(); if(!inf.length){ bgmAlert('저장할 사진을 먼저 선택하세요.', PW0()); return; }
         const W = PW0(); let blobs;
-        try{ blobs = await Promise.all(inf.map(i => itemToBlob(i.u))); }catch(e){ W.alert('사진을 읽지 못했습니다.'); return; }
+        try{ blobs = await Promise.all(inf.map(i => itemToBlob(i.u))); }catch(e){ bgmAlert('사진을 읽지 못했습니다.', W); return; }
         const extOf = t => ({ 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif' }[t] || 'jpg');
         const used = new Set(), clean = t => String(t || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').trim().slice(0, 80);
         const names = blobs.map((b, q) => { let base = clean(itemName(inf[q].u)) || ('사진_' + String(q + 1).padStart(2, '0')), nm = base + '.' + extOf(b.type), n = 2; while(used.has(nm.toLowerCase())) nm = base + ' (' + (n++) + ').' + extOf(b.type); used.add(nm.toLowerCase()); return nm; });
         if(W.showDirectoryPicker && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
-          try{ const dir = await W.showDirectoryPicker({ mode: 'readwrite' }); for(let q = 0; q < blobs.length; q++){ const fh = await dir.getFileHandle(names[q], { create: true }); const w = await fh.createWritable(); await w.write(blobs[q]); await w.close(); } W.alert('"' + dir.name + '" 폴더에 선택한 사진 ' + blobs.length + '개를 저장했습니다.'); }
-          catch(e){ if(e && e.name === 'AbortError') return; W.alert('저장하지 못했습니다: ' + (e && e.message ? e.message : e)); }
+          try{ const dir = await W.showDirectoryPicker({ mode: 'readwrite' }); for(let q = 0; q < blobs.length; q++){ const fh = await dir.getFileHandle(names[q], { create: true }); const w = await fh.createWritable(); await w.write(blobs[q]); await w.close(); } bgmAlert('"' + dir.name + '" 폴더에 선택한 사진 ' + blobs.length + '개를 저장했습니다.', W); }
+          catch(e){ if(e && e.name === 'AbortError') return; bgmAlert('저장하지 못했습니다: ' + (e && e.message ? e.message : e), W); }
           return;
         }
         const D = pop.ownerDocument;
@@ -5802,7 +5877,7 @@ function mixTotalDuration(){
         const fd = e.target.closest('.pk-fd'), tl = e.target.closest('.pk-t');
         if(fd){
           const i = Number(fd.dataset.f);
-          pkMenu(e, [['✏️ 이름 바꾸기', () => { const nn = (prompt('폴더 이름', folders[i].name) || '').trim(); if(!nn || nn === folders[i].name) return; if(folders.some((f, q) => q !== i && f.name === nn)){ alert('같은 이름의 폴더가 있습니다.'); return; } folders[i].name = nn; libFSet(folders); fill(null); }],
+          pkMenu(e, [['✏️ 이름 바꾸기', async () => { const nn = ((await bgmPrompt('폴더 이름', folders[i].name, PW0())) || '').trim(); if(!nn || nn === folders[i].name) return; if(folders.some((f, q) => q !== i && f.name === nn)){ bgmAlert('같은 이름의 폴더가 있습니다.', PW0()); return; } folders[i].name = nn; libFSet(folders); fill(null); }],
             ['🗑 폴더 지우기 (사진은 남음)', () => { folders.splice(i, 1); libFSet(folders); if(curF === i) curF = null; fill(null); }]]);
           return;
         }
@@ -5820,7 +5895,7 @@ function mixTotalDuration(){
         }
         if(e.target.closest('button, input')) return;
         const ent = [['📋 붙여넣기', doPaste], ['☑ 모두 선택', () => { msel = new Set(tilesNow().map(t => t._key)); paintMs(); }]];
-        if(curF == null) ent.push(['📁 폴더 만들기', () => { const nn = (prompt('폴더 이름') || '').trim(); if(!nn) return; if(folders.some(f => f.name === nn)){ alert('같은 이름의 폴더가 있습니다.'); return; } folders.push({ name: nn, items: [] }); libFSet(folders); fill(null); }]);
+        if(curF == null) ent.push(['📁 폴더 만들기', async () => { const nn = ((await bgmPrompt('폴더 이름', '', PW0())) || '').trim(); if(!nn) return; if(folders.some(f => f.name === nn)){ bgmAlert('같은 이름의 폴더가 있습니다.', PW0()); return; } folders.push({ name: nn, items: [] }); libFSet(folders); fill(null); }]);
         pkMenu(e, ent);
       });
       // 마우스로 끌어 여러 장 선택 / Ctrl+A 전체 선택
@@ -5988,7 +6063,7 @@ function mixTotalDuration(){
       let file = null;
       try{ const its = await navigator.clipboard.read(); for(const it of its){ const ty = it.types.find(t => /^image\//.test(t)); if(ty){ const b = await it.getType(ty); file = new File([b], 'paste.' + (ty.split('/')[1] || 'png'), { type: ty }); break; } } }catch(e){}
       if(!file && window.__imgClip != null){ const u = window.__imgClip; try{ const b = isVid(u) ? u : await (await fetch(u)).blob(); file = (b instanceof File) ? b : new File([b], 'paste', { type: b.type }); }catch(e){} }
-      if(!file){ alert('붙여넣을 이미지가 없습니다.\n이미지를 먼저 복사해 주세요.'); return; }
+      if(!file){ bgmAlert('붙여넣을 이미지가 없습니다.\n이미지를 먼저 복사해 주세요.'); return; }
       await attachFiles([file], x);
     }
     function imgMenu(cx, cy, x){
@@ -6016,7 +6091,7 @@ function mixTotalDuration(){
       add('줄 붙여넣기 (위에)', () => pasteLine(x));
       add('줄 지우기', () => delLine(x));
       add('가사 글 전체 복사', () => { clipW(syT.map(t => t === BLANK ? '' : t).join('\n')); });
-      add('가사 전체 지우기', () => { const n = syT.length; if(!n) return; if(!confirm('가사 ' + n + '줄을 모두 지울까요?\n(사진 목록은 지워지지 않습니다)')) return; syT.splice(0); syStamp.splice(0); syAbs.splice(0); picL = picL.map(() => null); savePT(); syPos = 0; afterStampPos = -1; syStack = []; lyrPersist(); syRender(true); });
+      add('가사 전체 지우기', async () => { const n = syT.length; if(!n) return; if(!(await bgmYN('가사 ' + n + '줄을 모두 지울까요?\n(사진 목록은 지워지지 않습니다)', '🗑 지우기'))) return; syT.splice(0); syStamp.splice(0); syAbs.splice(0); picL = picL.map(() => null); savePT(); syPos = 0; afterStampPos = -1; syStack = []; lyrPersist(); syRender(true); });
       add('⬆ 위에 줄 넣기', () => insertLine(x));
       add('⬇ 아래에 줄 넣기', () => insertLine(x + 1));
       if(x > 0) add('↑ 한 줄 위로', () => moveLyric(x, x - 1));
@@ -6307,12 +6382,12 @@ function mixTotalDuration(){
     const imgF = back.querySelector('[data-imgf]');
     back.querySelector('[data-imgadd]').addEventListener('click', () => imgF.click());
     back.querySelector('[data-imgsave]').addEventListener('click', async () => {
-      if(!pics.length){ alert('저장할 사진이 없습니다.'); return; }
+      if(!pics.length){ bgmAlert('저장할 사진이 없습니다.'); return; }
       const idxs = selSet.size ? Array.from(selSet).sort((a, b) => a - b) : pics.map((_, i) => i);
       const extOf = t => ({ 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif', 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' }[t] || (/^video/.test(t) ? 'mp4' : 'jpg'));
       const pad = String(idxs.length).length < 2 ? 2 : String(idxs.length).length;
       let blobs;
-      try{ blobs = await Promise.all(idxs.map(i => itemToBlob(pics[i]))); }catch(e){ alert('사진을 읽지 못했습니다.'); return; }
+      try{ blobs = await Promise.all(idxs.map(i => itemToBlob(pics[i]))); }catch(e){ bgmAlert('사진을 읽지 못했습니다.'); return; }
       const used = new Set(), clean = t => String(t || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').trim().slice(0, 80);
       const names = blobs.map((b, k) => { let base = clean(itemName(pics[idxs[k]])); if(!base) base = (clean(String(name).replace(/\.[^.]*$/, '')) || '사진') + '_' + String(idxs[k] + 1).padStart(pad, '0'); let nm = base, n = 2; while(used.has(nm.toLowerCase())) nm = base + ' (' + (n++) + ')'; used.add(nm.toLowerCase()); return nm + '.' + extOf(b.type); });
       const isMob = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -6321,8 +6396,8 @@ function mixTotalDuration(){
           const saved = await getSavedDirHandle(kind), o = { mode: 'readwrite' }; if(saved) o.startIn = saved;
           const dir = await window.showDirectoryPicker(o);
           for(let k = 0; k < blobs.length; k++){ const fh = await dir.getFileHandle(names[k], { create: true }); const w = await fh.createWritable(); await w.write(blobs[k]); await w.close(); }
-          alert('"' + dir.name + '" 폴더에 사진 ' + blobs.length + '개를 저장했습니다. (' + names[0] + ' ~ ' + names[names.length - 1] + ')');
-        }catch(e){ if(e && e.name === 'AbortError') return; alert('저장하지 못했습니다: ' + (e && e.message ? e.message : e)); }
+          bgmAlert('"' + dir.name + '" 폴더에 사진 ' + blobs.length + '개를 저장했습니다. (' + names[0] + ' ~ ' + names[names.length - 1] + ')');
+        }catch(e){ if(e && e.name === 'AbortError') return; bgmAlert('저장하지 못했습니다: ' + (e && e.message ? e.message : e)); }
         return;
       }
       for(let k = 0; k < blobs.length; k++){ const u = URL.createObjectURL(blobs[k]), a = document.createElement('a'); a.href = u; a.download = names[k]; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); await new Promise(r => setTimeout(r, 250)); }
@@ -6332,12 +6407,12 @@ function mixTotalDuration(){
       const key = keyOf(kind, name), cur = await getImgs(key); let bad = 0; const added = [];
       for(const f of fs){ try{ if(/^video\//.test(f.type)){ if(f.size > 500 * 1024 * 1024){ bad++; continue; } added.push(f); } else added.push(await shrinkImage(f)); }catch(e){ bad++; } }
       const repl = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length === 1 && fs.length === 1; // 한 장이면 그 자리 사진을 바꿈(기존 사진 삭제, 시간은 자리에 그대로)
-      if(repl){ cur[rp] = added[0]; if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; } picT = getPT(key, cur.length); picL = getPL(key, cur.length); pics = cur; libAddImages(added); renderPics(); return; }
+      if(repl){ cur[rp] = added[0]; if(!(await setImgs(key, cur))){ bgmAlert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; } picT = getPT(key, cur.length); picL = getPL(key, cur.length); pics = cur; libAddImages(added); renderPics(); return; }
       const slot = typeof rp === 'number' && rp >= 0 && rp < cur.length && added.length; if(slot) at = rp; // 그 자리에 끼워 넣고 기존 사진은 뒤로 밀림 (시간은 자리에 그대로)
       const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...added);
-      if(cur.length === pics.length && bad){ alert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 500MB 이하만 됩니다)'); return; }
-      if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
-      if(bad) alert('읽지 못했거나 너무 큰(500MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
+      if(cur.length === pics.length && bad){ bgmAlert('파일을 읽지 못했습니다. 다른 파일로 해 주세요. (동영상은 500MB 이하만 됩니다)'); return; }
+      if(!(await setImgs(key, cur))){ bgmAlert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
+      if(bad) bgmAlert('읽지 못했거나 너무 큰(500MB 초과) 파일 ' + bad + '개는 빼고 저장했습니다.');
       { const pt0 = getPT(key, cur.length - added.length); if(slot){ while(pt0.length < cur.length) pt0.push(null); } else pt0.splice(pos, 0, ...added.map(() => null)); setPT(key, pt0); picT = pt0; const pl0 = getPL(key, cur.length - added.length); pl0.splice(pos, 0, ...added.map(() => null)); setPL(key, pl0); picL = pl0; }
       pics = cur; libAddImages(added); renderPics();
     }
@@ -6354,7 +6429,7 @@ function mixTotalDuration(){
       if(!items || !items.length) return;
       const key = keyOf(kind, name), cur = await getImgs(key);
       const pos = (typeof at === 'number' && at >= 0 && at <= cur.length) ? at : cur.length; cur.splice(pos, 0, ...items);
-      if(!(await setImgs(key, cur))){ alert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
+      if(!(await setImgs(key, cur))){ bgmAlert('이미지를 저장하지 못했습니다. 저장 공간을 확인해 주세요.'); return; }
       { const pt0 = getPT(key, cur.length - items.length); pt0.splice(pos, 0, ...items.map(() => null)); setPT(key, pt0); picT = pt0; const pl0 = getPL(key, cur.length - items.length); pl0.splice(pos, 0, ...items.map(() => null)); setPL(key, pl0); picL = pl0; }
       pics = cur; renderPics();
     }
@@ -6370,7 +6445,7 @@ function mixTotalDuration(){
       const fs = imgsOf(e.dataTransfer); if(fs.length){ putImages(fs, at, rp); return; }
       const u = urlOf(e.dataTransfer); if(!u) return;
       try{ const r = await fetch(u); const b = await r.blob(); if(!/^image\//.test(b.type)) throw new Error('t'); putImage(b, at, rp); }
-      catch(x){ alert('이 사이트의 이미지는 끌어다 놓아서 가져올 수 없습니다.\n이미지를 우클릭해서 "이미지 복사"를 한 뒤 Ctrl+V로 붙여넣어 주세요.'); }
+      catch(x){ bgmAlert('이 사이트의 이미지는 끌어다 놓아서 가져올 수 없습니다.\n이미지를 우클릭해서 "이미지 복사"를 한 뒤 Ctrl+V로 붙여넣어 주세요.'); }
     };
     document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', e => onDrop(e));
     // 썸네일 줄: 파일 놓기(놓은 자리에 삽입) + 썸네일 끌어서 순서 바꾸기
@@ -6467,16 +6542,16 @@ function mixTotalDuration(){
       thumbsEl.addEventListener('touchmove', e => { if(st && st.on) e.preventDefault(); }, { passive: false });
       thumbsEl.addEventListener('contextmenu', e => { if(st && st.on) e.preventDefault(); });
     })();
-    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !confirm('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?')) return; pics = []; picT = []; picL = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
+    back.querySelector('[data-imgdel]').addEventListener('click', async () => { if(pics.length > 1 && !(await bgmYN('이 곡의 사진·동영상 ' + pics.length + '개를 모두 뺄까요?', '🗑 빼기'))) return; pics = []; picT = []; picL = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); });
     // ---- 영상(16:9)으로 저장: 믹스된 소리 + 사진/동영상 + 가사를 한꺼번에 녹화 ----
     let vexpBusy = false;
     back.querySelector('[data-vexp]').addEventListener('click', async () => {
       if(vexpBusy) return;
       const trk = activeTrack, vk = trk === 'music' ? 'music' : 'voice';
-      if(trk === 'voice' && !voiceBuffer){ alert('음성을 먼저 불러와 주세요.'); return; }
-      if(trk === 'music' && !musicBuffer){ alert('배경음악을 먼저 불러와 주세요.'); return; }
-      if(trk === 'all' && (!voiceBuffer || !musicBuffer)){ alert('통합 영상을 만들려면 음성과 배경음악을 둘 다 불러와야 합니다.'); return; }
-      if(!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream){ alert('이 브라우저는 영상 저장을 지원하지 않습니다. 크롬을 사용해 주세요.'); return; }
+      if(trk === 'voice' && !voiceBuffer){ bgmAlert('음성을 먼저 불러와 주세요.'); return; }
+      if(trk === 'music' && !musicBuffer){ bgmAlert('배경음악을 먼저 불러와 주세요.'); return; }
+      if(trk === 'all' && (!voiceBuffer || !musicBuffer)){ bgmAlert('통합 영상을 만들려면 음성과 배경음악을 둘 다 불러와야 합니다.'); return; }
+      if(!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream){ bgmAlert('이 브라우저는 영상 저장을 지원하지 않습니다. 크롬을 사용해 주세요.'); return; }
       const cands0 = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
       const mime0 = cands0.find(m => { try{ return MediaRecorder.isTypeSupported(m); }catch(e){ return false; } }) || 'video/webm';
       const ext0 = /mp4/.test(mime0) ? 'mp4' : 'webm', base0 = (dispName(vk, ((curInfo(vk) || { item: { name: name } }).item.name)).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '영상');
@@ -6487,7 +6562,7 @@ function mixTotalDuration(){
         busyMsg(trk === 'all' ? '믹싱 중… (영상에 들어갈 소리를 만듭니다)' : '소리 준비 중…');
         try{ voicePlayerCtl.pause(); }catch(e){} try{ musicPlayerCtl.pause(); }catch(e){}
         let audioBuf = null, M = null;
-        if(trk === 'all'){ const okMix = await performMix(); audioBuf = mixedBuffer; M = window.__lastMix; if(!okMix || !audioBuf || !M){ busyMsg(''); alert('믹싱에 실패했습니다.'); vexpBusy = false; return; } }
+        if(trk === 'all'){ const okMix = await performMix(); audioBuf = mixedBuffer; M = window.__lastMix; if(!okMix || !audioBuf || !M){ busyMsg(''); bgmAlert('믹싱에 실패했습니다.'); vexpBusy = false; return; } }
         else if(trk === 'voice'){ const tv = getTrimmedVoiceBuffer(), r0 = getVoiceTrimRange(); audioBuf = await buildSegmentedVoiceBuffer(tv, r0.start, voiceSpeed, voiceSpeedSegments, () => {}); M = { voiceDelay: 0, vDur: audioBuf.duration, mDur: audioBuf.duration, duration: audioBuf.duration }; }
         else { const tm0 = getTrimmedMusicBuffer(), r1 = getMusicTrimRange(); audioBuf = await buildSegmentedMusicBuffer(tm0, r1.start, musicSpeed, musicSpeedSegments, () => {}); M = { voiceDelay: 0, vDur: audioBuf.duration, mDur: audioBuf.duration, duration: audioBuf.duration }; }
         busyMsg('');
@@ -6609,13 +6684,13 @@ function mixTotalDuration(){
         const wasStopped = stopFlag; cleanup();
         if(wasStopped){ return; }
         const sv = await saveOut(hnd0, new Blob(chunks, { type: rec.mimeType || mime || 'video/webm' }), base0 + '.' + ext0);
-        alert('영상을 저장했습니다. (' + sv + ')' + (ext0 === 'webm' ? '\n\n이 브라우저는 webm 형식으로만 저장합니다. 크롬·VLC·팟플레이어에서는 재생되지만, 폰 갤러리나 일부 플레이어에서는 안 열릴 수 있습니다. mp4가 필요하면 최신 PC 크롬에서 만들어 주세요.' : ''));
-      }catch(e){ try{ if(rec && rec.state !== 'inactive') rec.stop(); }catch(x){} busyMsg(''); cleanup(); alert('영상을 만들지 못했습니다: ' + (e && e.message ? e.message : e)); }
+        bgmAlert('영상을 저장했습니다. (' + sv + ')' + (ext0 === 'webm' ? '\n\n이 브라우저는 webm 형식으로만 저장합니다. 크롬·VLC·팟플레이어에서는 재생되지만, 폰 갤러리나 일부 플레이어에서는 안 열릴 수 있습니다. mp4가 필요하면 최신 PC 크롬에서 만들어 주세요.' : ''));
+      }catch(e){ try{ if(rec && rec.state !== 'inactive') rec.stop(); }catch(x){} busyMsg(''); cleanup(); bgmAlert('영상을 만들지 못했습니다: ' + (e && e.message ? e.message : e)); }
     });
     // 음성·음악·통합 선택 (믹서 4번 선택과 같은 것)
     const trkBtns = Array.from(back.querySelectorAll('[data-trk]'));
     const syncTrk = () => trkBtns.forEach(b => b.classList.toggle('on', b.dataset.trk === activeTrack));
-    trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ alert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
+    trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ bgmAlert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
     syncTrk();
     // 백업 저장 / 불러오기
     async function saveSong(){ // 이 곡의 노래(원본) + 가사 + 시간 + 사진·동영상을 한 파일로
@@ -6623,38 +6698,38 @@ function mixTotalDuration(){
         if(curTab === 'sync'){ if(txtMode) txtApply(); lyrPersist(); }
         const key = keyOf(kind, name), cur = curInfo(kind), item = cur && cur.item;
         const aud = (item && item.raw) ? { blob: item.raw, name: item.name, type: item.raw.type || '', kind } : null;
-        if(!pics.length && !loadLyr()[key] && !aud){ alert('저장할 내용이 없습니다.'); return; }
+        if(!pics.length && !loadLyr()[key] && !aud){ bgmAlert('저장할 내용이 없습니다.'); return; }
         const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
         const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream');
-        if(item && !aud) alert('이 노래는 원본 파일이 없어서 노래 없이 저장합니다.\n(노래를 다시 불러온 뒤 저장하면 노래도 들어갑니다)');
+        if(item && !aud) bgmAlert('이 노래는 원본 파일이 없어서 노래 없이 저장합니다.\n(노래를 다시 불러온 뒤 저장하면 노래도 들어갑니다)');
         busyMsg('저장 파일 만드는 중…');
         const pk = await packSong(key, null, aud);
-        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) alert('저장했습니다: ' + sv);
-      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) alert('저장 파일을 만들지 못했습니다.'); }
+        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) bgmAlert('저장했습니다: ' + sv);
+      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) bgmAlert('저장 파일을 만들지 못했습니다.'); }
     }
     back.querySelector('[data-bsave]').addEventListener('click', async () => {
       try{
         const key = keyOf(kind, name), txt = ta.value.trim();
-        if(!txt && !pics.length && !loadLyr()[key]){ alert('저장할 가사나 사진이 없습니다.'); return; }
+        if(!txt && !pics.length && !loadLyr()[key]){ bgmAlert('저장할 가사나 사진이 없습니다.'); return; }
         const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
         const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream');
         busyMsg('저장 파일 만드는 중…');
         const pk = await packSong(key, txt ? { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) } : null);
-        if(!pk.head.lyr && !pk.blobs.length){ busyMsg(''); alert('저장할 가사나 사진이 없습니다.'); return; }
-        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) alert('저장했습니다: ' + sv);
-      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) alert('저장 파일을 만들지 못했습니다.'); }
+        if(!pk.head.lyr && !pk.blobs.length){ busyMsg(''); bgmAlert('저장할 가사나 사진이 없습니다.'); return; }
+        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) bgmAlert('저장했습니다: ' + sv);
+      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) bgmAlert('저장 파일을 만들지 못했습니다.'); }
     });
     back.querySelector('[data-ball]').addEventListener('click', async () => {
       try{
         const keys = new Set([...Object.keys(loadLyr()), ...(await listImgKeys())]); const packs = [];
-        if(!keys.size){ alert('저장할 곡이 없습니다.'); return; }
+        if(!keys.size){ bgmAlert('저장할 곡이 없습니다.'); return; }
         const d = new Date(), z = n => String(n).padStart(2, '0'), fn = '배경음악믹서_전체_' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '.bgmx';
         const hnd = await pickSaveHandle(fn, 'bgmx', 'application/octet-stream');
         busyMsg('전체 저장 파일 만드는 중…');
         for(const k of keys){ const pk = await packSong(k); if(pk.head.lyr || pk.blobs.length) packs.push(pk); }
-        if(!packs.length){ busyMsg(''); alert('저장할 곡이 없습니다.'); return; }
-        const sv = await saveOut(hnd, buildBgmx(packs), fn); busyMsg(''); if(hnd) alert('저장했습니다: ' + sv);
-      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) alert('전체 저장 파일을 만들지 못했습니다.'); }
+        if(!packs.length){ busyMsg(''); bgmAlert('저장할 곡이 없습니다.'); return; }
+        const sv = await saveOut(hnd, buildBgmx(packs), fn); busyMsg(''); if(hnd) bgmAlert('저장했습니다: ' + sv);
+      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) bgmAlert('전체 저장 파일을 만들지 못했습니다.'); }
     });
     const bf = back.querySelector('[data-bf]');
     back.querySelector('[data-bload]').addEventListener('click', () => bf.click());
@@ -6663,25 +6738,25 @@ function mixTotalDuration(){
       const media = all.filter(x => /^(image|video)\//.test(x.type) || /\.(mp4|mov|m4v|webm|mkv|jpe?g|png|gif|webp|bmp)$/i.test(x.name));
       const f = all.find(x => /\.bgmx$/i.test(x.name));
       if(media.length && !f){ putImages(media.map(x => (x.type ? x : new File([x], x.name, { type: /\.(mp4|m4v)$/i.test(x.name) ? 'video/mp4' : (/\.mov$/i.test(x.name) ? 'video/quicktime' : (/\.webm$/i.test(x.name) ? 'video/webm' : 'image/jpeg')) })))); return; }
-      if(!f){ alert('불러올 수 있는 파일이 아닙니다. (.bgmx 백업 파일, 사진, 동영상 mp4)'); return; }
+      if(!f){ bgmAlert('불러올 수 있는 파일이 아닙니다. (.bgmx 백업 파일, 사진, 동영상 mp4)'); return; }
       try{
         busyMsg('불러오는 중…'); const songs = await readBgmx(f); busyMsg('');
-        if(!songs.length){ alert('들어 있는 곡이 없습니다.'); return; }
+        if(!songs.length){ bgmAlert('들어 있는 곡이 없습니다.'); return; }
         const key = keyOf(kind, name);
         if(songs.length === 1){
           const kk = songs[0].aud ? songs[0].key : key; // 노래가 들어 있는 파일은 그 곡 이름대로 불러옴
           const had = (await getImgs(kk)).length > 0; let add = false;
-          if(had) add = !confirm('이 곡에 이미 사진·동영상이 있습니다.\n확인 = 기존 것을 지우고 불러온 것으로 바꾸기\n취소 = 기존 것 뒤에 추가하기');
+          if(had) { const ch = await bgmAsk('이 곡에 이미 사진·동영상이 있습니다.\n어떻게 할까요?', [{ t: '바꾸기', v: 'r', c: 'or' }, { t: '뒤에 추가', v: 'a' }, { t: '취소', v: null, c: 'wh' }]); if(!ch) return; add = ch === 'a'; }
           busyMsg('불러오는 중…'); await applySong(songs[0], kk, add);
         } else {
-          if(!confirm('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?')) return;
+          if(!(await bgmYN('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?', '불러오기'))) return;
           busyMsg('불러오는 중…'); for(const sg of songs) await applySong(sg, sg.key, false);
         }
         busyMsg('');
         const L2 = loadLyr()[key] || {}; ta.value = L2.text || ''; si.value = L2.start || 0; ei.value = L2.end || Math.round(i.item.buffer.duration);
         nm.textContent = dispName(kind, name); shownKey = null; await refreshPics(); tick(); tab('view');
-        alert('불러왔습니다.');
-      }catch(e){ busyMsg(''); alert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
+        bgmAlert('불러왔습니다.');
+      }catch(e){ busyMsg(''); bgmAlert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
     });
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
