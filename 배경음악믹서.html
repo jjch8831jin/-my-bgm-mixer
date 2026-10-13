@@ -807,6 +807,8 @@
   .lyr-box .sy-row.sy-ly .pk.e{ border:2px dashed #7c3aed; background:#f5f3ff; color:#7c3aed; display:flex; align-items:center; justify-content:center; font-size:16pt; font-weight:700; }
   .lyr-box .sy-row.sy-ly .pk.e.cont{ border:2px dotted #d6d3d1; background:none; color:#a8a29e; font-size:8pt; font-weight:400; line-height:1.15; text-align:center; padding:0 2px; }
   .lyr-box .sy-seg{ display:none !important; }
+  .lyr-box.syncmode .lyr-tabs > button:not([data-x]), .lyr-box.syncmode .lyr-tabs .trk, .lyr-box.syncmode .lyr-bar .rate, .lyr-box.syncmode .lyr-bar .fs, .lyr-box.syncmode .lyr-bar .trk, .lyr-box.syncmode .lyr-bar [data-nx]{ display:none !important; }
+  .lyr-box .addl, .lyr-box .sy-one button.up{ display:none !important; }
   .lyr-box .sy-row.sy-ly .tm{ white-space:nowrap; }
   .lyr-box .sy-row.sy-ly .tx2.blank{ min-width:4em; color:#a8a29e; font-style:italic; font-size:.85em; }
   .lyr-box .sy-row.sy-ly .tx2.blank::before{ content:'(빈 줄)'; }
@@ -5158,6 +5160,7 @@ function mixTotalDuration(){
     function tab(k){
       back.querySelectorAll('[data-pane]').forEach(x => { x.style.display = x.dataset.pane === k ? '' : 'none'; });
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
+      { const bx = back.querySelector('.lyr-box'), lbx = back.querySelector('.lyr-head .lb'); if(bx) bx.classList.toggle('syncmode', k === 'sync'); if(lbx) lbx.textContent = (k === 'sync') ? '시간 맞추기' : '제목'; }
       curTab = k; try{ applyAuto(); }catch(e){}
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
@@ -5310,6 +5313,16 @@ function mixTotalDuration(){
       let done = false;
       const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ if(syT[x] === BLANK){ syRender(true); return; } delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(true); };
       inp.addEventListener('blur', commit);
+      inp.addEventListener('paste', e => { // 여러 줄을 붙여넣으면 줄마다 가사 줄로 나눈다
+        const t = (e.clipboardData && e.clipboardData.getData('text/plain')) || ''; if(!/\r?\n/.test(t)) return;
+        const lines = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean); if(!lines.length) return;
+        e.preventDefault(); e.stopPropagation(); if(done) return;
+        const v = inp.value, a = inp.selectionStart, b2 = inp.selectionEnd, before = v.slice(0, a), after = v.slice(b2).trim();
+        const arr = lines.slice(); arr[0] = (before + arr[0]).trim(); arr[arr.length - 1] = (arr[arr.length - 1] + (after ? ' ' + after : '')).trim();
+        done = true; syT[x] = arr[0] || BLANK;
+        const rest = arr.slice(1); if(rest.length){ syT.splice(x + 1, 0, ...rest); syStamp.splice(x + 1, 0, ...rest.map(() => null)); syAbs.splice(x + 1, 0, ...rest.map(() => null)); picL = picL.map(q => q != null && q > x ? q + rest.length : q); savePT(); }
+        syStack = []; lyrPersist(); syRender(true);
+      });
       inp.addEventListener('keydown', e => {
         if((e.ctrlKey || e.metaKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !done){
           e.preventDefault(); e.stopPropagation();
