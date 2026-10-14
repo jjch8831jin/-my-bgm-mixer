@@ -4725,7 +4725,7 @@ setActiveTrack(startTrack);
     d.addEventListener('click', ev => {
       const t = ev.target;
       if(t.closest('.ib-main')) openFilesFor(kind);
-      else if(t.closest('.ib-bk')){ let fi = document.getElementById('bkMainFile'); if(!fi){ fi = document.createElement('input'); fi.type = 'file'; fi.id = 'bkMainFile'; fi.multiple = true; fi.accept = '.bgmx,audio/*,.wav,.mp3'; fi.style.display = 'none'; document.body.appendChild(fi); fi.addEventListener('change', async () => { const fs = [...(fi.files || [])], kk = fi.dataset.kind || 'voice'; fi.value = ''; const au = fs.filter(f => !/\.bgmx$/i.test(f.name)), bk = fs.filter(f => /\.bgmx$/i.test(f.name)); if(au.length && window.__absyncFiles) await window.__absyncFiles(au, kk); for(const f of bk){ if(window.__bgmxImport) await window.__bgmxImport(f); } }); } fi.dataset.kind = kind; fi.accept = kind === 'voice' ? '.bgmx,audio/*,.wav,.mp3' : '.bgmx'; fi.click(); }
+      else if(t.closest('.ib-bk')){ let fi = document.getElementById('bkMainFile'); if(!fi){ fi = document.createElement('input'); fi.type = 'file'; fi.id = 'bkMainFile'; fi.multiple = true; fi.accept = '.bgmx,audio/*,.wav,.mp3'; fi.style.display = 'none'; document.body.appendChild(fi); fi.addEventListener('change', async () => { const fs = [...(fi.files || [])], kk = fi.dataset.kind || 'voice'; fi.value = ''; const au = fs.filter(f => !/\.bgmx$/i.test(f.name)), bk = fs.filter(f => /\.bgmx$/i.test(f.name)); if(au.length){ let r = { saved: 0, bad: [] }; try{ r = (window.__absyncFiles ? await window.__absyncFiles(au, kk, true) : r) || r; }catch(x){} if(kk === 'voice'){ try{ const vi = document.getElementById('voiceInput'), dt = new DataTransfer(); au.forEach(f => dt.items.add(f)); vi.files = dt.files; vi.dispatchEvent(new Event('change', { bubbles: true })); }catch(x){ bgmAlert('음성 파일을 불러오지 못했습니다. 📁 음성 버튼으로 골라 주세요.'); } let m = '음성 파일 ' + au.length + '개를 불러왔어요.'; if(r.saved) m += '\n오디오북 시간표가 있는 ' + r.saved + '개는 가사와 시간도 넣었어요.'; if(r.bad.length) m += '\n\n시간표가 없어 음성만 불러온 파일 ' + r.bad.length + '개:\n' + r.bad.slice(0, 5).join('\n') + (r.bad.length > 5 ? '\n…' : '') + '\n(필요하면 시간 맞추기에서 글을 붙여 넣고 ⚖ 글자 수로 자동 배분을 쓰세요)'; bgmAlert(m); } } for(const f of bk){ if(window.__bgmxImport) await window.__bgmxImport(f); } }); } fi.dataset.kind = kind; fi.accept = kind === 'voice' ? '.bgmx,audio/*,.wav,.mp3' : '.bgmx'; fi.click(); }
       else if(t.closest('.ib-find')){ S[kind].search = true; e.btn.classList.add('searching'); e.btn.innerHTML = '<span class="ib-ic">🔍</span><input type="text" class="ib-q" placeholder="곡 이름"><button type="button" class="ib-x" title="닫기">✕</button>'; const q = e.btn.querySelector('.ib-q'); q.value = S[kind].q; q.focus(); }
       else if(t.closest('.ib-x')){ S[kind].q = ''; btnDefault(); let ci = -1; try{ ci = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).getCurIdx(); }catch(x){} S[kind].start = ci > 0 ? ci : 0; render(kind); }
       else if(t.closest('.ia-prev')){ S[kind].start = Math.max(0, S[kind].start - per()); render(kind); }
@@ -5243,7 +5243,7 @@ function mixTotalDuration(){
     return null;
   }
   // 메인 화면 📂 백업 버튼: 오디오북에서 저장한 음성 파일(여러 개 가능)의 시간표를 곡을 열지 않고 바로 가사·시간으로 저장
-  window.__absyncFiles = async function(files, kind){
+  window.__absyncFiles = async function(files, kind, quiet){
     const fmt = x => { const m = Math.floor(x / 60), r = x - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); };
     const got = [], bad = [];
     for(const f of files){
@@ -5254,12 +5254,14 @@ function mixTotalDuration(){
       if(L.length) got.push({ f, L }); else bad.push(f.name);
     }
     const badTxt = bad.length ? '\n\n시간표가 없어 건너뛴 파일 ' + bad.length + '개:\n' + bad.slice(0, 5).join('\n') + (bad.length > 5 ? '\n…' : '') : '';
-    if(!got.length){ bgmAlert('선택한 파일에는 오디오북 시간표가 없습니다.\n(오디오북에서 시간표 기능이 들어간 뒤 저장한 WAV·MP3 파일만 됩니다)'); return; }
+    if(quiet && !got.length) return { saved: 0, bad };
+    if(!got.length){ bgmAlert('선택한 파일에는 오디오북 시간표가 없습니다.\n(오디오북에서 시간표 기능이 들어간 뒤 저장한 WAV·MP3 파일만 됩니다)'); return { saved: 0, bad }; }
     const a = loadLyr(), had = got.filter(g => a[keyOf(kind, g.f.name)] && String(a[keyOf(kind, g.f.name)].text || '').trim());
-    if(had.length && !(await bgmYN('이미 가사가 저장된 파일이 ' + had.length + '개 있습니다.\n오디오북 시간표로 바꿀까요?\n' + had.slice(0, 5).map(g => g.f.name).join('\n') + (had.length > 5 ? '\n…' : ''), '📘 바꾸기'))) return;
+    if(had.length && !(await bgmYN('이미 가사가 저장된 파일이 ' + had.length + '개 있습니다.\n오디오북 시간표로 바꿀까요?\n' + had.slice(0, 5).map(g => g.f.name).join('\n') + (had.length > 5 ? '\n…' : ''), '📘 바꾸기'))) return { saved: 0, bad, kept: true };
     got.forEach(({ f, L }) => { a[keyOf(kind, f.name)] = { text: L.map(o => fmt(o.s) + ' ' + o.t).join('\n'), start: 0, end: Math.ceil(L[L.length - 1].s + 1) }; });
     saveLyr(a);
-    bgmAlert('오디오북 시간표 ' + got.length + '개 파일을 불러왔어요.\n같은 이름의 ' + (kind === 'voice' ? '음성' : '음악') + ' 파일을 믹서에 불러오면 가사와 시간이 들어 있습니다.' + badTxt);
+    if(!quiet) bgmAlert('오디오북 시간표 ' + got.length + '개 파일을 불러왔어요.\n같은 이름의 ' + (kind === 'voice' ? '음성' : '음악') + ' 파일을 믹서에 불러오면 가사와 시간이 들어 있습니다.' + badTxt);
+    return { saved: got.length, bad };
   };
   function animScroll(el, to){
     const W = (el.ownerDocument && el.ownerDocument.defaultView) || window; // 별도 창 안의 칸은 그 창의 타이머로 움직여야 믹서 창이 가려져도 멈추지 않음
