@@ -5242,6 +5242,46 @@ function mixTotalDuration(){
     // 완전 최대화: 뒤 화면 스크롤바가 오른쪽에 여백처럼 남지 않게 잠금
     const prevOv = [document.documentElement.style.overflow, document.body.style.overflow];
     document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
+    // ---- 시간 맞추기 별도 창(보조 모니터): 사진불러오기처럼 새 창으로 열어 다른 모니터로 끌어 놓고 쓴다 ----
+    const adoc = () => back.ownerDocument, aw = () => back.ownerDocument.defaultView || window;
+    const bgmAlert = (m, w) => window.bgmAlert(m, w || aw()); // 알림·입력 창은 지금 가사창이 있는 창에 뜨게 한다
+    const bgmPrompt = (m, d, w) => window.bgmPrompt(m, d, w || aw());
+    const dLis = []; // 문서 전체에 거는 단축키·붙여넣기 등 (창을 옮기면 같이 옮긴다)
+    const dAdd = (t, f, c) => { dLis.push([t, f, c]); adoc().addEventListener(t, f, c); };
+    const dRem = (t, f, c) => { const k = dLis.findIndex(x => x[0] === t && x[1] === f); if(k >= 0) dLis.splice(k, 1); try{ document.removeEventListener(t, f, c); }catch(e){} try{ adoc().removeEventListener(t, f, c); }catch(e){} };
+    let popW = null;
+    const rebind = (from, to) => dLis.forEach(x => { try{ from.removeEventListener(x[0], x[1], x[2]); }catch(e){} to.addEventListener(x[0], x[1], x[2]); });
+    const popIn = () => { // 별도 창이 닫히면 가사창을 원래 창으로 돌려놓는다 (작업 내용은 그대로)
+      if(!popW) return; const w = popW; popW = null;
+      try{ localStorage.setItem('bgmSyWin', JSON.stringify({ l: w.screenX, t: w.screenY, w: w.outerWidth, h: w.outerHeight })); }catch(e){}
+      try{ rebind(w.document, document); }catch(e){}
+      document.body.appendChild(back);
+      document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
+      try{ layoutOne(); }catch(e){}
+    };
+    const popOut = () => {
+      if(popW && !popW.closed){ try{ popW.focus(); }catch(e){} return; }
+      if(/Android|iPhone|iPad/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches)) return; // 폰은 그대로
+      let P = {}; try{ P = JSON.parse(localStorage.getItem('bgmSyWin') || '{}') || {}; }catch(e){}
+      const f = 'popup=yes,width=' + (P.w || 1100) + ',height=' + (P.h || 800) + ',left=' + (P.l != null ? P.l : 60) + ',top=' + (P.t != null ? P.t : 40);
+      let w = null; try{ w = window.open('', 'bgmSync', f); }catch(e){ w = null; }
+      if(!w) return; // 팝업이 막혀 있으면 지금처럼 이 창에서
+      const d = w.document;
+      if(!d.getElementById('syWinInit')){
+        d.title = '시간 맞추기'; const mk = d.createElement('meta'); mk.id = 'syWinInit'; mk.name = 'viewport'; mk.content = 'width=device-width,initial-scale=1'; d.head.appendChild(mk);
+        document.querySelectorAll('style, link[rel=stylesheet]').forEach(n => { d.head.appendChild(n.cloneNode(true)); });
+        d.body.style.cssText = 'margin:0;overflow:hidden;background:#faf6e8;font-family:' + getComputedStyle(document.body).fontFamily;
+      }
+      popW = w;
+      d.body.appendChild(back);
+      document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; // 믹스창은 다시 평소처럼
+      rebind(document, d);
+      w.addEventListener('resize', () => { try{ layoutOne(); }catch(e){} });
+      w.addEventListener('pagehide', () => { if(popW === w) popIn(); });
+      try{ layoutOne(); }catch(e){}
+      try{ w.focus(); }catch(e){}
+    };
+    window.addEventListener('pagehide', () => { try{ if(popW){ const w = popW; popW = null; w.close(); } }catch(e){} });
     const nm = back.querySelector('.nm'), view = back.querySelector('.lyr-view');
     const ta = back.querySelector('[data-pane=edit] textarea'), si = back.querySelector('[data-s]'), ei = back.querySelector('[data-e]');
     nm.textContent = dispName(kind, name); nm.style.cursor = 'pointer'; nm.title = '눌러서 제목 고치기';
@@ -5373,7 +5413,7 @@ function mixTotalDuration(){
       try{
         const bx = back.querySelector('.lyr-box'), head = back.querySelector('.lyr-head'), bar = back.querySelector('.lyr-bar'), tabs = head && head.querySelector('.lyr-tabs');
         if(!bx || !head || !bar || !tabs) return;
-        const want = window.innerWidth >= 1080 && curTab !== 'sync', merged = bar.parentNode === head;
+        const want = aw().innerWidth >= 1080 && curTab !== 'sync', merged = bar.parentNode === head;
         if(want && !merged) head.insertBefore(bar, tabs); else if(!want && merged) head.after(bar);
         bx.classList.toggle('onerow', want);
       }catch(e){}
@@ -5384,7 +5424,8 @@ function mixTotalDuration(){
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
       { const bx = back.querySelector('.lyr-box'), lbx = back.querySelector('.lyr-head .lb'); if(bx) bx.classList.toggle('syncmode', k === 'sync'); back.classList.toggle('syb', k === 'sync'); if(lbx) lbx.textContent = (k === 'sync') ? '시간 맞추기' : '제목'; }
       if(k === 'sync' && curTab !== 'sync' && !snap) takeSnap();
-      curTab = k; layoutOne(); try{ applyAuto(); }catch(e){}
+      { const was = curTab; curTab = k; if(k === 'sync' && was !== 'sync') popOut(); else if(k !== 'sync' && popW){ const w = popW; popIn(); try{ w.close(); }catch(e){} } }
+      layoutOne(); try{ applyAuto(); }catch(e){}
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
     let shownKey = null, lastIdx = -2, curTab = 'view', hl = null;
@@ -5552,7 +5593,7 @@ function mixTotalDuration(){
       add('♪ 가사 줄에 맞추기', () => pickLine(x));
       back.appendChild(m);
       const w = m.offsetWidth, h = m.offsetHeight;
-      m.style.left = Math.max(4, Math.min(cx, innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, innerHeight - h - 4)) + 'px';
+      m.style.left = Math.max(4, Math.min(cx, aw().innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, aw().innerHeight - h - 4)) + 'px';
     }
     back.addEventListener('pointerdown', e => { if(ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
     function picSyRender(keep){
@@ -6079,7 +6120,7 @@ function mixTotalDuration(){
     }
     const BLANK = '\u200b'; // 빈 줄 표시(보이지 않는 글자)
     const addTa = back.querySelector('.sy-add'), addWrap = back.querySelector('.addl'), upBtn = back.querySelector('[data-up]');
-    const growAdd = () => { addTa.style.height = 'auto'; addTa.style.height = Math.min(addTa.scrollHeight, Math.round(window.innerHeight * 0.6)) + 'px'; };
+    const growAdd = () => { addTa.style.height = 'auto'; addTa.style.height = Math.min(addTa.scrollHeight, Math.round(aw().innerHeight * 0.6)) + 'px'; };
     addTa.addEventListener('input', growAdd);
     addTa.addEventListener('keydown', e => { if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); addTa.value = ''; growAdd(); addTa.blur(); } });
     upBtn.addEventListener('click', () => {
@@ -6176,7 +6217,7 @@ function mixTotalDuration(){
       add('이미지 고르기', () => lineChooser(x));
       back.appendChild(m);
       const w = m.offsetWidth, h = m.offsetHeight;
-      m.style.left = Math.max(4, Math.min(cx, innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, innerHeight - h - 4)) + 'px';
+      m.style.left = Math.max(4, Math.min(cx, aw().innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, aw().innerHeight - h - 4)) + 'px';
     }
     function lineMenu(cx, cy, x){
       closeCtx();
@@ -6195,7 +6236,7 @@ function mixTotalDuration(){
       if(x < syT.length - 1) add('↓ 한 줄 아래로', () => moveLyric(x, x + 1));
       back.appendChild(m);
       const w = m.offsetWidth, h = m.offsetHeight;
-      m.style.left = Math.max(4, Math.min(cx, innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, innerHeight - h - 4)) + 'px';
+      m.style.left = Math.max(4, Math.min(cx, aw().innerWidth - w - 4)) + 'px'; m.style.top = Math.max(4, Math.min(cy, aw().innerHeight - h - 4)) + 'px';
     }
     // 끌어서 순서 바꾸기 (가사: 시간이 줄을 따라감 / 사진: 시간은 자리에 그대로)
     (function(){
@@ -6211,7 +6252,7 @@ function mixTotalDuration(){
         if(!pd || e.pointerId !== pd.id) return;
         if(pd.ghost){ pd.ghost.style.top = (e.clientY - pd.dy) + 'px'; pd.ghost.style.left = (e.clientX - pd.dx) + 'px'; }
         const rows = rowsOf();
-        const el = document.elementFromPoint(e.clientX, e.clientY), r = el && el.closest && el.closest('.sy-row'), j = rows.indexOf(r);
+        const el = adoc().elementFromPoint(e.clientX, e.clientY), r = el && el.closest && el.closest('.sy-row'), j = rows.indexOf(r);
         if(j >= 0){ pd.to = j; rows.forEach((q, k) => q.classList.toggle('insl', k === j && j !== pd.from)); }
         const rc = syList.getBoundingClientRect(); if(e.clientY < rc.top + 30) syList.scrollTop -= 14; else if(e.clientY > rc.bottom - 30) syList.scrollTop += 14;
       });
@@ -6236,7 +6277,7 @@ function mixTotalDuration(){
       });
       syList.addEventListener('pointermove', e => {
         if(!m || e.pointerId !== m.id) return;
-        if(!m.on){ if(Math.hypot(e.clientX - m.x0, e.clientY - m.y0) < 5) return; m.on = true; box = document.createElement('div'); box.className = 'selbox'; document.body.appendChild(box); }
+        if(!m.on){ if(Math.hypot(e.clientX - m.x0, e.clientY - m.y0) < 5) return; m.on = true; box = document.createElement('div'); box.className = 'selbox'; adoc().body.appendChild(box); }
         const l = Math.min(m.x0, e.clientX), t = Math.min(m.y0, e.clientY), r = Math.max(m.x0, e.clientX), b = Math.max(m.y0, e.clientY);
         box.style.left = l + 'px'; box.style.top = t + 'px'; box.style.width = (r - l) + 'px'; box.style.height = (b - t) + 'px';
         selSet = new Set(m.base);
@@ -6374,7 +6415,7 @@ function mixTotalDuration(){
         }); pop.appendChild(b); });
         back.appendChild(pop);
         const r = mb.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
-        pop.style.left = Math.max(4, Math.min(r.right - w, innerWidth - w - 4)) + 'px'; pop.style.top = Math.max(4, r.top - h - 6) + 'px';
+        pop.style.left = Math.max(4, Math.min(r.right - w, aw().innerWidth - w - 4)) + 'px'; pop.style.top = Math.max(4, r.top - h - 6) + 'px';
       });
       back.addEventListener('pointerdown', e => { if(pop && !pop.contains(e.target) && e.target !== mb) closeP(); }, true);
     })();
@@ -6384,11 +6425,11 @@ function mixTotalDuration(){
     const onSpace = e => {
       if(curTab !== 'sync' || e.code !== 'Space') return;
       { const t = e.target; if(t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && /^(text|search|number|)$/.test(t.type)))) return; }
-      e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){} if(!e.repeat) doStamp();
+      e.preventDefault(); e.stopPropagation(); try{ adoc().activeElement.blur(); }catch(x){} if(!e.repeat) doStamp();
     };
-    document.addEventListener('keydown', onSpace, true);
-    const onDel = e => { if(curTab !== 'sync' || syMode !== 'pic' || e.key !== 'Delete' || !selSet.size) return; { const a = document.activeElement; if(a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')) return; } e.preventDefault(); removeSel(); };
-    document.addEventListener('keydown', onDel, true);
+    dAdd('keydown', onSpace, true);
+    const onDel = e => { if(curTab !== 'sync' || syMode !== 'pic' || e.key !== 'Delete' || !selSet.size) return; { const a = adoc().activeElement; if(a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')) return; } e.preventDefault(); removeSel(); };
+    dAdd('keydown', onDel, true);
     const onAlt = e => {
       if(curTab !== 'sync' || (txtMode && e.target && e.target.tagName === 'TEXTAREA') || e.key !== 'Alt') return;
       e.preventDefault(); e.stopPropagation(); if(!e.repeat) syUndo(true);
@@ -6412,14 +6453,14 @@ function mixTotalDuration(){
       if(curTab !== 'sync' || syMode !== 'lyric' || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
       const tg = e.target; if(tg && ((tg.tagName === 'INPUT' && tg.type !== 'range') || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
       if(document.querySelector('.pk-back:not(.pk-float)') || !syT.length) return;
-      e.preventDefault(); e.stopPropagation(); try{ document.activeElement.blur(); }catch(x){}
+      e.preventDefault(); e.stopPropagation(); try{ adoc().activeElement.blur(); }catch(x){}
       syPos = Math.max(0, Math.min(syT.length - 1, syPos + (e.key === 'ArrowDown' ? 1 : -1))); afterStampPos = -1; syMark(true);
     };
-    document.addEventListener('keydown', onShiftPlay, true);
-    document.addEventListener('keydown', onArrowLine, true);
-    document.addEventListener('keydown', onAlt, true);
-    document.addEventListener('keydown', onEnter, true);
-    document.addEventListener('keyup', onAltUp, true);
+    dAdd('keydown', onShiftPlay, true);
+    dAdd('keydown', onArrowLine, true);
+    dAdd('keydown', onAlt, true);
+    dAdd('keydown', onEnter, true);
+    dAdd('keyup', onAltUp, true);
     // ---- 기능 줄 (시간 바·재생·속도) ----
     const sk = back.querySelector('[data-sk]'), ct = back.querySelector('[data-ct]'), dt = back.querySelector('[data-dt]');
     let dragging = false;
@@ -6455,7 +6496,7 @@ function mixTotalDuration(){
       chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
       document.body.appendChild(chipEl);
     });
-    const close = () => { try{ if(snap) revertSync(); else if(txtMode) txtApply(); }catch(e){} document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); document.removeEventListener('keydown', onSpace, true); document.removeEventListener('keydown', onAlt, true); document.removeEventListener('keydown', onShiftPlay, true); document.removeEventListener('keydown', onArrowLine, true); document.removeEventListener('keydown', onEnter, true); document.removeEventListener('keyup', onAltUp, true); document.removeEventListener('paste', onPaste, true); document.removeEventListener('copy', onCopy, true); document.removeEventListener('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} document.removeEventListener('keydown', onDel, true); back.remove(); document.removeEventListener('keydown', onKey, true); window.removeEventListener('resize', onRz); };
+    const close = () => { try{ if(popW){ const w = popW; popW = null; w.close(); } }catch(e){} try{ if(snap) revertSync(); else if(txtMode) txtApply(); }catch(e){} document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); dRem('keydown', onSpace, true); dRem('keydown', onAlt, true); dRem('keydown', onShiftPlay, true); dRem('keydown', onArrowLine, true); dRem('keydown', onEnter, true); dRem('keyup', onAltUp, true); dRem('paste', onPaste, true); dRem('copy', onCopy, true); dRem('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} dRem('keydown', onDel, true); back.remove(); dRem('keydown', onKey, true); window.removeEventListener('resize', onRz); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
@@ -6471,7 +6512,7 @@ function mixTotalDuration(){
       inp.addEventListener('blur', () => finish(true));
     });
     const onKey = e => { if(e.key === 'Escape'){ if(nm.querySelector('input')) return; if(e.target && e.target.closest && e.target.closest('.sy-list') && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return; if(ctxEl){ e.preventDefault(); closeCtx(); return; } e.preventDefault(); close(); } };
-    document.addEventListener('keydown', onKey, true);
+    dAdd('keydown', onKey, true);
     back.addEventListener('pointerdown', e => { if(e.target === back) close(); });
     back.querySelector('[data-x]').addEventListener('click', close);
     back.querySelector('[data-cancel]').addEventListener('click', cancelSync);
@@ -6545,7 +6586,7 @@ function mixTotalDuration(){
       try{ const r = await fetch(u); const b = await r.blob(); if(!/^image\//.test(b.type)) throw new Error('t'); putImage(b, at, rp); }
       catch(x){ bgmAlert('이 사이트의 이미지는 끌어다 놓아서 가져올 수 없습니다.\n이미지를 우클릭해서 "이미지 복사"를 한 뒤 Ctrl+V로 붙여넣어 주세요.'); }
     };
-    document.addEventListener('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', e => onDrop(e));
+    dAdd('paste', onPaste, true); back.addEventListener('dragover', onDragOver); back.addEventListener('drop', e => onDrop(e));
     // 썸네일 줄: 파일 놓기(놓은 자리에 삽입) + 썸네일 끌어서 순서 바꾸기
     const posAt = x => { const ths = Array.from(thumbsEl.querySelectorAll('.th')); let n = 0; ths.forEach(t => { const r = t.getBoundingClientRect(); if(r.left + r.width / 2 < x) n++; }); return n; };
     thumbsEl.addEventListener('dragover', e => { if(e.dataTransfer){ e.preventDefault(); thumbsEl.classList.add('dropping'); } });
@@ -6571,7 +6612,7 @@ function mixTotalDuration(){
       });
       thumbsEl.addEventListener('pointermove', e => {
         if(!m || e.pointerId !== m.id) return;
-        if(!m.on){ if(Math.hypot(e.clientX - m.x0, e.clientY - m.y0) < 5) return; m.on = true; box = document.createElement('div'); box.className = 'selbox'; document.body.appendChild(box); }
+        if(!m.on){ if(Math.hypot(e.clientX - m.x0, e.clientY - m.y0) < 5) return; m.on = true; box = document.createElement('div'); box.className = 'selbox'; adoc().body.appendChild(box); }
         const l = Math.min(m.x0, e.clientX), t = Math.min(m.y0, e.clientY), r = Math.max(m.x0, e.clientX), b = Math.max(m.y0, e.clientY);
         box.style.left = l + 'px'; box.style.top = t + 'px'; box.style.width = (r - l) + 'px'; box.style.height = (b - t) + 'px';
         selSet = new Set(m.base);
@@ -6589,9 +6630,9 @@ function mixTotalDuration(){
       };
       thumbsEl.addEventListener('pointerup', fin); thumbsEl.addEventListener('pointercancel', fin);
     })();
-    const inText = () => { const a = document.activeElement; return a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|search|number|)$/.test(a.type))); };
+    const inText = () => { const a = adoc().activeElement; return a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|search|number|)$/.test(a.type))); };
     const onCopy = e => {
-      if(!selSet.size) return; if(inText()){ const a = document.activeElement; if(a.selectionStart !== a.selectionEnd) return; }
+      if(!selSet.size) return; if(inText()){ const a = adoc().activeElement; if(a.selectionStart !== a.selectionEnd) return; }
       const idx = Array.from(selSet).sort((a, b) => a - b).filter(i => i < pics.length);
       window.__picClip = idx.map(i => pics[i]);
       e.preventDefault(); try{ e.clipboardData.setData('text/plain', 'bgm-pics:' + Date.now()); }catch(x){}
@@ -6600,7 +6641,7 @@ function mixTotalDuration(){
       if(!((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) || inText() || !pics.length) return;
       e.preventDefault(); selSet = new Set(pics.map((_, i) => i)); paintSel();
     };
-    document.addEventListener('copy', onCopy, true); document.addEventListener('keydown', onSelAll, true);
+    dAdd('copy', onCopy, true); dAdd('keydown', onSelAll, true);
     (function(){
       let st = null;
       const clearMarks = () => thumbsEl.querySelectorAll('.th').forEach(t => t.classList.remove('insL', 'insR', 'drg'));
