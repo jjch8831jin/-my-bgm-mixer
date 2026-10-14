@@ -6529,7 +6529,10 @@ function mixTotalDuration(){
     // ---- 가사 보기에서 틀린 문장을 오른쪽 클릭(폰: 길게 누르기) → 여기부터 다시 배분 / 이 줄 시간만 바꾸기 ----
     (function(){
       let pop = null, prev = null; // prev: 방금 고치기 전 상태 (되돌리기용)
+      let wasPlay = false, ab0 = 0; // 메뉴를 연 순간: 재생 중이었는지, 그때 위치
       const closeV = () => { if(pop){ try{ pop.remove(); }catch(e){} pop = null; } };
+      const goBack = () => { try{ ctl.seekToFraction(origToFrac(Math.max(0, ab0 - 5))); ctl.play(); plShow(true); }catch(e){} }; // 고친 뒤: 기준 위치 5초 전부터 다시 재생
+      const dismiss = () => { const had = !!pop; closeV(); if(had && wasPlay){ try{ ctl.play(); plShow(true); }catch(e){} } wasPlay = false; }; // 그냥 닫으면 원래 재생 중이었을 때만 이어 재생
       const rowIndex = el => { const r = el && el.closest ? el.closest('.lyr-ln') : null; return r ? lns.indexOf(r) : -1; };
       function edit(rowI, mode, t0){
         const cur = curInfo(kind); if(!cur || !cur.item || !cur.item.buffer) return;
@@ -6561,10 +6564,14 @@ function mixTotalDuration(){
         bannerMsg('방금 고친 것을 되돌렸어요.');
       }
       function openMenu(x, y, rowI){
-        closeV(); const cur = curInfo(kind); if(!cur) return;
-        const t0 = Math.max(0, cur.t); // 누른 그 순간의 재생 위치 (일시정지 없이)
+        if(pop) closeV(); else wasPlay = false;
+        let pl = false; try{ pl = ctl.isPlaying(); }catch(e){}
+        if(pl){ wasPlay = true; try{ ctl.pause(); plShow(false); }catch(e){} } // 누르는 순간 일시정지
+        const cur = curInfo(kind); if(!cur) return;
+        ab0 = origPos(kind);
+        const t0 = Math.max(0, cur.t); // 일시정지한 위치
         pop = mkEl('div', 'ctxm');
-        const add = (label, fn) => { const b = mkEl('button', null, label); b.addEventListener('click', e => { e.stopPropagation(); closeV(); fn(); }); pop.appendChild(b); };
+        const add = (label, fn) => { const b = mkEl('button', null, label); b.addEventListener('click', e => { e.stopPropagation(); closeV(); wasPlay = false; fn(); goBack(); }); pop.appendChild(b); };
         add('⚖ 여기부터 다시 배분', () => edit(rowI, 'from', t0));
         add('⏱ 이 줄 시간만 바꾸기', () => edit(rowI, 'one', t0));
         if(prev) add('↶ 방금 고친 것 되돌리기', undo);
@@ -6576,7 +6583,7 @@ function mixTotalDuration(){
       { let lp = null; // 폰: 길게 누르기
         view.addEventListener('pointerdown', e => { if(e.pointerType !== 'touch') return; const i = rowIndex(e.target); if(i < 0) return; const x = e.clientX, y = e.clientY; clearTimeout(lp); lp = setTimeout(() => { lp = null; openMenu(x, y, i); }, 600); });
         ['pointerup', 'pointercancel', 'pointermove'].forEach(ev => view.addEventListener(ev, () => { clearTimeout(lp); lp = null; })); }
-      back.addEventListener('pointerdown', e => { if(pop && !pop.contains(e.target)) closeV(); }, true);
+      back.addEventListener('pointerdown', e => { if(pop && !pop.contains(e.target)) dismiss(); }, true);
     })();
     // ⋯ 더보기 (입력 탭에 있던 기능)
     (function(){
