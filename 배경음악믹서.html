@@ -386,6 +386,7 @@
   .lyr-box.haspic.ended .lyr-hl{ visibility:hidden; }
   .lyr-ln{ position:relative; z-index:1; }
   .lyr-ln.on{ color:#9a3412; }
+  .lyr-ln.mk{ outline:3px solid #f59e0b; outline-offset:-3px; border-radius:10px; }
   .lyr-hl{ position:absolute; left:8px; right:8px; top:0; height:0; background:#ffe9c7; border-radius:10px; opacity:0; z-index:0; pointer-events:none; }
   .lyr-hl.mv{ transition:top .8s ease, height .8s ease, opacity .6s ease; }
   .lyr-voice .lyr-hl{ background:#bfdbfe; }
@@ -6530,9 +6531,11 @@ function mixTotalDuration(){
     (function(){
       let pop = null, prev = null; // prev: 방금 고치기 전 상태 (되돌리기용)
       let wasPlay = false, ab0 = 0; // 메뉴를 연 순간: 재생 중이었는지, 그때 위치
+      let mk = null; // 왼쪽 클릭으로 찍어 둔 자리 { i:줄, ab:전체 위치, t:이 파일 안 위치, was:찍을 때 재생 중이었는지 }
+      const clearMk = () => { mk = null; lns.forEach(e => e.classList.remove('mk')); };
       const closeV = () => { if(pop){ try{ pop.remove(); }catch(e){} pop = null; } };
       const goBack = () => { try{ ctl.seekToFraction(origToFrac(Math.max(0, ab0 - 5))); ctl.play(); plShow(true); }catch(e){} }; // 고친 뒤: 기준 위치 5초 전부터 다시 재생
-      const dismiss = () => { const had = !!pop; closeV(); if(had && wasPlay){ try{ ctl.play(); plShow(true); }catch(e){} } wasPlay = false; }; // 그냥 닫으면 원래 재생 중이었을 때만 이어 재생
+      const dismiss = () => { const had = !!pop; closeV(); if(had && wasPlay){ try{ ctl.play(); plShow(true); }catch(e){} } wasPlay = false; clearMk(); noClickUntil = Date.now() + 400; }; // 그냥 닫으면 원래 재생 중이었을 때만 이어 재생
       const rowIndex = el => { const r = el && el.closest ? el.closest('.lyr-ln') : null; return r ? lns.indexOf(r) : -1; };
       function edit(rowI, mode, t0){
         const cur = curInfo(kind); if(!cur || !cur.item || !cur.item.buffer) return;
@@ -6565,13 +6568,16 @@ function mixTotalDuration(){
       }
       function openMenu(x, y, rowI){
         if(pop) closeV(); else wasPlay = false;
-        let pl = false; try{ pl = ctl.isPlaying(); }catch(e){}
-        if(pl){ wasPlay = true; try{ ctl.pause(); plShow(false); }catch(e){} } // 누르는 순간 일시정지
-        const cur = curInfo(kind); if(!cur) return;
-        ab0 = origPos(kind);
-        const t0 = Math.max(0, cur.t); // 일시정지한 위치
+        let t0;
+        if(mk){ rowI = mk.i; ab0 = mk.ab; t0 = mk.t; wasPlay = mk.was; } // 왼쪽 클릭으로 찍어 둔 자리가 있으면 그 자리로
+        else {
+          let pl = false; try{ pl = ctl.isPlaying(); }catch(e){}
+          if(pl){ wasPlay = true; try{ ctl.pause(); plShow(false); }catch(e){} } // 누르는 순간 일시정지
+          const cur = curInfo(kind); if(!cur) return;
+          ab0 = origPos(kind); t0 = Math.max(0, cur.t); // 일시정지한 위치
+        }
         pop = mkEl('div', 'ctxm');
-        const add = (label, fn) => { const b = mkEl('button', null, label); b.addEventListener('click', e => { e.stopPropagation(); closeV(); wasPlay = false; fn(); goBack(); }); pop.appendChild(b); };
+        const add = (label, fn) => { const b = mkEl('button', null, label); b.addEventListener('click', e => { e.stopPropagation(); closeV(); wasPlay = false; fn(); clearMk(); goBack(); }); pop.appendChild(b); };
         add('⚖ 여기부터 다시 배분', () => edit(rowI, 'from', t0));
         add('⏱ 이 줄 시간만 바꾸기', () => edit(rowI, 'one', t0));
         if(prev) add('↶ 방금 고친 것 되돌리기', undo);
@@ -6579,9 +6585,25 @@ function mixTotalDuration(){
         const w = pop.offsetWidth, h = pop.offsetHeight;
         pop.style.left = Math.max(4, Math.min(x, aw().innerWidth - w - 4)) + 'px'; pop.style.top = Math.max(4, Math.min(y, aw().innerHeight - h - 4)) + 'px';
       }
-      view.addEventListener('contextmenu', e => { const i = rowIndex(e.target); if(i < 0 || curTab !== 'view') return; e.preventDefault(); openMenu(e.clientX, e.clientY, i); });
+      let lpFired = false, noClickUntil = 0; // 길게 눌러 메뉴가 열린 직후의 손떼기 클릭은 무시
+      view.addEventListener('contextmenu', e => { if(curTab !== 'view') return; const i = mk ? mk.i : rowIndex(e.target); if(i < 0) return; e.preventDefault(); openMenu(e.clientX, e.clientY, i); });
+      // 왼쪽 클릭(폰: 짧게 누르기): 틀린 문장을 그 순간 찍는다 — 재생이 멈추고 그 자리의 시간이 기록됨
+      view.addEventListener('click', e => {
+        if(lpFired){ lpFired = false; return; }
+        if(curTab !== 'view' || pop || Date.now() < noClickUntil) return;
+        try{ const sel = aw().getSelection(); if(sel && String(sel).trim()) return; }catch(err){}
+        const i = rowIndex(e.target); if(i < 0) return;
+        let pl = false; try{ pl = ctl.isPlaying(); }catch(err){}
+        if(mk && !pl){ mk.i = i; } // 이미 멈춰서 찍어 둔 상태면 시간은 그대로 두고 줄만 바꿈
+        else {
+          if(pl){ try{ ctl.pause(); plShow(false); }catch(err){} }
+          const cur = curInfo(kind); if(!cur) return;
+          mk = { i, ab: origPos(kind), t: Math.max(0, cur.t), was: pl };
+        }
+        lns.forEach((el, x) => el.classList.toggle('mk', x === mk.i));
+      });
       { let lp = null; // 폰: 길게 누르기
-        view.addEventListener('pointerdown', e => { if(e.pointerType !== 'touch') return; const i = rowIndex(e.target); if(i < 0) return; const x = e.clientX, y = e.clientY; clearTimeout(lp); lp = setTimeout(() => { lp = null; openMenu(x, y, i); }, 600); });
+        view.addEventListener('pointerdown', e => { if(e.pointerType !== 'touch') return; const i = rowIndex(e.target); if(i < 0) return; const x = e.clientX, y = e.clientY; clearTimeout(lp); lp = setTimeout(() => { lp = null; lpFired = true; setTimeout(() => { lpFired = false; }, 800); openMenu(x, y, mk ? mk.i : i); }, 600); });
         ['pointerup', 'pointercancel', 'pointermove'].forEach(ev => view.addEventListener(ev, () => { clearTimeout(lp); lp = null; })); }
       back.addEventListener('pointerdown', e => { if(pop && !pop.contains(e.target)) dismiss(); }, true);
     })();
