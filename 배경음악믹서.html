@@ -5596,6 +5596,18 @@ function mixTotalDuration(){
       picSyMark(!keep); paintSyPics(); if(keep) syList.scrollTop = keepTop;
     }
     // 가사 줄 고치기·지우기·추가
+    function mergeLines(x){ // x+1줄을 x줄 뒤에 붙임 (둘 다 사진이 있으면 위 줄 사진을 남기고 아래 줄 사진은 줄에서 풀림)
+      if(x < 0 || x + 1 >= syT.length) return -1;
+      const a = syT[x] === BLANK ? '' : syT[x], b = syT[x + 1] === BLANK ? '' : syT[x + 1];
+      syT[x] = (a && b ? a + ' ' + b : a + b) || BLANK;
+      if(syStamp[x] == null && syStamp[x + 1] != null) syStamp[x] = syStamp[x + 1];
+      const upHas = picL.some(v => v === x);
+      picL = picL.map(v => v == null ? null : (v === x + 1 ? (upHas ? null : x) : (v > x + 1 ? v - 1 : v)));
+      syT.splice(x + 1, 1); syStamp.splice(x + 1, 1); syAbs.splice(x + 1, 1); savePT();
+      if(syPos > x + 1) syPos--; else if(syPos === x + 1) syPos = x;
+      syStack = []; lyrPersist(); syRender(true);
+      return a.length;
+    }
     function editLine(x, span){
       const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.value = syT[x] === BLANK ? '' : syT[x]; span.replaceWith(inp); inp.focus(); inp.select();
       let done = false;
@@ -5612,6 +5624,17 @@ function mixTotalDuration(){
         syStack = []; lyrPersist(); syRender(true);
       });
       inp.addEventListener('keydown', e => {
+        if((e.key === 'Backspace' || e.key === 'Delete') && !e.ctrlKey && !e.metaKey && !e.altKey && !done && inp.selectionStart === inp.selectionEnd){
+          const atStart = e.key === 'Backspace' && inp.selectionStart === 0 && x > 0, atEnd = e.key === 'Delete' && inp.selectionEnd >= inp.value.length && x < syT.length - 1;
+          if(atStart || atEnd){ // 글 맨 앞 Backspace → 윗줄에 붙임 / 글 맨 끝 Delete → 아랫줄을 붙임
+            e.preventDefault(); e.stopPropagation(); done = true;
+            const v0 = inp.value.trim(); syT[x] = v0 || BLANK;
+            const at = atStart ? x - 1 : x, cp = mergeLines(at); if(cp < 0) return;
+            const sp = syRows[at] && syRows[at].querySelector('.tx2');
+            if(sp){ editLine(at, sp); const ni = back.querySelector('.sy-edit'); if(ni){ const c = (syT[at] === BLANK ? 0 : Math.min(cp + (cp && syT[at].length > cp ? 1 : 0), syT[at].length)); try{ ni.setSelectionRange(c, c); }catch(er){} } }
+            return;
+          }
+        }
         if((e.ctrlKey || e.metaKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !done){
           e.preventDefault(); e.stopPropagation();
           const to = e.key === 'ArrowUp' ? x - 1 : x + 1; if(to < 0 || to >= syT.length) return;
