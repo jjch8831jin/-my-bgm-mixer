@@ -5465,13 +5465,21 @@ function mixTotalDuration(){
     }
     function cancelSync(){ revertSync(); const A = loadLyr()[keyOf(kind, name)]; if(!A || !String(A.text || '').trim()) close(); else tab('view'); }
     const txtEl = back.querySelector('.sy-txt');
+    function txtShow(){ return syT.every(t => t === BLANK) ? '' : syT.map(t => t === BLANK ? '' : t).join('\n'); } // 사진 자리만 남은 빈 줄들은 칸을 비워서 보여 줌
     function txtApply(){ // 글 칸 → 가사 줄 (위에서부터 같은 순서로 시간·사진을 유지)
       clearTimeout(txtTimer);
-      const ls = txtEl.value.replace(/\r/g, '').split('\n'); while(ls.length && !ls[ls.length - 1].trim()) ls.pop();
+      const ls = txtEl.value === '' ? [] : txtEl.value.replace(/\r/g, '').split('\n'); // 끝에 친 엔터(빈 줄)도 그대로 둠
       const nt = ls.map(l => l.trim() ? l.trim() : BLANK), n = nt.length, o = syT.length;
       if(n === o && nt.every((t, i) => t === syT[i])) return;
       // 앞·뒤에서 같은 줄을 찾아 바뀐 가운데만 비교 → 지운 줄에 사진이 붙어 있으면 빈 줄로 남겨 사진 연결 유지
       const os = syStamp.slice(), oT = syT.slice(), mn = Math.min(o, n);
+      if(o > 0 && n > 0 && oT.every(t => t === BLANK)){ // 글자 없이 사진 자리만 있던 상태 → 쓴 줄이 위에서부터 사진 자리에 차례로 들어감
+        const fT2 = nt.slice(); while(fT2.length < o) fT2.push(BLANK);
+        syT = fT2; syStamp = fT2.map((_, i) => i < o ? os[i] : null); syAbs = fT2.map(() => null); savePT();
+        syPos = Math.max(0, Math.min(syPos, syT.length - 1)); afterStampPos = -1; syStack = []; syFresh.clear(); lyrPersist();
+        try{ syRender(true); }catch(e){}
+        return;
+      }
       let pp = 0; while(pp < mn && nt[pp] === oT[pp]) pp++;
       let ss = 0; while(ss < mn - pp && nt[n - 1 - ss] === oT[o - 1 - ss]) ss++;
       const nm = n - pp - ss, om = o - pp - ss;
@@ -5481,14 +5489,14 @@ function mixTotalDuration(){
       for(let k = 0; k < ss; k++){ keep.set(o - ss + k, fT.length); fT.push(nt[n - ss + k]); fS.push(os[o - ss + k]); }
       syT = fT; syStamp = fS; syAbs = fT.map(() => null);
       picL = picL.map(v => v == null ? null : (keep.has(v) ? keep.get(v) : null)); savePT();
-      if(fT.length !== n){ const ct = pp + nm; txtEl.value = fT.map(t => t === BLANK ? '' : t).join('\n'); try{ const cp = fT.slice(0, ct).reduce((a, t) => a + (t === BLANK ? 0 : t.length) + 1, 0); txtEl.setSelectionRange(cp, cp); }catch(e){} }
+      if(fT.length !== n){ const ct = pp + nm; txtEl.value = txtShow(); try{ const cp = fT.slice(0, ct).reduce((a, t) => a + (t === BLANK ? 0 : t.length) + 1, 0); txtEl.setSelectionRange(cp, cp); }catch(e){} }
       syPos = Math.max(0, Math.min(syPos, n - 1)); afterStampPos = -1; syStack = []; syFresh.clear();
       lyrPersist();
       try{ syRender(true); }catch(e){}
     }
     function setTxt(on){
       if(on === txtMode) return;
-      if(on) txtEl.value = syT.map(t => t === BLANK ? '' : t).join('\n'); else txtApply();
+      if(on) txtEl.value = txtShow(); else txtApply();
       txtMode = on; back.classList.toggle('txtm', on);
       back.querySelectorAll('[data-tg]').forEach(b => b.classList.toggle('on', (b.dataset.tg === 'txt') === on));
       if(on){ try{ txtEl.focus(); }catch(e){} } else { syRender(true); }
@@ -6063,7 +6071,7 @@ function mixTotalDuration(){
         const r = mkEl('div', 'sy-row sy-ly');
         const hd = mkEl('span', 'hd', '⠿'); hd.title = '끌어서 순서 바꾸기 (시간은 줄을 따라갑니다)';
         const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; afterStampPos = -1; syMark(false); });
-        const tx = mkEl('span', t === BLANK ? 'tx2 blank' : 'tx2', t === BLANK ? '' : t); tx.title = '누르면 이 줄이 다음 차례가 됩니다'; tx.addEventListener('click', () => { syPos = x; afterStampPos = -1; syMark(false); });
+        const tx = mkEl('span', t === BLANK ? 'tx2 blank' : 'tx2', t === BLANK ? '' : t); tx.title = '누르면 이 줄이 다음 차례가 됩니다 · 두 번 누르면 글을 고칩니다'; tx.addEventListener('click', () => { syPos = x; afterStampPos = -1; syMark(false); }); tx.addEventListener('dblclick', e => { e.preventDefault(); e.stopPropagation(); editLine(x, tx); });
         const rx = mkEl('button', 'rx', '✕'); rx.type = 'button'; rx.title = '이 줄 지우기'; rx.addEventListener('click', () => delLine(x));
         const kp = attachedPic(x); let cell;
         if(kp >= 0){ const u = pics[kp]; if(isVid(u)){ cell = document.createElement('video'); cell.muted = true; cell.preload = 'metadata'; cell.playsInline = true; cell.src = urlOfItem(u) + '#t=0.1'; } else { cell = document.createElement('img'); cell.src = u; cell.alt = ''; } cell.className = 'pk'; cell.title = '붙인 사진 (눌러서 바꾸기)'; }
@@ -6331,7 +6339,7 @@ function mixTotalDuration(){
           if(sel === '[data-del]'){ // 가사를 고른 상태면 가사만, 사진을 고른 상태면 사진만 지움 (확인창 없음 · 취소 버튼으로 되돌릴 수 있음)
             if(txtMode){
               if(!syT.length) return;
-              clearTimeout(txtTimer); clearLyrKeep(); txtEl.value = syT.map(() => '').join('\n'); syPos = 0; afterStampPos = -1; syStack = []; lyrPersist(); syRender(true);
+              clearTimeout(txtTimer); clearLyrKeep(); txtEl.value = txtShow(); syPos = 0; afterStampPos = -1; syStack = []; lyrPersist(); syRender(true);
             } else {
               if(!pics.length) return;
               (async () => { pics = []; picT = []; picL = []; savePT(); await setImgs(keyOf(kind, name), pics); renderPics(); syncInit(); })();
