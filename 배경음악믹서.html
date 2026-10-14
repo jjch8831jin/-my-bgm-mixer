@@ -5209,12 +5209,46 @@ function mixTotalDuration(){
     }catch(e){ busyMsg(''); bgmAlert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
   };
   function busyMsg(txt){ let d = document.getElementById('bgmxBusy'); if(!txt){ if(d) d.remove(); return; } if(!d){ d = document.createElement('div'); d.id = 'bgmxBusy'; d.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;background:#1c1917;color:#fff;padding:14px 22px;border-radius:12px;font-size:14pt;box-shadow:0 6px 24px rgba(0,0,0,.4)'; document.body.appendChild(d); } d.textContent = txt; }
+  // 오디오북에서 저장한 음성 파일(WAV·MP3) 안에 들어 있는 문장별 시간표를 꺼낸다. 없으면 null.
+  async function extractAudiobookSync(file){
+    try{
+      const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+      const str = (a, from, len) => String.fromCharCode(...a.slice(from, from + len));
+      if(str(head, 0, 4) === 'RIFF' && str(head, 8, 4) === 'WAVE'){
+        let pos = 12;
+        while(pos + 8 <= file.size){
+          const h = new DataView(await file.slice(pos, pos + 8).arrayBuffer());
+          const id = String.fromCharCode(h.getUint8(0), h.getUint8(1), h.getUint8(2), h.getUint8(3)), len = h.getUint32(4, true);
+          if(id === 'sync') return JSON.parse(await file.slice(pos + 8, pos + 8 + len).text());
+          pos += 8 + len + (len % 2);
+        }
+        return null;
+      }
+      if(str(head, 0, 3) === 'ID3'){
+        const ver = head[3], bodySize = ((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f);
+        const body = new Uint8Array(await file.slice(10, 10 + bodySize).arrayBuffer()); let p = 0;
+        while(p + 10 <= body.length){
+          const id = str(body, p, 4); if(!/^[A-Z0-9]{4}$/.test(id)) break;
+          const fsz = ver === 4 ? (((body[p + 4] & 0x7f) << 21) | ((body[p + 5] & 0x7f) << 14) | ((body[p + 6] & 0x7f) << 7) | (body[p + 7] & 0x7f)) : (body[p + 4] * 16777216 + (body[p + 5] << 16) + (body[p + 6] << 8) + body[p + 7]);
+          const cs = p + 10;
+          if(id === 'TXXX'){
+            const enc = body[cs]; let q = cs + 1; while(q < cs + fsz && body[q] !== 0) q++;
+            const desc = new TextDecoder().decode(body.slice(cs + 1, q));
+            if(desc === 'SAJU-SYNC' && (enc === 0 || enc === 3)) return JSON.parse(new TextDecoder().decode(body.slice(q + 1, cs + fsz)));
+          }
+          p = cs + fsz;
+        }
+      }
+    }catch(e){}
+    return null;
+  }
   function animScroll(el, to){
-    if(el.__anim) cancelAnimationFrame(el.__anim);
+    const W = (el.ownerDocument && el.ownerDocument.defaultView) || window; // 별도 창 안의 칸은 그 창의 타이머로 움직여야 믹서 창이 가려져도 멈추지 않음
+    if(el.__anim){ try{ (el.__animW || W).cancelAnimationFrame(el.__anim); }catch(e){} }
     const from = el.scrollTop, d = to - from; if(Math.abs(d) < 1){ el.__anim = 0; return; }
-    const t0 = performance.now(), dur = 900;
-    const step = now => { const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; el.scrollTop = from + d * e; if(k < 1) el.__anim = requestAnimationFrame(step); else el.__anim = 0; };
-    el.__anim = requestAnimationFrame(step);
+    const t0 = W.performance.now(), dur = 900; el.__animW = W;
+    const step = now => { const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; el.scrollTop = from + d * e; if(k < 1) el.__anim = W.requestAnimationFrame(step); else el.__anim = 0; };
+    el.__anim = W.requestAnimationFrame(step);
   }
   function openLyr(kind){
     const i = curInfo(kind);
@@ -5258,6 +5292,7 @@ function mixTotalDuration(){
       try{ rebind(w.document, document); }catch(e){}
       document.body.appendChild(back);
       document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
+      try{ startTimer(); }catch(e){}
       try{ layoutOne(); }catch(e){}
     };
     const popOut = () => {
@@ -5277,6 +5312,7 @@ function mixTotalDuration(){
       d.body.appendChild(back);
       document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; // 믹스창은 다시 평소처럼
       rebind(document, d);
+      try{ startTimer(); }catch(e){}
       w.addEventListener('resize', () => { try{ layoutOne(); }catch(e){} });
       w.addEventListener('pagehide', () => { if(popW === w) popIn(); });
       try{ layoutOne(); }catch(e){}
@@ -5465,7 +5501,7 @@ function mixTotalDuration(){
             const first = hl.style.opacity !== '1';
             if(first) hl.classList.remove('mv');
             hl.style.top = el.offsetTop + 'px'; hl.style.height = el.offsetHeight + 'px'; hl.style.opacity = '1';
-            if(first){ void hl.offsetWidth; requestAnimationFrame(() => hl && hl.classList.add('mv')); }
+            if(first){ void hl.offsetWidth; aw().requestAnimationFrame(() => hl && hl.classList.add('mv')); }
           } else hl.style.opacity = '0';
         }
         if(el && c.has) animScroll(view, hasPic ? el.offsetTop - 10 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4);
@@ -6408,22 +6444,48 @@ function mixTotalDuration(){
       syFresh.clear(); syStack = []; syPos = 0; afterStampPos = -1; lyrPersist(); syRender(true); try{ chipsUpd(); }catch(e){}
       bannerMsg('글자 수 비율로 나눴어요. 어긋난 줄은 직접 고치세요.');
     }
+    // 📘 오디오북에서 저장한 음성 파일 안의 문장별 시간표를 가사 줄과 시간으로 그대로 불러온다
+    function absyncPick(){
+      const inp = adoc().createElement('input'); inp.type = 'file'; inp.accept = 'audio/*,.wav,.mp3'; inp.style.display = 'none';
+      inp.addEventListener('change', async () => {
+        const f = inp.files && inp.files[0]; try{ inp.remove(); }catch(e){} if(!f) return;
+        const P = await extractAudiobookSync(f);
+        if(!P || !Array.isArray(P.offsets) || !Array.isArray(P.texts) || !P.offsets.length || P.offsets.length !== P.texts.length){ bgmAlert('이 파일에는 오디오북 시간표가 없습니다.\n(오디오북에서 시간표 기능이 들어간 뒤 저장한 WAV·MP3 파일만 됩니다)'); return; }
+        const rate = P.rate > 0 ? P.rate : 1, L = [];
+        P.texts.forEach((t, i) => { const tx = String(t == null ? '' : t).replace(/\s+/g, ' ').trim(); if(tx) L.push({ t: tx, s: Math.max(0, Number(P.offsets[i]) / rate) }); });
+        if(!L.length){ bgmAlert('시간표에 글이 없습니다.'); return; }
+        const cur = curInfo(kind), dur = cur && cur.item && cur.item.buffer ? cur.item.buffer.duration : 0;
+        let msg = '오디오북 시간표 ' + L.length + '문장을 불러옵니다.';
+        if(dur && L[L.length - 1].s > dur + 1) msg += '\n(주의: 지금 불러온 음성이 이 파일보다 짧습니다. 같은 음성인지 확인하세요)';
+        if(syT.length || picL.some(v => v != null)) msg += '\n지금 있는 가사와 시간은 바뀌고, 사진 연결은 풀립니다.\n(✕취소를 누르면 시간 맞추기 전으로 되돌아갑니다)';
+        if(!(await bgmYN(msg, '📘 불러오기'))) return;
+        clearTimeout(txtTimer);
+        syT = L.map(o => o.t); syStamp = L.map(o => o.s); syAbs = L.map(o => absOf(o.s));
+        picL = picL.map(() => null); try{ savePT(); }catch(e){}
+        syFresh.clear(); syStack = []; syPos = 0; afterStampPos = -1;
+        if(txtMode){ try{ txtEl.value = txtShow(); }catch(e){} }
+        lyrPersist(); syRender(true); try{ chipsUpd(); }catch(e){}
+        bannerMsg('오디오북 시간표 ' + L.length + '문장을 불러왔어요.');
+      });
+      adoc().body.appendChild(inp); inp.click();
+    }
     // ⋯ 더보기 (입력 탭에 있던 기능)
     (function(){
       const mb = back.querySelector('[data-more]'); let pop = null;
       const closeP = () => { if(pop){ pop.remove(); pop = null; } };
       const items = [
         ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['💠 통합저장', 'SONG'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
-        ['⚖ 글자 수로 자동 배분', 'AUTO'], ['🗑 가사·사진 지우기', '[data-del]'], ['🧹 모두 지우기', 'ALL']
+        ['📘 오디오북 시간표 불러오기', 'ABSYNC'], ['⚖ 글자 수로 자동 배분', 'AUTO'], ['🗑 가사·사진 지우기', '[data-del]'], ['🧹 모두 지우기', 'ALL']
       ];
       const autoItem = items.find(x => x[1] === 'AUTO');
       mb.addEventListener('click', e => {
         e.stopPropagation(); if(pop){ closeP(); return; }
         pop = mkEl('div', 'ctxm moreM');
-        items.forEach(([t, sel]) => { if(sel === 'AUTO' && aw().innerWidth < 600) t = '⚖ 자동 배분'; if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null); const sp = t.indexOf(' '); const ics = mkEl('span', null, t.slice(0, sp)); ics.style.cssText = 'display:inline-block;width:1.6em;text-align:center'; b.appendChild(ics); b.appendChild(document.createTextNode(t.slice(sp + 1))); b.type = 'button'; b.addEventListener('click', () => {
+        items.forEach(([t, sel]) => { if(sel === 'AUTO' && aw().innerWidth < 600) t = '⚖ 자동 배분'; if(sel === 'ABSYNC' && aw().innerWidth < 600) t = '📘 오디오북 시간표'; if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null); const sp = t.indexOf(' '); const ics = mkEl('span', null, t.slice(0, sp)); ics.style.cssText = 'display:inline-block;width:1.6em;text-align:center'; b.appendChild(ics); b.appendChild(document.createTextNode(t.slice(sp + 1))); b.type = 'button'; b.addEventListener('click', () => {
           closeP();
           if(sel === 'PICK'){ lineChooser(null); return; }
           if(sel === 'AUTO'){ autoDist(); return; }
+          if(sel === 'ABSYNC'){ absyncPick(); return; }
           if(sel === 'SONG'){ saveSong(); return; }
           if(sel === 'ALL'){ (async () => {
             if(!(await bgmYN('가사와 사진을 모두 지울까요?\n(취소 버튼으로 되돌릴 수 있습니다)', '🧹 모두 지우기'))) return;
@@ -6517,7 +6579,10 @@ function mixTotalDuration(){
       back.querySelector('[data-rm]').addEventListener('click', () => adj(-0.01));
       back.querySelector('[data-rp]').addEventListener('click', () => adj(0.01));
     }
-    const timer = setInterval(() => { barUpd(); picTick(); if(curTab === 'sync') return; if(view.offsetParent) upd(); }, 200);
+    const tickFn = () => { barUpd(); picTick(); if(curTab === 'sync') return; if(view.offsetParent) upd(); };
+    let timer = null, timerW = window;
+    const startTimer = () => { try{ timerW.clearInterval(timer); }catch(e){} timerW = aw(); timer = timerW.setInterval(tickFn, 200); }; // 가사창이 있는 창의 타이머로 돌림 (믹서 창이 가려져도 멈추지 않게)
+    startTimer();
     let chipEl = null;
     back.querySelector('[data-hide]').addEventListener('click', () => {
       back.style.display = 'none'; document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1];
@@ -6525,7 +6590,7 @@ function mixTotalDuration(){
       chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
       document.body.appendChild(chipEl);
     });
-    const close = () => { try{ if(popW){ const w = popW; popW = null; w.close(); } }catch(e){} try{ if(snap) revertSync(); else if(txtMode) txtApply(); }catch(e){} document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; clearInterval(timer); dRem('keydown', onSpace, true); dRem('keydown', onAlt, true); dRem('keydown', onShiftPlay, true); dRem('keydown', onArrowLine, true); dRem('keydown', onEnter, true); dRem('keyup', onAltUp, true); dRem('paste', onPaste, true); dRem('copy', onCopy, true); dRem('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} dRem('keydown', onDel, true); back.remove(); dRem('keydown', onKey, true); window.removeEventListener('resize', onRz); };
+    const close = () => { try{ if(popW){ const w = popW; popW = null; w.close(); } }catch(e){} try{ if(snap) revertSync(); else if(txtMode) txtApply(); }catch(e){} document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; try{ timerW.clearInterval(timer); }catch(e){} dRem('keydown', onSpace, true); dRem('keydown', onAlt, true); dRem('keydown', onShiftPlay, true); dRem('keydown', onArrowLine, true); dRem('keydown', onEnter, true); dRem('keyup', onAltUp, true); dRem('paste', onPaste, true); dRem('copy', onCopy, true); dRem('keydown', onSelAll, true); try{ if(chipEl) chipEl.remove(); }catch(e){} dRem('keydown', onDel, true); back.remove(); dRem('keydown', onKey, true); window.removeEventListener('resize', onRz); };
     // 제목 고치기: 제목을 누르면 입력칸으로 바뀜 (Enter=저장, Esc=취소, 비우면 파일 이름으로)
     nm.addEventListener('click', () => {
       if(nm.querySelector('input')) return;
