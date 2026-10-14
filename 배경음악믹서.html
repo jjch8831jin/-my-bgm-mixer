@@ -5525,7 +5525,7 @@ function mixTotalDuration(){
             if(first){ void hl.offsetWidth; aw().requestAnimationFrame(() => hl && hl.classList.add('mv')); }
           } else hl.style.opacity = '0';
         }
-        if(el && c.has) animScroll(view, hasPic ? el.offsetTop - 10 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight * 1.5 + 4);
+        if(el && c.has) animScroll(view, hasPic ? el.offsetTop - 10 : el.offsetTop - view.clientHeight / 2 + el.offsetHeight / 2);
       }
     }
     // ---- 시간 맞추기 ----
