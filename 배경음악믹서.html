@@ -5425,7 +5425,7 @@ function mixTotalDuration(){
       back.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === k));
       { const bx = back.querySelector('.lyr-box'), lbx = back.querySelector('.lyr-head .lb'); if(bx) bx.classList.toggle('syncmode', k === 'sync'); back.classList.toggle('syb', k === 'sync'); if(lbx) lbx.textContent = (k === 'sync') ? '시간 맞추기' : '제목'; }
       if(k === 'sync' && curTab !== 'sync' && !snap) takeSnap();
-      { const was = curTab; curTab = k; if(k === 'sync' && was !== 'sync') popOut(); else if(k !== 'sync' && popW){ const w = popW; popIn(); try{ w.close(); }catch(e){} } }
+      curTab = k;
       layoutOne(); try{ applyAuto(); }catch(e){}
       if(k === 'edit') ta.focus(); else if(k === 'sync') syncInit(); else { shownKey = null; upd(); }
     }
@@ -6926,6 +6926,7 @@ function mixTotalDuration(){
     });
     setFs(fsz);
     tab(lyrLines(L).length ? 'view' : 'sync');
+    popOut(); // 가사 보기·시간 맞추기 모두 별도 창으로 (보조 모니터용) — 닫으면 이 창으로 돌아옴
   }
   const slots = [
     { kind:'voice', span:document.querySelector('#voiceTrackTitle > span'), box:document.getElementById('voiceTrackTitle') },
