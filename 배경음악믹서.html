@@ -5509,11 +5509,18 @@ function mixTotalDuration(){
     function cancelSync(){ revertSync(); const A = loadLyr()[keyOf(kind, name)]; if(!A || !String(A.text || '').trim()) close(); else tab('view'); }
     const txtEl = back.querySelector('.sy-txt');
     function txtShow(){ return syT.every(t => t === BLANK) ? '' : syT.map(t => t === BLANK ? '' : t).join('\n'); } // 사진 자리만 남은 빈 줄들은 칸을 비워서 보여 줌
-    function txtApply(){ // 글 칸 → 가사 줄 (위에서부터 같은 순서로 시간·사진을 유지)
+    function txtApply(final = true){ // 글 칸 → 가사 줄 (위에서부터 같은 순서로 시간·사진을 유지) · final: 쓰기를 마칠 때 새로 친 빈 줄은 칸으로 만들지 않음
       clearTimeout(txtTimer);
-      const ls = txtEl.value === '' ? [] : txtEl.value.replace(/\r/g, '').split('\n'); // 끝에 친 엔터(빈 줄)도 그대로 둠
-      const nt = ls.map(l => l.trim() ? l.trim() : BLANK), n = nt.length, o = syT.length;
-      if(n === o && nt.every((t, i) => t === syT[i])) return;
+      const ls = txtEl.value === '' ? [] : txtEl.value.replace(/\r/g, '').split('\n'); // 쓰는 중에는 끝에 친 엔터(빈 줄)도 그대로 둠
+      let nt = ls.map(l => l.trim() ? l.trim() : BLANK), n = nt.length; const o = syT.length;
+      let blankCut = false;
+      { // 새로 친 빈 줄(이미 있던 사진 자리 칸은 제외)은 칸으로 만들지 않음 → 가사 줄 수 = 사진 칸 수 (쓰는 중에는 글 칸의 빈 줄을 그대로 둠)
+        const mnx = Math.min(o, n); let p0 = 0; while(p0 < mnx && nt[p0] === syT[p0]) p0++;
+        let s0 = 0; while(s0 < mnx - p0 && nt[n - 1 - s0] === syT[o - 1 - s0]) s0++;
+        const mid = nt.slice(p0, n - s0), cut = mid.filter(t => t !== BLANK);
+        if(cut.length !== mid.length){ nt = nt.slice(0, p0).concat(cut, nt.slice(n - s0)); n = nt.length; blankCut = true; }
+      }
+      if(n === o && nt.every((t, i) => t === syT[i])){ if(blankCut && final){ try{ txtEl.value = txtShow(); }catch(e){} } return; }
       // 앞·뒤에서 같은 줄을 찾아 바뀐 가운데만 비교 → 지운 줄에 사진이 붙어 있으면 빈 줄로 남겨 사진 연결 유지
       const os = syStamp.slice(), oT = syT.slice(), mn = Math.min(o, n);
       if(o > 0 && n > 0 && oT.every(t => t === BLANK)){ // 글자 없이 사진 자리만 있던 상태 → 쓴 줄이 위에서부터 사진 자리에 차례로 들어감
@@ -5534,6 +5541,7 @@ function mixTotalDuration(){
       picL = picL.map(v => v == null ? null : (keep.has(v) ? keep.get(v) : null)); savePT();
       if(fT.length !== n){ const ct = pp + nm; txtEl.value = txtShow(); try{ const cp = fT.slice(0, ct).reduce((a, t) => a + (t === BLANK ? 0 : t.length) + 1, 0); txtEl.setSelectionRange(cp, cp); }catch(e){} }
       syPos = Math.max(0, Math.min(syPos, n - 1)); afterStampPos = -1; syStack = []; syFresh.clear();
+      if(blankCut && final){ try{ txtEl.value = txtShow(); }catch(e){} }
       lyrPersist();
       try{ syRender(true); }catch(e){}
     }
@@ -5544,7 +5552,8 @@ function mixTotalDuration(){
       back.querySelectorAll('[data-tg]').forEach(b => b.classList.toggle('on', (b.dataset.tg === 'txt') === on));
       if(on){ try{ txtEl.focus(); }catch(e){} } else { syRender(true); }
     }
-    txtEl.addEventListener('input', () => { clearTimeout(txtTimer); txtTimer = setTimeout(txtApply, 300); });
+    txtEl.addEventListener('input', () => { clearTimeout(txtTimer); txtTimer = setTimeout(() => txtApply(false), 300); });
+    txtEl.addEventListener('blur', () => { if(txtMode) txtApply(true); });
     back.querySelectorAll('[data-tg]').forEach(b => b.addEventListener('click', () => setTxt(b.dataset.tg === 'txt')));
     function syncInit(){
       const L2 = lyrLines({ text: ta.value }).map(tparse);
@@ -5654,7 +5663,7 @@ function mixTotalDuration(){
     function editLine(x, span){
       const inp = mkEl('input', 'sy-edit'); inp.type = 'text'; inp.value = syT[x] === BLANK ? '' : syT[x]; span.replaceWith(inp); inp.focus(); inp.select();
       let done = false;
-      const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ if(syT[x] === BLANK){ syRender(true); return; } delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(true); };
+      const commit = () => { if(done) return; done = true; const v = inp.value.trim(); if(!v){ if(syT[x] === BLANK && attachedPic(x) >= 0){ syRender(true); return; } delLine(x); return; } if(v !== syT[x]){ syT[x] = v; lyrPersist(); } syRender(true); };
       inp.addEventListener('blur', commit);
       inp.addEventListener('paste', e => { // 여러 줄을 붙여넣으면 줄마다 가사 줄로 나눈다
         const t = (e.clipboardData && e.clipboardData.getData('text/plain')) || ''; if(!/\r?\n/.test(t)) return;
@@ -6127,7 +6136,7 @@ function mixTotalDuration(){
     upBtn.addEventListener('click', () => {
       const arr = addTa.value.split(/\r?\n/).map(l => l.trim()); while(arr.length && !arr[arr.length - 1]) arr.pop(); // 맨 끝의 빈 줄은 무시
       if(!arr.length) return;
-      addTa.value = ''; growAdd(); addLines(arr.map(l => l || BLANK).join('\n')); // 빈 줄도 한 줄씩 (두 줄이면 두 줄)
+      addTa.value = ''; growAdd(); { const arr2 = arr.filter(Boolean); if(arr2.length) addLines(arr2.join('\n')); } // 빈 줄은 건너뜀 (가사 줄 수 = 사진 칸 수)
     });
     function syRender(keep){
       const keepTop = syList.scrollTop; closeCtx();
