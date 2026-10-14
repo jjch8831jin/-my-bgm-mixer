@@ -5246,6 +5246,7 @@ function mixTotalDuration(){
     const adoc = () => back.ownerDocument, aw = () => back.ownerDocument.defaultView || window;
     const bgmAlert = (m, w) => window.bgmAlert(m, w || aw()); // 알림·입력 창은 지금 가사창이 있는 창에 뜨게 한다
     const bgmPrompt = (m, d, w) => window.bgmPrompt(m, d, w || aw());
+    const bgmYN = (m, ok, w) => window.bgmYN(m, ok, w || aw());
     const dLis = []; // 문서 전체에 거는 단축키·붙여넣기 등 (창을 옮기면 같이 옮긴다)
     const dAdd = (t, f, c) => { dLis.push([t, f, c]); adoc().addEventListener(t, f, c); };
     const dRem = (t, f, c) => { const k = dLis.findIndex(x => x[0] === t && x[1] === f); if(k >= 0) dLis.splice(k, 1); try{ document.removeEventListener(t, f, c); }catch(e){} try{ adoc().removeEventListener(t, f, c); }catch(e){} };
@@ -6381,20 +6382,39 @@ function mixTotalDuration(){
       if(syMode === 'pic'){ savePT(); tab('view'); return; }
       lyrPersist(); tab('view');
     }
+    // ⚖ 글자 수 비율로 가사 줄마다 시간을 자동으로 나눠 채운다 (오디오북과 같은 '대략' 맞춤 · 어긋난 줄은 직접 고침)
+    function bannerMsg(m){
+      try{ const o = adoc().createElement('div'); o.textContent = m; o.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:90px;max-width:92%;background:#d9f2d0;border:2px solid #4ca83a;border-radius:10px;padding:10px 16px;font-size:14pt;font-weight:700;color:#14532d;z-index:100000;text-align:center'; back.appendChild(o); setTimeout(() => { try{ o.remove(); }catch(e){} }, 6000); }catch(e){}
+    }
+    async function autoDist(){
+      if(txtMode) txtApply();
+      if(!syT.length){ bgmAlert('가사가 없습니다. 먼저 가사를 올려 주세요.'); return; }
+      const cur = curInfo(kind); if(!cur || !cur.item || !cur.item.buffer){ bgmAlert((kind === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 나눌 수 없습니다.'); return; }
+      if(syStamp.some(v => v != null) && !(await bgmYN('이미 찍어 둔 시간이 있습니다.\n글자 수로 다시 나눌까요?\n(✕취소를 누르면 시간 맞추기 전으로 되돌아갑니다)', '⚖ 다시 나누기'))) return;
+      const tot = cur.item.buffer.duration; if(!(tot > 0)) return;
+      const w = syT.map(t => { const n = String(t).replace(/[\s\u200b]/g, '').length; return n > 0 ? n : 2; });
+      const W = w.reduce((a, b) => a + b, 0); let acc = 0;
+      syT.forEach((_, i) => { const t = tot * acc / W; acc += w[i]; syStamp[i] = t; syAbs[i] = absOf(t); const kp = attachedPic(i); if(kp >= 0){ picT[kp] = t; } });
+      try{ savePT(); }catch(e){}
+      syFresh.clear(); syStack = []; syPos = 0; afterStampPos = -1; lyrPersist(); syRender(true); try{ chipsUpd(); }catch(e){}
+      bannerMsg('글자 수 비율로 나눴어요. 어긋난 줄은 직접 고치세요.');
+    }
     // ⋯ 더보기 (입력 탭에 있던 기능)
     (function(){
       const mb = back.querySelector('[data-more]'); let pop = null;
       const closeP = () => { if(pop){ pop.remove(); pop = null; } };
       const items = [
         ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['💠 통합저장', 'SONG'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
-        ['🗑 가사·사진 지우기', '[data-del]'], ['🧹 모두 지우기', 'ALL']
+        ['⚖ 글자 수로 자동 배분', 'AUTO'], ['🗑 가사·사진 지우기', '[data-del]'], ['🧹 모두 지우기', 'ALL']
       ];
+      const autoItem = items.find(x => x[1] === 'AUTO');
       mb.addEventListener('click', e => {
         e.stopPropagation(); if(pop){ closeP(); return; }
         pop = mkEl('div', 'ctxm moreM');
-        items.forEach(([t, sel]) => { if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null); const sp = t.indexOf(' '); const ics = mkEl('span', null, t.slice(0, sp)); ics.style.cssText = 'display:inline-block;width:1.6em;text-align:center'; b.appendChild(ics); b.appendChild(document.createTextNode(t.slice(sp + 1))); b.type = 'button'; b.addEventListener('click', () => {
+        items.forEach(([t, sel]) => { if(sel === 'AUTO' && aw().innerWidth < 600) t = '⚖ 자동 배분'; if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null); const sp = t.indexOf(' '); const ics = mkEl('span', null, t.slice(0, sp)); ics.style.cssText = 'display:inline-block;width:1.6em;text-align:center'; b.appendChild(ics); b.appendChild(document.createTextNode(t.slice(sp + 1))); b.type = 'button'; b.addEventListener('click', () => {
           closeP();
           if(sel === 'PICK'){ lineChooser(null); return; }
+          if(sel === 'AUTO'){ autoDist(); return; }
           if(sel === 'SONG'){ saveSong(); return; }
           if(sel === 'ALL'){ (async () => {
             if(!(await bgmYN('가사와 사진을 모두 지울까요?\n(취소 버튼으로 되돌릴 수 있습니다)', '🧹 모두 지우기'))) return;
