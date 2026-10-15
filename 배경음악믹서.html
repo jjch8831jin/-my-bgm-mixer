@@ -933,7 +933,7 @@
   .pk-back.pk-win [data-win]{ display:none; }
   .pk-back:has(.pk-g){ padding:5vh 5vw; box-sizing:border-box; align-items:stretch; justify-content:stretch; }
   .pk-box:has(.pk-g){ width:100%; height:100%; max-height:none; border-radius:12px; padding:10px 12px; box-sizing:border-box; }
-  .pk-box:has(.pk-g) .pk-g{ flex:1; min-height:0; overflow:auto; align-content:start; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+  .pk-box:has(.pk-g) .pk-g{ flex:1; min-height:0; overflow:auto; align-content:start; grid-auto-rows:max-content; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
   .pk-box:has(.pk-g) .pk-g .pk-t{ height:110px; }
   @media (max-width:600px){ .pk-box:has(.pk-g) .pk-g{ grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); } .pk-box:has(.pk-g) .pk-g .pk-t{ height:80px; } }
   @media (max-width:600px){ .lyr-box .sy-row.sy-ly.now .tx2::after{ content:none; } .lyr-box .sy-row.sy-ly{ gap:6px; padding:6px 6px; } .lyr-box .sy-row.sy-ly .tm{ min-width:3.6em; font-size:11pt; } .lyr-box .sy-row.sy-ly .hd{ font-size:14pt; } }
