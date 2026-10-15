@@ -7123,11 +7123,17 @@ function mixTotalDuration(){
       try{
         if(curTab === 'sync'){ if(txtMode) txtApply(); lyrPersist(); }
         const key = keyOf(kind, name), cur = curInfo(kind), item = cur && cur.item;
-        const aud = (item && item.raw) ? { blob: item.raw, name: item.name, type: item.raw.type || '', kind } : null;
+        let aud = (item && item.raw) ? { blob: item.raw, name: item.name, type: item.raw.type || '', kind } : null;
+        if(!aud && item && item.buffer){ // 원본 파일이 없는 곡(편집·녹음·복원)은 지금 소리를 MP3로 만들어 함께 넣음 → 폰에서 이 파일 하나만 불러오면 됨
+          busyMsg('노래 만드는 중… 0%'); await new Promise(r => setTimeout(r, 30));
+          let wb = null, ty = 'audio/mpeg';
+          try{ wb = await encodeMP3Async(item.buffer, 128, pc => busyMsg('노래 만드는 중… ' + pc + '%')); }catch(e){ wb = null; }
+          if(!wb){ wb = encodeWAV(item.buffer); ty = 'audio/wav'; bgmAlert('MP3 만들기에 실패해서 WAV로 넣었습니다.\n(인터넷 연결을 확인하면 MP3로 들어갑니다)'); }
+          aud = { blob: wb, name: item.name, type: ty, kind };
+        }
         if(!pics.length && !loadLyr()[key] && !aud){ bgmAlert('저장할 내용이 없습니다.'); return; }
         const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
         const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream');
-        if(item && !aud) bgmAlert('이 노래는 원본 파일이 없어서 노래 없이 저장합니다.\n(노래를 다시 불러온 뒤 저장하면 노래도 들어갑니다)');
         busyMsg('저장 파일 만드는 중…');
         const pk = await packSong(key, null, aud);
         const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) bgmAlert('저장했습니다: ' + sv);
