@@ -823,6 +823,8 @@
   .lyr-box .sy-row.sy-pic .ck{ position:absolute; left:46px; top:8px; width:26px; height:26px; border-radius:50%; background:#1e3a8a; color:#fff; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; z-index:2; pointer-events:none; }
   .lyr-box .sy-row.sy-pic .ck.off{ background:rgba(255,255,255,.85); border:2px solid #1e3a8a; color:transparent; }
   .lyr-box .sy-bar .more{ background:#fff; border:1px solid #a8a29e; font-weight:700; flex:none; }
+  .lyr-box .sy-bar .song{ background:#fff; border:1px solid #a8a29e; font-weight:700; flex:none; margin-left:auto; }
+  .lyr-box .sy-bar .song + .ok{ margin-left:0 !important; }
   .ctxm{ position:fixed; z-index:10002; background:#fff; border:1px solid #a8a29e; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.3); padding:4px; display:flex; flex-direction:column; min-width:150px; }
   .ctxm button{ text-align:left; font-size:14pt; padding:8px 14px; border:0; background:transparent; border-radius:8px; color:#1c1917; cursor:pointer; white-space:nowrap; }
   .ctxm button:hover{ background:#e0e7ff; }
@@ -5328,7 +5330,7 @@ function mixTotalDuration(){
       '<span class="trk trkB" title="영상·재생에 쓰는 소리 선택"><button type="button" data-trk="voice" title="키 1">음성</button><button type="button" data-trk="music" title="키 2">음악</button><button type="button" data-trk="all" title="키 3">통합</button></span>' +
       '</div>' +
       '<div data-pane="view"><div class="lyr-picbox"><img alt=""></div><div class="lyr-view"></div></div>' +
-      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-ed"><div class="sy-edin"><div class="sy-etm"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="sy-epk"></div><div class="sy-mir"></div></div></div><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><button type="button" class="cancel" data-cancel><span class="ic">✕</span><span>취소</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
+      '<div data-pane="sync"><div class="sy-list"></div><div class="sy-ed"><div class="sy-edin"><div class="sy-etm"></div><textarea class="sy-txt" spellcheck="false" placeholder="여기에 가사를 쓰세요 (한 줄에 한 소절)"></textarea><div class="sy-epk"></div><div class="sy-mir"></div></div></div><div class="addl"><textarea class="sy-add" rows="1"></textarea></div><div class="sy-bar sy-one"><span class="sy-seg"><button type="button" data-sym="lyric" class="on"><span class="ic">📝</span><span>가사</span></button><button type="button" data-sym="pic"><span class="ic">🖼</span><span>사진</span></button></span><button type="button" data-undo><span class="ic">↶</span><span><span class="lg">한 줄&nbsp;</span>되돌리기</span></button><button type="button" class="stamp" data-stamp></button><button type="button" class="up" data-up title="칸에 쓴 글을 줄마다 가사 목록으로 올립니다"><span class="ic">⬆️</span><span>올리기</span></button><button type="button" class="more" data-more title="영상·백업·불러오기·사진 저장 등"><span class="ic">⋯</span><span>더보기</span></button><button type="button" class="cancel" data-cancel><span class="ic">✕</span><span>취소</span></button><button type="button" class="song" data-song title="노래·가사·시간·사진을 파일 하나로 저장"><span class="ic">💠</span><span>통합저장</span></button><button type="button" class="ok" data-fin><span class="ic">💾</span><span>저장</span></button></div></div>' +
       '<div data-pane="edit" style="display:none !important"><textarea placeholder="한 줄에 한 소절씩 붙여넣으세요"></textarea>' +
       '<div class="lyr-opt">시작 <input type="number" min="0" step="0.5" data-s>초 &nbsp; 끝 <input type="number" min="0" step="0.5" data-e>초 &nbsp;<span>· 이 사이를 줄 수로 나눠 자동으로 넘깁니다</span></div>' +
       '<div class="lyr-thumbs" data-thumbs></div>' +
@@ -6683,7 +6685,7 @@ function mixTotalDuration(){
       const mb = back.querySelector('[data-more]'); let pop = null;
       const closeP = () => { if(pop){ pop.remove(); pop = null; } };
       const items = [
-        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['💠 통합저장', 'SONG'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
+        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
         ['📘 오디오북 시간표 불러오기', 'ABSYNC'], ['⚖ 글자 수로 자동 배분', 'AUTO'], ['⚖ 여기부터 다시 배분', 'AUTO2'], ['🗑 가사·사진 지우기', '[data-del]'], ['🧹 모두 지우기', 'ALL']
       ];
       const autoItem = items.find(x => x[1] === 'AUTO');
@@ -7211,6 +7213,7 @@ function mixTotalDuration(){
       }catch(e){ busy(''); bgmAlert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
     });
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
+    back.querySelector('[data-song]').addEventListener('click', () => { saveSong(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
       const a = loadLyr(), txt = ta.value.trim(), k = keyOf(kind, name);
       if(txt) a[k] = { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) }; else delete a[k];
