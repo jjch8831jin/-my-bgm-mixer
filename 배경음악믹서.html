@@ -5179,10 +5179,15 @@ function mixTotalDuration(){
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   }
   // PC 크롬: 저장 창에서 폴더·파일 이름을 고름. 폰 등 지원 안 되면 null → 기존처럼 다운로드
-  async function pickSaveHandle(name, ext, mime){
-    if(typeof window.showSaveFilePicker !== 'function') return null;
-    try{ return await window.showSaveFilePicker({ suggestedName: name, types: [{ description: ext.toUpperCase() + ' 파일', accept: { [mime]: ['.' + ext] } }] }); }
-    catch(e){ if(e && e.name === 'AbortError') throw e; return null; }
+  async function pickSaveHandle(name, ext, mime, win){
+    // 저장 창: 예전에 되던 대로 믹서 본 창에서 먼저 열고, 안 열리면(브라우저가 거부) 누른 창(시간 맞추기 별도 창)에서 다시 시도
+    const cand = [window]; if(win && win !== window) cand.push(win);
+    for(const W of cand){
+      if(typeof W.showSaveFilePicker !== 'function') continue;
+      try{ return await W.showSaveFilePicker({ suggestedName: name, types: [{ description: ext.toUpperCase() + ' 파일', accept: { [mime]: ['.' + ext] } }] }); }
+      catch(e){ if(e && e.name === 'AbortError') throw e; }
+    }
+    return null;
   }
   async function saveOut(handle, blob, fname){
     if(handle){ try{ const w = await handle.createWritable(); await w.write(blob); await w.close(); return handle.name || fname; }catch(e){} }
@@ -5230,7 +5235,7 @@ function mixTotalDuration(){
       bgmAlert('불러왔습니다. (곡 ' + songs.length + '개)');
     }catch(e){ busyMsg(''); bgmAlert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
   };
-  function busyMsg(txt){ let d = document.getElementById('bgmxBusy'); if(!txt){ if(d) d.remove(); return; } if(!d){ d = document.createElement('div'); d.id = 'bgmxBusy'; d.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;background:#1c1917;color:#fff;padding:14px 22px;border-radius:12px;font-size:14pt;box-shadow:0 6px 24px rgba(0,0,0,.4)'; document.body.appendChild(d); } d.textContent = txt; }
+  function busyMsg(txt, doc){ const dd = doc || document; [document, dd].forEach(x => { try{ const o = x.getElementById('bgmxBusy'); if(o && (!txt || x !== dd)) o.remove(); }catch(e){} }); if(!txt) return; let d = dd.getElementById('bgmxBusy'); if(!d){ d = dd.createElement('div'); d.id = 'bgmxBusy'; d.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;background:#1c1917;color:#fff;padding:14px 22px;border-radius:12px;font-size:14pt;box-shadow:0 6px 24px rgba(0,0,0,.4)'; dd.body.appendChild(d); } d.textContent = txt; }
   // 오디오북에서 저장한 음성 파일(WAV·MP3) 안에 들어 있는 문장별 시간표를 꺼낸다. 없으면 null.
   async function extractAudiobookSync(file){
     try{
@@ -7120,49 +7125,51 @@ function mixTotalDuration(){
     trkBtns.forEach(b => b.addEventListener('click', () => { const m = document.querySelector('#toolSelect [data-track="' + b.dataset.trk + '"]'); if(m) m.click(); syncTrk(); const want = b.dataset.trk === 'music' ? 'music' : 'voice'; if(want !== kind){ if(!curInfo(want)){ bgmAlert((want === 'voice' ? '음성' : '배경음악') + ' 파일이 없어 창을 바꿀 수 없습니다.'); return; } close(); openLyr(want); } }));
     syncTrk();
     // 백업 저장 / 불러오기
+    const busy = t => busyMsg(t, adoc());
     async function saveSong(){ // 이 곡의 노래(원본) + 가사 + 시간 + 사진·동영상을 한 파일로
       try{
         if(curTab === 'sync'){ if(txtMode) txtApply(); lyrPersist(); }
         const key = keyOf(kind, name), cur = curInfo(kind), item = cur && cur.item;
+        if(!pics.length && !loadLyr()[key] && !(item && (item.raw || item.buffer))){ bgmAlert('저장할 내용이 없습니다.'); return; }
+        const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
+        const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream', aw()); // 누른 직후에 저장 창부터 엶 (노래를 만드는 동안 시간이 지나면 열리지 않음)
         let aud = (item && item.raw) ? { blob: item.raw, name: item.name, type: item.raw.type || '', kind } : null;
         if(!aud && item && item.buffer){ // 원본 파일이 없는 곡(편집·녹음·복원)은 지금 소리를 MP3로 만들어 함께 넣음 → 폰에서 이 파일 하나만 불러오면 됨
-          busyMsg('노래 만드는 중… 0%'); await new Promise(r => setTimeout(r, 30));
+          busy('노래 만드는 중… 0%'); await new Promise(r => setTimeout(r, 30));
           let wb = null, ty = 'audio/mpeg';
-          try{ wb = await encodeMP3Async(item.buffer, 128, pc => busyMsg('노래 만드는 중… ' + pc + '%')); }catch(e){ wb = null; }
+          try{ wb = await encodeMP3Async(item.buffer, 128, pc => busy('노래 만드는 중… ' + pc + '%')); }catch(e){ wb = null; }
           if(!wb){ wb = encodeWAV(item.buffer); ty = 'audio/wav'; bgmAlert('MP3 만들기에 실패해서 WAV로 넣었습니다.\n(인터넷 연결을 확인하면 MP3로 들어갑니다)'); }
           aud = { blob: wb, name: item.name, type: ty, kind };
         }
         if(!pics.length && !loadLyr()[key] && !aud){ bgmAlert('저장할 내용이 없습니다.'); return; }
-        const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
-        const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream');
-        busyMsg('저장 파일 만드는 중…');
+        busy('저장 파일 만드는 중…');
         const pk = await packSong(key, null, aud);
-        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) bgmAlert('저장했습니다: ' + sv);
-      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) bgmAlert('저장 파일을 만들지 못했습니다.'); }
+        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busy(''); bgmAlert(hnd ? '저장했습니다: ' + sv : '파일 받기를 시작했습니다: ' + sv + '\n(폰은 다운로드 폴더에서 확인하세요)');
+      }catch(e){ busy(''); if(e && e.name === 'AbortError') bgmAlert('저장을 취소했습니다. (파일은 만들어지지 않았습니다)'); else bgmAlert('저장 파일을 만들지 못했습니다.'); }
     }
     back.querySelector('[data-bsave]').addEventListener('click', async () => {
       try{
         const key = keyOf(kind, name), txt = ta.value.trim();
         if(!txt && !pics.length && !loadLyr()[key]){ bgmAlert('저장할 가사나 사진이 없습니다.'); return; }
         const base = (dispName(kind, name).replace(/\.(mp3|wav|m4a|aac|ogg|oga|flac|wma|opus|webm|mp4|mkv|mov)$/i, '').replace(/[\\/:*?"<>|]+/g, '_') || '곡');
-        const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream');
-        busyMsg('저장 파일 만드는 중…');
+        const hnd = await pickSaveHandle(base + '.bgmx', 'bgmx', 'application/octet-stream', aw());
+        busy('저장 파일 만드는 중…');
         const pk = await packSong(key, txt ? { text: txt, start: Math.max(0, Number(si.value) || 0), end: Math.max(0, Number(ei.value) || 0) } : null);
-        if(!pk.head.lyr && !pk.blobs.length){ busyMsg(''); bgmAlert('저장할 가사나 사진이 없습니다.'); return; }
-        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busyMsg(''); if(hnd) bgmAlert('저장했습니다: ' + sv);
-      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) bgmAlert('저장 파일을 만들지 못했습니다.'); }
+        if(!pk.head.lyr && !pk.blobs.length){ busy(''); bgmAlert('저장할 가사나 사진이 없습니다.'); return; }
+        const sv = await saveOut(hnd, buildBgmx([pk]), base + '.bgmx'); busy(''); bgmAlert(hnd ? '저장했습니다: ' + sv : '파일 받기를 시작했습니다: ' + sv + '\n(폰은 다운로드 폴더에서 확인하세요)');
+      }catch(e){ busy(''); if(e && e.name === 'AbortError') bgmAlert('저장을 취소했습니다. (파일은 만들어지지 않았습니다)'); else bgmAlert('저장 파일을 만들지 못했습니다.'); }
     });
     back.querySelector('[data-ball]').addEventListener('click', async () => {
       try{
         const keys = new Set([...Object.keys(loadLyr()), ...(await listImgKeys())]); const packs = [];
         if(!keys.size){ bgmAlert('저장할 곡이 없습니다.'); return; }
         const d = new Date(), z = n => String(n).padStart(2, '0'), fn = '배경음악믹서_전체_' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '.bgmx';
-        const hnd = await pickSaveHandle(fn, 'bgmx', 'application/octet-stream');
-        busyMsg('전체 저장 파일 만드는 중…');
+        const hnd = await pickSaveHandle(fn, 'bgmx', 'application/octet-stream', aw());
+        busy('전체 저장 파일 만드는 중…');
         for(const k of keys){ const pk = await packSong(k); if(pk.head.lyr || pk.blobs.length) packs.push(pk); }
-        if(!packs.length){ busyMsg(''); bgmAlert('저장할 곡이 없습니다.'); return; }
-        const sv = await saveOut(hnd, buildBgmx(packs), fn); busyMsg(''); if(hnd) bgmAlert('저장했습니다: ' + sv);
-      }catch(e){ busyMsg(''); if(!(e && e.name === 'AbortError')) bgmAlert('전체 저장 파일을 만들지 못했습니다.'); }
+        if(!packs.length){ busy(''); bgmAlert('저장할 곡이 없습니다.'); return; }
+        const sv = await saveOut(hnd, buildBgmx(packs), fn); busy(''); bgmAlert(hnd ? '저장했습니다: ' + sv : '파일 받기를 시작했습니다: ' + sv + '\n(폰은 다운로드 폴더에서 확인하세요)');
+      }catch(e){ busy(''); if(e && e.name === 'AbortError') bgmAlert('저장을 취소했습니다. (파일은 만들어지지 않았습니다)'); else bgmAlert('전체 저장 파일을 만들지 못했습니다.'); }
     });
     const bf = back.querySelector('[data-bf]');
     back.querySelector('[data-bload]').addEventListener('click', () => bf.click());
@@ -7173,23 +7180,23 @@ function mixTotalDuration(){
       if(media.length && !f){ putImages(media.map(x => (x.type ? x : new File([x], x.name, { type: /\.(mp4|m4v)$/i.test(x.name) ? 'video/mp4' : (/\.mov$/i.test(x.name) ? 'video/quicktime' : (/\.webm$/i.test(x.name) ? 'video/webm' : 'image/jpeg')) })))); return; }
       if(!f){ bgmAlert('불러올 수 있는 파일이 아닙니다. (.bgmx 백업 파일, 사진, 동영상 mp4)'); return; }
       try{
-        busyMsg('불러오는 중…'); const songs = await readBgmx(f); busyMsg('');
+        busy('불러오는 중…'); const songs = await readBgmx(f); busy('');
         if(!songs.length){ bgmAlert('들어 있는 곡이 없습니다.'); return; }
         const key = keyOf(kind, name);
         if(songs.length === 1){
           const kk = songs[0].aud ? songs[0].key : key; // 노래가 들어 있는 파일은 그 곡 이름대로 불러옴
           const had = (await getImgs(kk)).length > 0; let add = false;
           if(had) { const ch = await bgmAsk('이 곡에 이미 사진·동영상이 있습니다.\n어떻게 할까요?', [{ t: '바꾸기', v: 'r', c: 'or' }, { t: '뒤에 추가', v: 'a' }, { t: '취소', v: null, c: 'wh' }]); if(!ch) return; add = ch === 'a'; }
-          busyMsg('불러오는 중…'); await applySong(songs[0], kk, add);
+          busy('불러오는 중…'); await applySong(songs[0], kk, add);
         } else {
           if(!(await bgmYN('곡 ' + songs.length + '개를 불러옵니다.\n같은 곡의 가사와 사진은 불러온 것으로 바뀝니다. 계속할까요?', '불러오기'))) return;
-          busyMsg('불러오는 중…'); for(const sg of songs) await applySong(sg, sg.key, false);
+          busy('불러오는 중…'); for(const sg of songs) await applySong(sg, sg.key, false);
         }
-        busyMsg('');
+        busy('');
         const L2 = loadLyr()[key] || {}; ta.value = L2.text || ''; si.value = L2.start || 0; ei.value = L2.end || Math.round(i.item.buffer.duration);
         nm.textContent = dispName(kind, name); shownKey = null; await refreshPics(); tick(); tab('view');
         bgmAlert('불러왔습니다.');
-      }catch(e){ busyMsg(''); bgmAlert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
+      }catch(e){ busy(''); bgmAlert(e && e.message === 'magic' ? '이 앱에서 만든 백업 파일(.bgmx)이 아닙니다.' : '불러오지 못했습니다. 저장 공간을 확인해 주세요.'); }
     });
     back.querySelector('[data-del]').addEventListener('click', () => { const a = loadLyr(); delete a[keyOf(kind, name)]; saveLyr(a); ta.value = ''; shownKey = null; tick(); upd(); ta.focus(); });
     back.querySelector('[data-ok]').addEventListener('click', () => {
