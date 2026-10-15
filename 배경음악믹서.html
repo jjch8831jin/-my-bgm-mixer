@@ -1304,7 +1304,7 @@ window.bgmDlgCss = function(D){
         + '.bgm-al-i{font-size:14pt;padding:8px 10px;border:1px solid #a8a29e;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit;color:#1c1917;background:#fff}';
   (D.head || D.documentElement).appendChild(st);
 };
-window.bgmToast = function(msg, win){
+window.bgmToast = function(msg, win, ms){
   try{
     const w = win || window, D = w.document;
     bgmDlgCss(D);
@@ -1312,8 +1312,8 @@ window.bgmToast = function(msg, win){
     const t = D.createElement('div'); t.className = 'bgm-toast'; t.textContent = String(msg);
     t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);max-width:88vw;z-index:2147483647;background:rgba(28,25,23,.94);color:#fff;font-size:13pt;font-weight:700;padding:12px 18px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.4);pointer-events:none;white-space:pre-line;text-align:center;transition:opacity .5s;opacity:1';
     (D.body || D.documentElement).appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; }, 3000);
-    setTimeout(() => { try{ t.remove(); }catch(_){} }, 3600);
+    setTimeout(() => { t.style.opacity = '0'; }, ms || 3000);
+    setTimeout(() => { try{ t.remove(); }catch(_){} }, (ms || 3000) + 600);
   }catch(e){}
 };
 window.bgmAlert = function(msg, win){
@@ -6685,7 +6685,7 @@ function mixTotalDuration(){
       const mb = back.querySelector('[data-more]'); let pop = null;
       const closeP = () => { if(pop){ pop.remove(); pop = null; } };
       const items = [
-        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'],
+        ['🎬 영상', '[data-vexp]'], ['💾 백업', '[data-bsave]'], ['📦 전체', '[data-ball]'], ['📂 백업불러오기', '[data-bload]'], ['📷 사진불러오기', 'PICK'], ...(kind === 'music' ? [['🎵 음악 파일 바꾸기', 'CHGAUDIO']] : []),
         ['📘 오디오북 시간표 불러오기', 'ABSYNC'], ['⚖ 글자 수로 자동 배분', 'AUTO'], ['⚖ 여기부터 다시 배분', 'AUTO2'], ['🗑 가사·사진 지우기', '[data-del]'], ['🧹 모두 지우기', 'ALL']
       ];
       const autoItem = items.find(x => x[1] === 'AUTO');
@@ -6695,6 +6695,7 @@ function mixTotalDuration(){
         items.forEach(([t, sel]) => { if(sel === 'AUTO' && aw().innerWidth < 600) t = '⚖ 자동 배분'; if(sel === 'AUTO2' && aw().innerWidth < 600) t = '⚖ 여기부터 배분'; if(sel === 'ABSYNC' && aw().innerWidth < 600) t = '📘 오디오북 시간표'; if(sel === '[data-del]') t = txtMode ? '🗑 가사 지우기' : '🗑 사진 지우기'; const b = mkEl('button', null); const sp = t.indexOf(' '); const ics = mkEl('span', null, t.slice(0, sp)); ics.style.cssText = 'display:inline-block;width:1.6em;text-align:center'; b.appendChild(ics); b.appendChild(document.createTextNode(t.slice(sp + 1))); b.type = 'button'; b.addEventListener('click', () => {
           closeP();
           if(sel === 'PICK'){ lineChooser(null); return; }
+          if(sel === 'CHGAUDIO'){ changeAudio(); return; }
           if(sel === 'AUTO'){ autoDist(); return; }
           if(sel === 'AUTO2'){ autoDistFrom(); return; }
           if(sel === 'ABSYNC'){ absyncPick(); return; }
@@ -7140,6 +7141,29 @@ function mixTotalDuration(){
     syncTrk();
     // 백업 저장 / 불러오기
     const busy = t => busyMsg(t, adoc());
+    // 🎵 음악 파일 바꾸기: 소리만 새 파일로 바꾸고 가사·사진·시간은 그대로 둔다 (곡 이름도 그대로 → 가사·사진이 그 이름에 붙어 있음)
+    async function changeAudio(){
+      const D = adoc(), inp = D.createElement('input');
+      inp.type = 'file'; inp.accept = 'audio/*,.mp3,.wav,.m4a,.ogg,.flac'; inp.style.display = 'none'; D.body.appendChild(inp);
+      inp.addEventListener('cancel', () => inp.remove());
+      inp.addEventListener('change', async () => {
+        const f = inp.files && inp.files[0]; inp.remove(); if(!f) return;
+        const it = musicItems.find(x => x.name === name);
+        if(!it){ bgmAlert('바꿀 곡을 찾지 못했습니다.'); return; }
+        busy('새 음악 파일 불러오는 중…');
+        try{
+          const buf = await getCtx().decodeAudioData(await f.arrayBuffer());
+          const oldDur = it.buffer.duration;
+          it.buffer = buf; it.raw = f;
+          const live = musicPlayerCtl.captureLive(); if(live) live.shift = 0;
+          rebuild('music', live);
+          busy('');
+          const diff = Math.abs(buf.duration - oldDur) > 1;
+          window.bgmToast('음악 파일을 바꿨습니다. (길이 ' + fmtTime(oldDur) + ' → ' + fmtTime(buf.duration) + ')\n가사·사진·시간은 그대로입니다.' + (diff ? '\n길이가 달라서 시간이 안 맞으면 다시 맞춰 주세요.' : ''), aw(), diff ? 6000 : 4000);
+        }catch(err){ busy(''); bgmAlert('음악 파일을 불러오지 못했습니다: ' + f.name + '\n' + (err && err.message ? err.message : '')); }
+      });
+      inp.click();
+    }
     async function saveSong(){ // 이 곡의 노래(원본) + 가사 + 시간 + 사진·동영상을 한 파일로
       try{
         if(curTab === 'sync'){ if(txtMode) txtApply(); lyrPersist(); }
