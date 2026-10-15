@@ -7439,6 +7439,9 @@ window.addEventListener('pagehide', flushWork);
     if(!isReload){
       const oldKeys = await workAllKeys();
       for(const k of oldKeys) await workDelete(k);
+      // 창을 닫았다 새로 열면 곡별 가사·시간·사진·제목과 저장 안 한 임시 기록도 함께 지움 (사진 보관함은 그대로)
+      try{ ['bgmMixerLyrics', 'bgmMixerTitles', 'bgmMixerPicT', 'bgmMixerPicL', 'bgmMixerLyrImgs'].forEach(k => localStorage.removeItem(k)); Object.keys(localStorage).filter(k => k.startsWith('bgmSyncSnap::')).forEach(k => localStorage.removeItem(k)); }catch(e){}
+      try{ await new Promise(res => { const r = indexedDB.open('bgmMixerImgs', 1); r.onupgradeneeded = () => r.result.createObjectStore('imgs'); r.onsuccess = () => { try{ const db = r.result, t = db.transaction('imgs', 'readwrite'); t.objectStore('imgs').clear(); t.oncomplete = () => { db.close(); res(); }; t.onerror = t.onabort = () => { db.close(); res(); }; }catch(e){ res(); } }; r.onerror = () => res(); }); }catch(e){}
     }
     const meta = isReload ? await workGet('meta') : null;
     if(meta && meta.v === 1 && ((meta.voice || []).length || (meta.music || []).length)){
