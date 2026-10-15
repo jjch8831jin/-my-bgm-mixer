@@ -5902,7 +5902,7 @@ function mixTotalDuration(){
         const idx = all.map((u, k) => k), mode = (pop.querySelector('.pk-sort') || {}).value || 'pick'; if(mode === 'pick') return idx;
         const M = metaGet(), nm = k => (typeof all[k] === 'string' ? itemName(all[k]) : String(all[k] && all[k].name || '')), dt = k => (typeof all[k] === 'string' ? M[hs(nrm(all[k]))] : all[k] && all[k].lastModified), sz = k => (typeof all[k] === 'string' ? all[k].length : (all[k] && all[k].size) || 0);
         if(mode === 'name') idx.sort((a, b) => { const A = nm(a), B = nm(b); if(!A !== !B) return A ? -1 : 1; return A.localeCompare(B, 'ko', { numeric: true }) || a - b; });
-        else if(mode === 'date') idx.sort((a, b) => { const A = dt(a), B = dt(b); if((A == null) !== (B == null)) return A == null ? 1 : -1; return (A || 0) - (B || 0) || a - b; });
+        else if(mode === 'date') idx.sort((a, b) => { const A = dt(a), B = dt(b); if((A == null) !== (B == null)) return A == null ? 1 : -1; return (B || 0) - (A || 0) || a - b; });
         else if(mode === 'size') idx.sort((a, b) => sz(b) - sz(a) || a - b);
         return idx;
       };
@@ -5978,7 +5978,7 @@ function mixTotalDuration(){
       });
       const addToList = async fs => {
         fs = Array.from(fs || []); if(!fs.length) return;
-        { const sm = (pop.querySelector('.pk-sort') || {}).value || 'pick'; if(sm === 'name') fs.sort((p, q) => String(p.name || '').localeCompare(String(q.name || ''), 'ko', { numeric: true })); else if(sm === 'date') fs.sort((p, q) => (p.lastModified || 0) - (q.lastModified || 0)); else if(sm === 'size') fs.sort((p, q) => (q.size || 0) - (p.size || 0)); }
+        { const sm = (pop.querySelector('.pk-sort') || {}).value || 'pick'; if(sm === 'name') fs.sort((p, q) => String(p.name || '').localeCompare(String(q.name || ''), 'ko', { numeric: true })); else if(sm === 'date') fs.sort((p, q) => (q.lastModified || 0) - (p.lastModified || 0)); else if(sm === 'size') fs.sort((p, q) => (q.size || 0) - (p.size || 0)); }
         const add = []; let selDup = null, selLib = null; const libNow = await libGet(); const MM = metaGet();
         const items = [];
         for(const f of fs){
