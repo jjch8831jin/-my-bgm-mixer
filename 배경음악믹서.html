@@ -5647,7 +5647,8 @@ function mixTotalDuration(){
       for(let i = 0; i < pp + nm; i++){ if(i < pp + Math.min(nm, om)){ fS.push(os[i]); keep.set(i, i); } else fS.push(null); }
       for(let j = nm; j < om; j++){ const oi = pp + j; if(picL.some(v => v === oi)){ keep.set(oi, fT.length); fT.push(BLANK); fS.push(os[oi]); } }
       for(let k = 0; k < ss; k++){ keep.set(o - ss + k, fT.length); fT.push(nt[n - ss + k]); fS.push(os[o - ss + k]); }
-      syT = fT; syStamp = fS; syAbs = fT.map(() => null);
+      const allNew = o > 0 && n > 0 && pp === 0 && ss === 0 && !nt.some(t => t !== BLANK && oT.includes(t)); // 이전 줄이 하나도 그대로 남지 않은 완전히 다른 가사 → 이전 시간은 모두 지움
+      syT = fT; syStamp = allNew ? fT.map(() => null) : fS; syAbs = fT.map(() => null);
       picL = picL.map(v => v == null ? null : (keep.has(v) ? keep.get(v) : null)); savePT();
       if(fT.length !== n){ const ct = pp + nm; txtEl.value = txtShow(); try{ const cp = fT.slice(0, ct).reduce((a, t) => a + (t === BLANK ? 0 : t.length) + 1, 0); txtEl.setSelectionRange(cp, cp); }catch(e){} }
       syPos = Math.max(0, Math.min(syPos, n - 1)); afterStampPos = -1; syStack = []; syFresh.clear();
