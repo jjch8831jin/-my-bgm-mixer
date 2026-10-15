@@ -853,7 +853,7 @@
   .lyr-box .addl, .lyr-box .sy-one button.up{ display:none !important; }
   .lyr-box .sy-row.sy-ly .tm{ white-space:nowrap; }
   .lyr-box .sy-row.sy-ly .tx2.blank{ min-width:4em; color:#a8a29e; font-style:italic; font-size:.85em; }
-  .lyr-box .sy-row.sy-ly .tx2.blank::before{ content:'(빈 줄)'; }
+  .lyr-box .sy-row.sy-ly .tx2.blank::before{ content:''; }
   .lyr-box .sy-row.sy-ly.dropto{ outline:3px solid #1e3a8a; outline-offset:-3px; }
   .pk-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:6px; }
   .pk-g .pk-t{ padding:0; border:3px solid transparent; border-radius:8px; background:#fff; cursor:pointer; height:56px; overflow:hidden; }
@@ -1007,7 +1007,7 @@
   .lyr-box.syncmode .lyr-head .lb{ font-size:16pt !important; }
   .lyr-box.syncmode .lyr-head .nm{ font-size:14pt !important; }
   .lyr-box.syncmode .sy-list{ font-size:16pt !important; }
-  .lyr-box.syncmode .sy-row.sy-ly .tx2.blank{ font-size:12pt !important; }
+  .lyr-box.syncmode .sy-row.sy-ly .tx2.blank{ font-size:16pt !important; color:#a8a29e; }
   .lyr-box .lyr-head [data-cancel]{ flex:none; margin-left:auto; flex-direction:row; align-items:center; justify-content:center; gap:6px; height:30px; padding:0 12px; font-size:16px; white-space:nowrap; background:#fee2e2 !important; border:1px solid #b91c1c !important; color:#991b1b !important; font-weight:700; border-radius:8px; }
   .lyr-box .lyr-head [data-cancel] .ic{ font-size:16px; line-height:1; }
 </style>
@@ -5624,18 +5624,12 @@ function mixTotalDuration(){
           if(ch){ const t0 = ch.offsetTop, t1 = t0 + ch.offsetHeight; if(t1 > edBox.scrollTop + edBox.clientHeight) edBox.scrollTop = t1 - edBox.clientHeight + 6; else if(t0 < edBox.scrollTop) edBox.scrollTop = Math.max(0, t0 - 6); } }
       }catch(e){}
     }
-    function txtShow(){ return syT.every(t => t === BLANK) ? '' : syT.map(t => t === BLANK ? '' : t).join('\n'); } // 사진 자리만 남은 빈 줄들은 칸을 비워서 보여 줌
+    function txtShow(){ return syT.length === 1 && syT[0] === BLANK ? '' : syT.map(t => t === BLANK ? '' : t).join('\n'); } // 사진 자리만 남은 빈 줄들은 칸을 비워서 보여 줌
     function txtApply(final = true){ // 글 칸 → 가사 줄 (위에서부터 같은 순서로 시간·사진을 유지) · final: 쓰기를 마칠 때 새로 친 빈 줄은 칸으로 만들지 않음
       clearTimeout(txtTimer);
       const ls = txtEl.value === '' ? [] : txtEl.value.replace(/\r/g, '').split('\n'); // 쓰는 중에는 끝에 친 엔터(빈 줄)도 그대로 둠
       let nt = ls.map(l => l.trim() ? l.trim() : BLANK), n = nt.length; const o = syT.length;
       let blankCut = false;
-      { // 새로 친 빈 줄(이미 있던 사진 자리 칸은 제외)은 칸으로 만들지 않음 → 가사 줄 수 = 사진 칸 수 (쓰는 중에는 글 칸의 빈 줄을 그대로 둠)
-        const mnx = Math.min(o, n); let p0 = 0; while(p0 < mnx && nt[p0] === syT[p0]) p0++;
-        let s0 = 0; while(s0 < mnx - p0 && nt[n - 1 - s0] === syT[o - 1 - s0]) s0++;
-        const mid = nt.slice(p0, n - s0), cut = mid.filter(t => t !== BLANK);
-        if(cut.length !== mid.length){ nt = nt.slice(0, p0).concat(cut, nt.slice(n - s0)); n = nt.length; blankCut = true; }
-      }
       if(n === o && nt.every((t, i) => t === syT[i])){ if(blankCut && final){ try{ txtEl.value = txtShow(); }catch(e){} } return; }
       // 앞·뒤에서 같은 줄을 찾아 바뀐 가운데만 비교 → 지운 줄에 사진이 붙어 있으면 빈 줄로 남겨 사진 연결 유지
       const os = syStamp.slice(), oT = syT.slice(), mn = Math.min(o, n);
@@ -6262,7 +6256,7 @@ function mixTotalDuration(){
         const r = mkEl('div', 'sy-row sy-ly');
         const hd = mkEl('span', 'hd', '⠿'); hd.title = '끌어서 순서 바꾸기 (시간은 줄을 따라갑니다)';
         const tm = mkEl('span', 'tm', ''); tm.title = '누르면 이 줄이 다음 차례가 됩니다'; tm.addEventListener('click', () => { syPos = x; afterStampPos = -1; syMark(false); });
-        const tx = mkEl('span', t === BLANK ? 'tx2 blank' : 'tx2', t === BLANK ? '' : t); tx.title = '누르면 이 줄이 다음 차례가 됩니다'; tx.addEventListener('click', () => { syPos = x; afterStampPos = -1; syMark(false); });
+        const tx = mkEl('span', t === BLANK ? 'tx2 blank' : 'tx2', t === BLANK ? '♪' : t); tx.title = '누르면 이 줄이 다음 차례가 됩니다'; tx.addEventListener('click', () => { syPos = x; afterStampPos = -1; syMark(false); });
         const rx = mkEl('button', 'rx', '✕'); rx.type = 'button'; rx.title = '이 줄 지우기'; rx.addEventListener('click', () => delLine(x));
         const kp = attachedPic(x); let cell;
         if(kp >= 0){ const u = pics[kp]; if(isVid(u)){ cell = document.createElement('video'); cell.muted = true; cell.preload = 'metadata'; cell.playsInline = true; cell.src = urlOfItem(u) + '#t=0.1'; } else { cell = document.createElement('img'); cell.src = u; cell.alt = ''; } cell.className = 'pk'; cell.title = '붙인 사진 (눌러서 바꾸기)'; }
