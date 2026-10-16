@@ -3236,9 +3236,9 @@ onBusyClick('downloadVoiceWavBtn', async () => {
   await downloadAsWav(buf, getVoiceBaseName() + '.wav', status, 'voice', 'voiceWav');
 });
 onBusyClick('downloadVoiceMp3Btn', async (e) => {
+  const btn = e.currentTarget;
   await applyAutoVoice();
   const status = barStatus('voiceMp3Bar', 'voiceMp3Fill');
-  const btn = e.currentTarget;
   btn.disabled = true;
   const trimmed = getTrimmedVoiceBuffer();
   const { start: trimStartNow } = getVoiceTrimRange();
