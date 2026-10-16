@@ -1012,6 +1012,36 @@
   .lyr-box.syncmode .sy-row.sy-ly .tx2.blank{ font-size:16pt !important; color:#a8a29e; }
   .lyr-box .lyr-head [data-cancel]{ flex:none; margin-left:auto; flex-direction:row; align-items:center; justify-content:center; gap:6px; height:30px; padding:0 12px; font-size:16px; white-space:nowrap; background:#fee2e2 !important; border:1px solid #b91c1c !important; color:#991b1b !important; font-weight:700; border-radius:8px; }
   .lyr-box .lyr-head [data-cancel] .ic{ font-size:16px; line-height:1; }
+
+  /* 4번 버튼 묶음 (이전·재생·정지·다음·반복·재생속도) */
+  body section .tgrp{ gap:0; align-items:stretch; height:36px; border:1px solid #6f8aa0; border-radius:4px; overflow:hidden; background:#455c70; box-sizing:border-box; margin-top:0 !important; }
+  body section .tgrp .player-btn, body section .tgrp .player-btn.primary{ flex:1 1 0; min-width:34px; width:auto; height:auto; padding:0; border:0; border-right:1px solid #6f8aa0; border-radius:0; box-shadow:none; background:#455c70; color:#f4f8fc; font-size:14pt; }
+  body section .tgrp .player-btn:disabled, body section .tgrp .player-btn.primary:disabled{ background:#2b3d4d; color:#9fb3c5; opacity:1; }
+  body section .tgrp .player-btn.on, body section .tgrp .player-btn:active:not(:disabled){ background:#ffb547; color:#131f2c; box-shadow:inset 0 0 10px rgba(255,255,255,.35); transform:none; }
+  body section .tgrp .tg-speed{ flex:none; display:flex; align-items:center; gap:4px; padding:0 6px; background:#455c70; color:#f4f8fc; white-space:nowrap; }
+  body section .tgrp .tg-speed .lb{ font-size:13px; font-weight:800; }
+  body section .tgrp .tg-speed input{ width:58px; height:26px; box-sizing:border-box; padding:2px 0 2px 3px; font-size:14px; }
+  @media (max-width:600px){ .tool-panel .pl-left{ width:100% !important; } .tool-panel .player-line{ flex-wrap:wrap; } }
+  /* 6번으로 옮긴 음성 줄 */
+  #mixSec #autoVoiceSpeedBtn{ background: var(--music); border-color: var(--music); color: #fff8ec; }
+  #mixSec #autoVoiceSpeedBtn:hover:not(:disabled){ background: #b07414; border-color: #b07414; color: #fff8ec; }
+  #mixSec #autoVoiceSpeedBtn.recording{ background: #ef4a3a; border-color: #ff8a7c; color: #fff; box-shadow: 0 0 10px rgba(239,74,58,.7); }
+  #mixSec .pv-row{ flex-wrap: nowrap; gap: 4px; }
+  #mixSec .pv-row .mix-chip{ padding: 4px 5px; gap: 3px; }
+  #mixSec .pv-row .mix-chip input[type="number"]{ width: 76px; padding: 3px 2px; }
+  #mixSec .pv-row > .record-btn{ padding: 6px 7px; flex: none; white-space: nowrap; }
+  #mixSec .pv-row > .pv-box{ flex: none; }
+  #mixSec .pv-row > .pv-box, #mixSec .pv-row > #autoVoiceSpeedBtn{ align-self: stretch; box-sizing: border-box; }
+  #mixSec .pv-row .auto-track{ min-width: 0; gap: 6px; }
+  #mixSec .pv-row .auto-track .progress-bar{ min-width: 20px; }
+  #mixSec .pv-row .auto-track .time{ min-width: 0; }
+  @media (max-width: 1150px){ #mixSec .pv-row{ flex-wrap: wrap; } #mixSec .pv-row .auto-track{ min-width: 180px; } }
+  #mixTools .mt-bar{ display:flex; align-items:center; gap:12px; margin-top:12px; }
+  #mixTools .mt-bar .dlgrp{ margin-left:auto; }
+  #mixTools .mt-seg{ flex:none; }
+  #mixTools .mt-q{ display:none; align-items:center; gap:6px; margin-top:10px; }
+  #mixTools .mt-q input{ width:12em; }
+  @media (max-width:600px){ #mixTools .mt-bar{ flex-wrap:wrap; } #mixTools .mt-bar .dlgrp{ margin-left:0; } #mixTools .mt-seg button{ padding:8px 8px; font-size:12pt; } }
 </style>
 </head>
 <body>
@@ -1120,12 +1150,13 @@
     </div>
     <div class="tool-panel" id="panel_voice">
       <div class="player-line">
-        <div class="pl-left"><div class="player-row" style="margin-top:0; justify-content:flex-start;">
+        <div class="pl-left"><div class="player-row tgrp" style="margin-top:0; justify-content:flex-start;">
           <button class="player-btn" id="voicePrevBtn" disabled title="이전 트랙">⏮</button>
           <button class="player-btn primary" id="voicePlayBtn" disabled title="재생/일시정지">▶</button>
           <button class="player-btn" id="voiceStopBtn" disabled title="정지">⏹</button>
           <button class="player-btn" id="voiceNextBtn" disabled title="다음 트랙">⏭</button>
           <button class="player-btn" id="voiceRepeatBtn" type="button" title="반복 재생 (켜면 끝나도 처음부터 다시 재생)">🔁</button>
+          <label class="tg-speed" title="재생속도 — 들을 때만 적용됩니다 (저장하는 파일의 속도에는 영향 없음). 더블클릭하면 1.00"><span class="lb">재생속도</span><input type="number" id="voiceListenSpeed" min="0.5" max="2.5" step="0.05" value="1.00"></label>
         </div></div>
         <div class="pl-mid"><div class="progress-bar scrubbable" id="voiceProgressBar"><div class="progress-fill" id="voiceProgressFill"></div></div></div>
         <div class="time" id="voiceTimeLabel" style="margin-top:0;">00:00 / 00:00</div>
@@ -1156,7 +1187,7 @@
     </div>
     <div class="tool-panel" id="panel_music">
       <div class="player-line">
-        <div class="pl-left"><div class="player-row" style="margin-top:0; justify-content:flex-start;">
+        <div class="pl-left"><div class="player-row tgrp" style="margin-top:0; justify-content:flex-start;">
           <button class="player-btn" id="musicPrevBtn" disabled title="이전 트랙">⏮</button>
           <button class="player-btn primary" id="musicPlayBtn" disabled title="재생/일시정지">▶</button>
           <button class="player-btn" id="musicStopBtn" disabled title="정지">⏹</button>
@@ -1232,7 +1263,7 @@
 
   
 
-  <section>
+  <section id="mixSec">
     <h2>6. 믹싱 & 미리듣기</h2>
     <div class="transport" style="margin-top:6px;">
       <button class="mix-btn" id="mixBtn" disabled>🎚 믹싱하기</button>
@@ -1252,6 +1283,22 @@
     </div>
     <div id="folderStatus_mix" style="display:none"></div>
     <div class="progress-bar mini dlbar" id="exportMp3Bar"><div class="progress-fill music" id="exportMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="exportMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div>
+
+    <div id="mixTools">
+      <div id="mixVoiceRowHost" style="margin-top:12px;"></div>
+      <div class="mt-bar">
+        <div class="segmented big mt-seg" id="mtSeg">
+          <button type="button" data-mt="vfile" title="음성 파일 불러오기">📁 음성</button>
+          <button type="button" data-mt="vfind" title="음성 목록에서 이름으로 찾기">🔍</button>
+          <button type="button" data-mt="vbk" title="오디오북에서 저장한 음성 파일(여러 개 가능) 또는 백업 파일(.bgmx) 불러오기 — 가사·시간·사진">📂 오디오북</button>
+          <button type="button" data-mt="mfile" title="배경음악 파일 불러오기">📁 음악</button>
+          <button type="button" data-mt="mfind" title="음악 목록에서 이름으로 찾기">🔍</button>
+          <button type="button" data-mt="mbk" title="백업 파일(.bgmx) 불러오기 — 가사·시간·사진">📂 백업</button>
+        </div>
+      </div>
+      <div class="mt-q" id="mtQBox"><span>🔍</span><input type="text" id="mtQ" placeholder="곡 이름"><button type="button" class="record-btn" id="mtQx" title="닫기">✕</button></div>
+      <div class="imp-row" id="mtList"><button type="button" class="imp-arrow ia-prev" title="이전">◀</button><div class="imp-items" id="mtItems" data-lk="voice"></div><button type="button" class="imp-arrow ia-next" title="다음">▶</button></div>
+    </div>
   </section>
 
 
@@ -3257,6 +3304,7 @@ function getItemBoundaries(items){
   return bounds;
 }
 
+let voiceListen = 1; // 4번 '재생속도': 음성 탭에서 들을 때만 적용 (저장 파일에는 영향 없음)
 function makePlayer(kind){
   const ids = kind === 'voice'
     ? { prev:'voicePrevBtn', play:'voicePlayBtn', stop:'voiceStopBtn', next:'voiceNextBtn', fill:'voiceProgressFill', time:'voiceTimeLabel', durSpan:'voiceDur' }
@@ -3269,7 +3317,7 @@ function makePlayer(kind){
 
   function rawBuffer(){ return kind === 'voice' ? voiceBuffer : musicBuffer; }
   function trimRange(){ return kind === 'voice' ? getVoiceTrimRange() : getMusicTrimRange(); }
-  function speedFactor(){ return kind === 'voice' ? voiceSpeed : musicSpeed; }
+  function speedFactor(){ return kind === 'voice' ? voiceSpeed * (activeTrack === 'voice' ? voiceListen : 1) : musicSpeed; }
   function volNow(){
     const id = kind === 'voice' ? 'voiceVolume' : 'musicVolume';
     const v = (api.managed ? profVal('all', id) : profVal(kind, id));
@@ -3283,6 +3331,7 @@ function makePlayer(kind){
     const has = !!rawBuffer();
     const pl = st.playing && !st.fading;
     document.getElementById(ids.play).textContent = pl ? '⏸' : '▶';
+    document.getElementById(ids.play).classList.toggle('on', pl);
     document.getElementById(ids.prev).disabled = !has;
     document.getElementById(ids.play).disabled = !has;
     document.getElementById(ids.stop).disabled = !has;
@@ -4688,6 +4737,8 @@ function setActiveTrack(k){
   const oldTrack = activeTrack;
   if(profiles && oldTrack !== k) profiles[oldTrack] = snapshotProfile();
   activeTrack = k; try{ localStorage.setItem('bgmMixerTrack', k); }catch(e){}
+  try{ if(voiceListen !== 1) voicePlayerCtl.setSpeed(); }catch(e){}
+  try{ if(window.alignTransport){ window.alignTransport(); setTimeout(window.alignTransport,50); } }catch(e){}
   if(profiles && oldTrack !== k){ applyProfile(k); saveSettings(); }
   document.querySelectorAll('#toolSelect button').forEach(b => b.classList.toggle('active', b.dataset.track === k));
   document.getElementById('panel_all').classList.toggle('active', k === 'all');
@@ -4726,30 +4777,30 @@ setActiveTrack(startTrack);
   const mq = window.matchMedia('(max-width:600px)');
   let fmt = 'mp3'; try{ const v = localStorage.getItem('bgmMixerDlFmt'); if(v === 'wav' || v === 'mp3') fmt = v; }catch(e){}
   const grp = document.createElement('div'); grp.id = 'dlGrp'; grp.className = 'dlgrp';
-  grp.innerHTML = '<button type="button" class="dg-btn dg-get" title="받기">⬇ 받기</button><span class="dg-fmt"><button type="button" data-f="wav">WAV</button><button type="button" data-f="mp3">MP3</button></span><button type="button" class="dg-btn dg-folder" title="저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>';
+  grp.innerHTML = '<button type="button" class="dg-btn dg-get" title="목록의 파일을 순서대로 하나로 이어 붙여 저장">⬇ 합쳐 받기</button><span class="dg-fmt"><button type="button" data-f="wav">WAV</button><button type="button" data-f="mp3">MP3</button></span><button type="button" class="dg-btn dg-folder" title="저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>';
   const getB = grp.querySelector('.dg-get'), folB = grp.querySelector('.dg-folder');
   const srcId = (t, f) => t === 'voice' ? (f === 'mp3' ? 'downloadVoiceMp3Btn' : 'downloadVoiceWavBtn') : (f === 'mp3' ? 'downloadMusicMp3Btn' : 'downloadMusicBtn');
   function syncDl(){
-    const t = activeTrack; if(t !== 'voice' && t !== 'music') return;
+    const t = window.__mtKind || 'voice';
     const s = document.getElementById(srcId(t, fmt)); getB.disabled = !s || s.disabled;
     const fo = document.getElementById('chooseFolderBtn_' + t); folB.classList.toggle('on', !!(fo && fo.classList.contains('on')));
     grp.querySelectorAll('.dg-fmt button').forEach(b => b.classList.toggle('on', b.dataset.f === fmt));
   }
   function placeDl(){
-    const t = activeTrack;
-    if(t !== 'voice' && t !== 'music'){ grp.style.display = 'none'; return; }
-    grp.style.display = '';
-    if(mq.matches){ const imp = document.getElementById('imp_' + t); if(imp){ imp.before(grp); grp.classList.add('inpanel'); } }
-    else { document.getElementById('toolSelect').after(grp); grp.classList.remove('inpanel'); }
+    const bar = document.querySelector('#mixTools .mt-bar');
+    if(bar && grp.parentNode !== bar) bar.appendChild(grp);
+    grp.style.display = ''; grp.classList.remove('inpanel');
     syncDl();
   }
-  getB.addEventListener('click', () => { const s = document.getElementById(srcId(activeTrack, fmt)); if(s && !s.disabled) s.click(); });
-  folB.addEventListener('click', () => { const fo = document.getElementById('chooseFolderBtn_' + activeTrack); if(fo) fo.click(); setTimeout(syncDl, 150); });
+  getB.addEventListener('click', () => { const s = document.getElementById(srcId(window.__mtKind || 'voice', fmt)); if(s && !s.disabled) s.click(); });
+  folB.addEventListener('click', () => { const fo = document.getElementById('chooseFolderBtn_' + (window.__mtKind || 'voice')); if(fo) fo.click(); setTimeout(syncDl, 150); });
   grp.querySelectorAll('.dg-fmt button').forEach(b => b.addEventListener('click', () => { fmt = b.dataset.f; try{ localStorage.setItem('bgmMixerDlFmt', fmt); }catch(e){} syncDl(); }));
   window.syncDl = syncDl; window.placeDl = placeDl;
 
   const S = { voice: { start: 0, q: '', ci: -2, search: false }, music: { start: 0, q: '', ci: -2, search: false } };
   const els = {};
+  function openBk(kind){ let fi = document.getElementById('bkMainFile'); if(!fi){ fi = document.createElement('input'); fi.type = 'file'; fi.id = 'bkMainFile'; fi.multiple = true; fi.accept = '.bgmx,audio/*,.wav,.mp3'; fi.style.display = 'none'; document.body.appendChild(fi); fi.addEventListener('change', async () => { const fs = [...(fi.files || [])], kk = fi.dataset.kind || 'voice'; fi.value = ''; const au = fs.filter(f => !/\.bgmx$/i.test(f.name)), bk = fs.filter(f => /\.bgmx$/i.test(f.name)); if(au.length){ let r = { saved: 0, bad: [] }; try{ r = (window.__absyncFiles ? await window.__absyncFiles(au, kk, true) : r) || r; }catch(x){} if(kk === 'voice'){ try{ const vi = document.getElementById('voiceInput'), dt = new DataTransfer(); au.forEach(f => dt.items.add(f)); vi.files = dt.files; vi.dispatchEvent(new Event('change', { bubbles: true })); }catch(x){ bgmAlert('음성 파일을 불러오지 못했습니다. 📁 음성 버튼으로 골라 주세요.'); } let m = '음성 파일 ' + au.length + '개를 불러왔어요.'; if(r.saved) m += '\n오디오북 시간표가 있는 ' + r.saved + '개는 가사와 시간도 넣었어요.'; if(r.bad.length) m += '\n\n시간표가 없어 음성만 불러온 파일 ' + r.bad.length + '개:\n' + r.bad.slice(0, 5).join('\n') + (r.bad.length > 5 ? '\n…' : '') + '\n(필요하면 시간 맞추기에서 글을 붙여 넣고 ⚖ 글자 수로 자동 배분을 쓰세요)'; bgmAlert(m); } } for(const f of bk){ if(window.__bgmxImport) await window.__bgmxImport(f); } }); } fi.dataset.kind = kind; fi.accept = kind === 'voice' ? '.bgmx,audio/*,.wav,.mp3' : '.bgmx'; fi.click();  }
+  window.__openBk = openBk;
   function mk(kind){
     const d = document.createElement('div'); d.className = 'imp-row'; d.id = 'imp_' + kind;
     d.innerHTML = '<div class="imp-btn"></div><button type="button" class="imp-arrow ia-prev" title="이전">◀</button><div class="imp-items" id="impItems_' + kind + '" data-lk="' + kind + '"></div><button type="button" class="imp-arrow ia-next" title="다음">▶</button>';
@@ -4761,7 +4812,7 @@ setActiveTrack(startTrack);
     d.addEventListener('click', ev => {
       const t = ev.target;
       if(t.closest('.ib-main')) openFilesFor(kind);
-      else if(t.closest('.ib-bk')){ let fi = document.getElementById('bkMainFile'); if(!fi){ fi = document.createElement('input'); fi.type = 'file'; fi.id = 'bkMainFile'; fi.multiple = true; fi.accept = '.bgmx,audio/*,.wav,.mp3'; fi.style.display = 'none'; document.body.appendChild(fi); fi.addEventListener('change', async () => { const fs = [...(fi.files || [])], kk = fi.dataset.kind || 'voice'; fi.value = ''; const au = fs.filter(f => !/\.bgmx$/i.test(f.name)), bk = fs.filter(f => /\.bgmx$/i.test(f.name)); if(au.length){ let r = { saved: 0, bad: [] }; try{ r = (window.__absyncFiles ? await window.__absyncFiles(au, kk, true) : r) || r; }catch(x){} if(kk === 'voice'){ try{ const vi = document.getElementById('voiceInput'), dt = new DataTransfer(); au.forEach(f => dt.items.add(f)); vi.files = dt.files; vi.dispatchEvent(new Event('change', { bubbles: true })); }catch(x){ bgmAlert('음성 파일을 불러오지 못했습니다. 📁 음성 버튼으로 골라 주세요.'); } let m = '음성 파일 ' + au.length + '개를 불러왔어요.'; if(r.saved) m += '\n오디오북 시간표가 있는 ' + r.saved + '개는 가사와 시간도 넣었어요.'; if(r.bad.length) m += '\n\n시간표가 없어 음성만 불러온 파일 ' + r.bad.length + '개:\n' + r.bad.slice(0, 5).join('\n') + (r.bad.length > 5 ? '\n…' : '') + '\n(필요하면 시간 맞추기에서 글을 붙여 넣고 ⚖ 글자 수로 자동 배분을 쓰세요)'; bgmAlert(m); } } for(const f of bk){ if(window.__bgmxImport) await window.__bgmxImport(f); } }); } fi.dataset.kind = kind; fi.accept = kind === 'voice' ? '.bgmx,audio/*,.wav,.mp3' : '.bgmx'; fi.click(); }
+      else if(t.closest('.ib-bk')){ openBk(kind); }
       else if(t.closest('.ib-find')){ S[kind].search = true; e.btn.classList.add('searching'); e.btn.innerHTML = '<span class="ib-ic">🔍</span><input type="text" class="ib-q" placeholder="곡 이름"><button type="button" class="ib-x" title="닫기">✕</button>'; const q = e.btn.querySelector('.ib-q'); q.value = S[kind].q; q.focus(); }
       else if(t.closest('.ib-x')){ S[kind].q = ''; btnDefault(); let ci = -1; try{ ci = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).getCurIdx(); }catch(x){} S[kind].start = ci > 0 ? ci : 0; render(kind); }
       else if(t.closest('.ia-prev')){ S[kind].start = Math.max(0, S[kind].start - per()); render(kind); }
@@ -4788,12 +4839,77 @@ setActiveTrack(startTrack);
     const shown = list.slice(st.start, st.start + n);
     e.items.innerHTML = shown.length ? shown.map(i => rowHtml(items[i], i, kind, items.length)).join('') : (q ? '<span class="none">찾는 곡이 없습니다</span>' : '');
     e.prev.disabled = st.start <= 0; e.next.disabled = st.start + n >= list.length;
+    try{ if(typeof render6 === 'function') render6(kind); }catch(x){}
   }
   window.renderImp = render;
-  window.impTick = (kind, ci) => { const st = S[kind]; if(ci === st.ci) return; st.ci = ci; if(!st.q && ci >= 0) st.start = ci; render(kind); };
+  window.impTick = (kind, ci) => { const st = S[kind]; if(ci === st.ci) return; st.ci = ci; if(!st.q && ci >= 0) st.start = ci; if(kind === (window.__mtKind || 'voice') && !S6.q && ci >= 0) S6.start = ci; render(kind); };
+  // ---- 6번: 파일 버튼 6개 묶음 + 목록 (4번과 같은 파일 목록을 보여 줌) ----
+  const S6 = { start: 0, q: '', search: false };
+  window.__mtKind = 'voice';
+  const mtSeg = document.getElementById('mtSeg'), mtItems = document.getElementById('mtItems'), mtQBox = document.getElementById('mtQBox'), mtQ = document.getElementById('mtQ');
+  const mtPrev = document.querySelector('#mtList .ia-prev'), mtNext = document.querySelector('#mtList .ia-next');
+  function render6(){
+    const kind = window.__mtKind || 'voice';
+    const items = kind === 'voice' ? voiceItems : musicItems, q = S6.q.trim().toLowerCase(), n = per();
+    const list = []; items.forEach((it, i) => { if(!q || String(it.name).toLowerCase().indexOf(q) >= 0) list.push(i); });
+    S6.start = Math.max(0, Math.min(S6.start, Math.max(0, list.length - 1)));
+    const shown = list.slice(S6.start, S6.start + n);
+    mtItems.dataset.lk = kind;
+    mtItems.innerHTML = shown.length ? shown.map(i => rowHtml(items[i], i, kind, items.length)).join('') : (q ? '<span class="none">찾는 곡이 없습니다</span>' : '');
+    mtPrev.disabled = S6.start <= 0; mtNext.disabled = S6.start + n >= list.length;
+    mtQBox.style.display = S6.search ? 'flex' : 'none';
+    try{ if(window.syncDl) window.syncDl(); }catch(x){}
+  }
+  window.render6 = render6;
+  function setMt(kind, btn){
+    const changed = (window.__mtKind !== kind);
+    window.__mtKind = kind;
+    if(changed){ S6.q = ''; S6.search = false; let ci = -1; try{ ci = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).getCurIdx(); }catch(x){} S6.start = ci > 0 ? ci : 0; mtQ.value = ''; }
+    mtSeg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === btn));
+    render6();
+  }
+  mtSeg.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-mt]'); if(!b) return;
+    const a = b.dataset.mt, kind = a[0] === 'v' ? 'voice' : 'music';
+    setMt(kind, b);
+    if(a.slice(1) === 'file') openFilesFor(kind);
+    else if(a.slice(1) === 'bk') openBk(kind);
+    else { S6.search = true; render6(); mtQ.focus(); }
+  });
+  mtQ.addEventListener('input', () => { S6.q = mtQ.value; S6.start = 0; render6(); });
+  document.getElementById('mtQx').addEventListener('click', () => { S6.q = ''; S6.search = false; mtQ.value = ''; render6(); });
+  mtPrev.addEventListener('click', () => { S6.start = Math.max(0, S6.start - per()); render6(); });
+  mtNext.addEventListener('click', () => { S6.start += per(); render6(); });
   ['voice', 'music'].forEach(k => { mk(k); document.getElementById(k + 'List').dataset.lk = k; render(k); });
+  render6();
   mq.addEventListener('change', () => { ['voice', 'music'].forEach(render); placeDl(); });
   placeDl();
+})();
+
+// ---- 4번 재생속도(듣기 전용) · 6번으로 옮긴 음성 줄 · 4번 묶음 너비 맞춤 ----
+(function(){
+  const host = document.getElementById('mixVoiceRowHost'), row = document.querySelector('#panel_voice .speed-row.pv-row');
+  if(host && row) host.appendChild(row);
+  const inp = document.getElementById('voiceListenSpeed');
+  if(inp){
+    const apply = () => { let v = Number(inp.value); if(!(v > 0)) return; v = Math.max(0.5, Math.min(2.5, v)); voiceListen = v; try{ voicePlayerCtl.setSpeed(); }catch(e){} };
+    inp.addEventListener('input', apply);
+    inp.addEventListener('change', () => { if(!(Number(inp.value) > 0)) inp.value = '1.00'; apply(); });
+    inp.addEventListener('dblclick', () => { inp.value = '1.00'; apply(); });
+  }
+  window.alignTransport = function(){
+    const ts = document.getElementById('toolSelect'); if(!ts) return;
+    const wide = window.innerWidth > 600;
+    document.querySelectorAll('.tool-panel .pl-left').forEach(pl => {
+      if(!wide){ pl.style.removeProperty('width'); return; }
+      const pn = pl.closest('.tool-panel'); if(!pn || getComputedStyle(pn).display === 'none') return;
+      const right = ts.getBoundingClientRect().right, left = pl.getBoundingClientRect().left;
+      if(right > left + 200) pl.style.setProperty('width', Math.round(right - left) + 'px', 'important');
+    });
+  };
+  window.addEventListener('resize', () => window.alignTransport());
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => window.alignTransport());
+  setTimeout(() => window.alignTransport(), 0);
 })();
 profiles = pendingProfiles || { voice: snapshotProfile(), music: snapshotProfile(), all: snapshotProfile() };
 ['voice','music','all'].forEach(t => { const d = snapshotProfile(); PROF_IDS.concat(['durationMode','loopMode','autoDuck']).forEach(key => { if(profiles[t][key] === undefined) profiles[t][key] = d[key]; }); });
