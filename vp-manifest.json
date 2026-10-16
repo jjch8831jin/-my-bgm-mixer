@@ -1,0 +1,13 @@
+{
+  "name": "동영상 재생기",
+  "short_name": "동영상재생기",
+  "start_url": "./동영상재생기.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e121b",
+  "theme_color": "#0e121b",
+  "icons": [
+    { "src": "vp-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "vp-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
