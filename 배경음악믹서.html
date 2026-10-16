@@ -4775,13 +4775,14 @@ setActiveTrack(startTrack);
 (function(){
   const mq = window.matchMedia('(max-width:600px)');
   let fmt = 'mp3'; try{ const v = localStorage.getItem('bgmMixerDlFmt'); if(v === 'wav' || v === 'mp3') fmt = v; }catch(e){}
+  const I6 = { voice: [], music: [] }; let busy6 = false; // 6번 전용 파일 목록 (4번과 별개)
   const grp = document.createElement('div'); grp.id = 'dlGrp'; grp.className = 'dlgrp';
   grp.innerHTML = '<button type="button" class="dg-btn dg-get" title="목록의 파일을 순서대로 하나로 이어 붙여 저장">⬇ 합쳐 받기</button><span class="dg-fmt"><button type="button" data-f="wav">WAV</button><button type="button" data-f="mp3">MP3</button></span><button type="button" class="dg-btn dg-folder" title="저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>';
   const getB = grp.querySelector('.dg-get'), folB = grp.querySelector('.dg-folder');
   const srcId = (t, f) => t === 'voice' ? (f === 'mp3' ? 'downloadVoiceMp3Btn' : 'downloadVoiceWavBtn') : (f === 'mp3' ? 'downloadMusicMp3Btn' : 'downloadMusicBtn');
   function syncDl(){
     const t = window.__mtKind || 'voice';
-    const s = document.getElementById(srcId(t, fmt)); getB.disabled = !s || s.disabled;
+    getB.disabled = busy6 || !I6[t].length;
     const fo = document.getElementById('chooseFolderBtn_' + t); folB.classList.toggle('on', !!(fo && fo.classList.contains('on')));
     grp.querySelectorAll('.dg-fmt button').forEach(b => b.classList.toggle('on', b.dataset.f === fmt));
   }
@@ -4791,7 +4792,7 @@ setActiveTrack(startTrack);
     grp.style.display = ''; grp.classList.remove('inpanel');
     syncDl();
   }
-  getB.addEventListener('click', () => { const s = document.getElementById(srcId(window.__mtKind || 'voice', fmt)); if(s && !s.disabled) s.click(); });
+  getB.addEventListener('click', () => { if(!getB.disabled) merge6(window.__mtKind || 'voice'); });
   folB.addEventListener('click', () => { const fo = document.getElementById('chooseFolderBtn_' + (window.__mtKind || 'voice')); if(fo) fo.click(); setTimeout(syncDl, 150); });
   grp.querySelectorAll('.dg-fmt button').forEach(b => b.addEventListener('click', () => { fmt = b.dataset.f; try{ localStorage.setItem('bgmMixerDlFmt', fmt); }catch(e){} syncDl(); }));
   window.syncDl = syncDl; window.placeDl = placeDl;
@@ -4838,32 +4839,108 @@ setActiveTrack(startTrack);
     const shown = list.slice(st.start, st.start + n);
     e.items.innerHTML = shown.length ? shown.map(i => rowHtml(items[i], i, kind, items.length)).join('') : (q ? '<span class="none">찾는 곡이 없습니다</span>' : '');
     e.prev.disabled = st.start <= 0; e.next.disabled = st.start + n >= list.length;
-    try{ if(typeof render6 === 'function') render6(kind); }catch(x){}
   }
   window.renderImp = render;
-  window.impTick = (kind, ci) => { const st = S[kind]; if(ci === st.ci) return; st.ci = ci; if(!st.q && ci >= 0) st.start = ci; if(kind === (window.__mtKind || 'voice') && !S6.q && ci >= 0) S6.start = ci; render(kind); };
-  // ---- 6번: 파일 버튼 6개 묶음 + 목록 (4번과 같은 파일 목록을 보여 줌) ----
+  window.impTick = (kind, ci) => { const st = S[kind]; if(ci === st.ci) return; st.ci = ci; if(!st.q && ci >= 0) st.start = ci; render(kind); };
+  // ---- 6번: 파일 버튼 6개 묶음 + 6번 전용 목록 (4번 목록과 별개) ----
   const S6 = { start: 0, q: '', search: false };
   window.__mtKind = 'voice';
   const mtSeg = document.getElementById('mtSeg'), mtItems = document.getElementById('mtItems'), mtQBox = document.getElementById('mtQBox'), mtQ = document.getElementById('mtQ');
   const mtPrev = document.querySelector('#mtList .ia-prev'), mtNext = document.querySelector('#mtList .ia-next');
+  function rowHtml6(it, idx, kind, total){
+    const pl = playing6 && playing6.id === it.id;
+    return '<div class="file-item pl" data-idx="' + idx + '">' +
+      '<button type="button" class="rp" data-mta="play" data-id="' + it.id + '" title="재생 / 정지">' + (pl ? '⏸' : '▶') + '</button>' +
+      '<button type="button" class="rs" data-mta="stop" data-id="' + it.id + '" title="정지">■</button>' +
+      '<span class="file-item-name">' + (idx + 1) + '. ' + escapeHtml(it.name) + '</span><span class="file-item-dur">' + fmtTime(it.buffer.duration) + '</span>' +
+      '<button type="button" data-mta="up" data-id="' + it.id + '"' + (idx === 0 ? ' disabled' : '') + ' title="위로">▲</button>' +
+      '<button type="button" data-mta="down" data-id="' + it.id + '"' + (idx === total - 1 ? ' disabled' : '') + ' title="아래로">▼</button>' +
+      '<button type="button" data-mta="remove" data-id="' + it.id + '" title="삭제">✕</button></div>';
+  }
   function render6(){
     const kind = window.__mtKind || 'voice';
-    const items = kind === 'voice' ? voiceItems : musicItems, q = S6.q.trim().toLowerCase(), n = per();
+    const items = I6[kind], q = S6.q.trim().toLowerCase(), n = per();
     const list = []; items.forEach((it, i) => { if(!q || String(it.name).toLowerCase().indexOf(q) >= 0) list.push(i); });
     S6.start = Math.max(0, Math.min(S6.start, Math.max(0, list.length - 1)));
     const shown = list.slice(S6.start, S6.start + n);
-    mtItems.dataset.lk = kind;
-    mtItems.innerHTML = shown.length ? shown.map(i => rowHtml(items[i], i, kind, items.length)).join('') : (q ? '<span class="none">찾는 곡이 없습니다</span>' : '');
+    mtItems.innerHTML = shown.length ? shown.map(i => rowHtml6(items[i], i, kind, items.length)).join('') : (q ? '<span class="none">찾는 곡이 없습니다</span>' : '');
     mtPrev.disabled = S6.start <= 0; mtNext.disabled = S6.start + n >= list.length;
     mtQBox.style.display = S6.search ? 'flex' : 'none';
-    try{ if(window.syncDl) window.syncDl(); }catch(x){}
+    syncDl();
   }
   window.render6 = render6;
+  // 목록 줄 재생 (4번 플레이어와 별개로 이 줄만 미리 들어 봄)
+  let playing6 = null;
+  function stop6(){ if(playing6){ const p = playing6; playing6 = null; try{ p.src.onended = null; p.src.stop(); }catch(x){} } }
+  function play6(it){
+    if(playing6 && playing6.id === it.id){ stop6(); render6(); return; }
+    stop6();
+    const ctx = getCtx(); try{ if(ctx.state === 'suspended') ctx.resume(); }catch(x){}
+    const src = ctx.createBufferSource(); src.buffer = it.buffer; src.connect(ctx.destination);
+    const me = { id: it.id, src };
+    src.onended = () => { if(playing6 === me){ playing6 = null; render6(); } };
+    playing6 = me; src.start(); render6();
+  }
+  async function addFiles6(fileList, kind){
+    const files = Array.from(fileList || []); if(!files.length) return;
+    const ctx = getCtx(), err = document.getElementById('loadError'); err.style.color = '';
+    const label = kind === 'voice' ? '음성' : '배경음악';
+    for(let i = 0; i < files.length; i++){
+      err.textContent = label + ' 파일 불러오는 중… (' + (i + 1) + '/' + files.length + ') ' + files[i].name;
+      try{ const buffer = await ctx.decodeAudioData(await files[i].arrayBuffer()); I6[kind].push({ id: ++itemIdCounter, name: files[i].name, buffer }); }
+      catch(e){ err.textContent = label + ' 파일을 불러오지 못했습니다: ' + files[i].name + ' — ' + e.message; }
+    }
+    if(err.textContent.includes('불러오는 중')) err.textContent = '';
+    if(window.__mtKind === kind) render6();
+  }
+  async function openFiles6(kind){
+    const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if(window.showOpenFilePicker && !isMobileUA){
+      try{
+        const opts = { multiple: true, types: [{ description: '오디오 파일', accept: { 'audio/*': ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.webm', '.flac'] } }] };
+        const dirHandle = await getSavedDirHandle(kind);
+        if(dirHandle){ try{ if(await verifyPermission(dirHandle, false)) opts.startIn = dirHandle; }catch(x){} }
+        const hs = await window.showOpenFilePicker(opts);
+        addFiles6(await Promise.all(hs.map(h => h.getFile())), kind); return;
+      }catch(e){ if(e && e.name === 'AbortError') return; }
+    }
+    pickInput6(kind, 'audio/*,.wav,.mp3', fs => addFiles6(fs, kind));
+  }
+  function pickInput6(kind, accept, cb){
+    let fi = document.getElementById('mtFile');
+    if(!fi){ fi = document.createElement('input'); fi.type = 'file'; fi.id = 'mtFile'; fi.multiple = true; fi.style.display = 'none'; document.body.appendChild(fi); fi.addEventListener('change', () => { const fs = [...(fi.files || [])]; fi.value = ''; if(fi._cb) fi._cb(fs); }); }
+    fi.accept = accept; fi._cb = cb; fi.click();
+  }
+  function openBk6(kind){
+    pickInput6(kind, kind === 'voice' ? '.bgmx,audio/*,.wav,.mp3' : '.bgmx', async fs => {
+      const au = fs.filter(f => !/\.bgmx$/i.test(f.name)), bk = fs.filter(f => /\.bgmx$/i.test(f.name));
+      if(au.length) await addFiles6(au, 'voice');
+      for(const f of bk){ if(window.__bgmxImport) await window.__bgmxImport(f); }
+    });
+  }
+  // 6번 목록의 파일을 순서대로 이어 붙여 WAV/MP3로 저장 (음성은 6번 속도 칸의 속도 적용)
+  async function merge6(kind){
+    const list = I6[kind]; if(!list.length || busy6) return;
+    busy6 = true; syncDl();
+    const bar = kind === 'voice' ? 'voice' : 'music';
+    const status = barStatus(bar + 'Mp3Bar', bar + 'Mp3Fill');
+    try{
+      status.textContent = '파일 합치는 중…';
+      let buf = concatBuffers(list);
+      if(kind === 'voice' && (Number(voiceSpeed) || 1) !== 1){
+        status.textContent = '음성 속도 처리 중…';
+        buf = await buildSegmentedVoiceBuffer(buf, 0, voiceSpeed, [], pct => { status.textContent = '음성 속도 처리 중… ' + pct + '%'; });
+      }
+      const base = kind === 'voice' ? String(list[0].name).replace(/\.[^/.]+$/, '') : '배경음악';
+      if(fmt === 'wav') await downloadAsWav(buf, base + '.wav', status, kind, kind + 'Wav');
+      else await downloadAsMp3(buf, base + '.mp3', status, getB, bar + 'Mp3Bar', bar + 'Mp3Fill', kind, kind + 'Mp3', bar + 'Mp3StopBtn');
+    }catch(e){ status.textContent = '합쳐 받기 중 오류: ' + e.message; }
+    busy6 = false; syncDl();
+  }
   function setMt(kind, btn){
     const changed = (window.__mtKind !== kind);
     window.__mtKind = kind;
-    if(changed){ S6.q = ''; S6.search = false; let ci = -1; try{ ci = (kind === 'voice' ? voicePlayerCtl : musicPlayerCtl).getCurIdx(); }catch(x){} S6.start = ci > 0 ? ci : 0; mtQ.value = ''; }
+    if(changed){ S6.q = ''; S6.search = false; S6.start = 0; mtQ.value = ''; stop6(); }
     mtSeg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === btn));
     render6();
   }
@@ -4871,9 +4948,19 @@ setActiveTrack(startTrack);
     const b = ev.target.closest('button[data-mt]'); if(!b) return;
     const a = b.dataset.mt, kind = a[0] === 'v' ? 'voice' : 'music';
     setMt(kind, b);
-    if(a.slice(1) === 'file') openFilesFor(kind);
-    else if(a.slice(1) === 'bk') openBk(kind);
+    if(a.slice(1) === 'file') openFiles6(kind);
+    else if(a.slice(1) === 'bk') openBk6(kind);
     else { S6.search = true; render6(); mtQ.focus(); }
+  });
+  mtItems.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-mta]'); if(!b || b.disabled) return;
+    const kind = window.__mtKind || 'voice', arr = I6[kind], id = Number(b.dataset.id), i = arr.findIndex(x => x.id === id); if(i < 0) return;
+    const a = b.dataset.mta;
+    if(a === 'play') play6(arr[i]);
+    else if(a === 'stop'){ if(playing6 && playing6.id === id) stop6(); render6(); }
+    else if(a === 'remove'){ if(playing6 && playing6.id === id) stop6(); arr.splice(i, 1); render6(); }
+    else if(a === 'up' && i > 0){ [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; render6(); }
+    else if(a === 'down' && i < arr.length - 1){ [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; render6(); }
   });
   mtQ.addEventListener('input', () => { S6.q = mtQ.value; S6.start = 0; render6(); });
   document.getElementById('mtQx').addEventListener('click', () => { S6.q = ''; S6.search = false; mtQ.value = ''; render6(); });
