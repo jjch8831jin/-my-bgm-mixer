@@ -1183,7 +1183,6 @@
         <button class="record-btn" id="downloadVoiceMp3Btn" disabled>⬇ MP3</button>
         <button class="record-btn folder-btn" id="chooseFolderBtn_voice" data-folder="voice" type="button" title="음성 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
-      <div class="progress-bar mini dlbar" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="voiceMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div>
     </div>
     <div class="tool-panel" id="panel_music">
       <div class="player-line">
@@ -1216,7 +1215,6 @@
         <button class="record-btn" id="downloadMusicMp3Btn" disabled>⬇ MP3</button>
         <button class="record-btn folder-btn" id="chooseFolderBtn_music" data-folder="music" type="button" title="배경음악 저장 폴더 지정 (한 번 더 누르면 해제)">📁 폴더</button>
       </div>
-      <div class="progress-bar mini dlbar" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="musicMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div>
     </div>
   </section>
 
@@ -1296,6 +1294,7 @@
           <button type="button" data-mt="mbk" title="백업 파일(.bgmx) 불러오기 — 가사·시간·사진">📂 백업</button>
         </div>
       </div>
+      <div id="mtBars" style="margin-top:10px;"><div class="progress-bar mini dlbar" id="voiceMp3Bar"><div class="progress-fill music" id="voiceMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="voiceMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div><div class="progress-bar mini dlbar" id="musicMp3Bar"><div class="progress-fill music" id="musicMp3Fill"></div><div class="bar-inner"><button class="stop-in" id="musicMp3StopBtn" type="button" style="display:none;">⏹ 생성 중단</button><span class="bar-text"></span></div></div></div>
       <div class="mt-q" id="mtQBox"><span>🔍</span><input type="text" id="mtQ" placeholder="곡 이름"><button type="button" class="record-btn" id="mtQx" title="닫기">✕</button></div>
       <div class="imp-row" id="mtList"><button type="button" class="imp-arrow ia-prev" title="이전">◀</button><div class="imp-items" id="mtItems" data-lk="voice"></div><button type="button" class="imp-arrow ia-next" title="다음">▶</button></div>
     </div>
