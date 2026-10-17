@@ -5593,7 +5593,8 @@ function mixTotalDuration(){
       if(popW && !popW.closed){ try{ popW.focus(); }catch(e){} return; }
       if(/Android|iPhone|iPad/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches)) return; // 폰은 그대로
       let P = {}; try{ P = JSON.parse(localStorage.getItem('bgmSyWin') || '{}') || {}; }catch(e){}
-      const f = 'popup=yes,width=' + (P.w || 1100) + ',height=' + (P.h || 800) + ',left=' + (P.l != null ? P.l : 60) + ',top=' + (P.t != null ? P.t : 40);
+      const sc = window.screen || {}; // 처음 한 번은 화면 전체 크기, 이후에는 마지막 크기·위치를 기억
+      const f = 'popup=yes,width=' + (P.w || sc.availWidth || 1100) + ',height=' + (P.h || sc.availHeight || 800) + ',left=' + (P.l != null ? P.l : (sc.availLeft || 0)) + ',top=' + (P.t != null ? P.t : (sc.availTop || 0));
       let w = null; try{ w = window.open('', 'bgmSync', f); }catch(e){ w = null; }
       if(!w) return; // 팝업이 막혀 있으면 지금처럼 이 창에서
       const d = w.document;
