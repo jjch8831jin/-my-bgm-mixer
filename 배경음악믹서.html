@@ -5593,10 +5593,11 @@ function mixTotalDuration(){
       if(popW && !popW.closed){ try{ popW.focus(); }catch(e){} return; }
       if(/Android|iPhone|iPad/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches)) return; // 폰은 그대로
       let P = {}; try{ P = JSON.parse(localStorage.getItem('bgmSyWin') || '{}') || {}; }catch(e){}
-      const sc = window.screen || {}; // 처음 한 번은 화면 전체 크기, 이후에는 마지막 크기·위치를 기억
-      const f = 'popup=yes,width=' + (P.w || sc.availWidth || 1100) + ',height=' + (P.h || sc.availHeight || 800) + ',left=' + (P.l != null ? P.l : (sc.availLeft || 0)) + ',top=' + (P.t != null ? P.t : (sc.availTop || 0));
+      const sc = window.screen || {}; // 항상 화면 전체 크기로 띄움
+      const f = 'popup=yes,width=' + (sc.availWidth || 1400) + ',height=' + (sc.availHeight || 900) + ',left=' + (sc.availLeft || 0) + ',top=' + (sc.availTop || 0);
       let w = null; try{ w = window.open('', 'bgmSync', f); }catch(e){ w = null; }
       if(!w) return; // 팝업이 막혀 있으면 지금처럼 이 창에서
+      try{ w.moveTo(sc.availLeft || 0, sc.availTop || 0); w.resizeTo(sc.availWidth || 1400, sc.availHeight || 900); }catch(e){} // 이미 떠 있던 창도 전체 크기로
       const d = w.document;
       if(!d.getElementById('syWinInit')){
         d.title = '시간 맞추기'; const mk = d.createElement('meta'); mk.id = 'syWinInit'; mk.name = 'viewport'; mk.content = 'width=device-width,initial-scale=1'; d.head.appendChild(mk);
