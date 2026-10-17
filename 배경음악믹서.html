@@ -1071,6 +1071,9 @@
   .console .fader.vol::-webkit-slider-runnable-track{ background:linear-gradient(#0b141c,#0b141c) center/100% 6px no-repeat,linear-gradient(90deg,transparent calc(50% - 1px),var(--c) calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)) 0 0/100% 100% no-repeat,linear-gradient(270deg,#8fa9c2 0 1px,transparent 1px) 0 0/100% 100% no-repeat,linear-gradient(90deg,#8fa9c2 0 1px,transparent 1px) 0 0/calc(100%/4) 100% repeat-x !important; }
   .console .mstrip .mrow input[type="number"]{ color:var(--c); font-weight:700; border-color:var(--c) !important; box-shadow:0 0 0 1px var(--c) inset; }
   .console .mstrip .mrow .mi{ color:var(--c); }
+  /* B안: 슬라이더 홈에도 색 */
+  .console .fader::-webkit-slider-runnable-track{ background:linear-gradient(color-mix(in srgb,var(--c) 70%,#0b141c),color-mix(in srgb,var(--c) 70%,#0b141c)) center/100% 6px no-repeat,linear-gradient(270deg,#8fa9c2 0 1px,transparent 1px) 0 0/100% 100% no-repeat,linear-gradient(90deg,#8fa9c2 0 1px,transparent 1px) 0 0/calc(100%/var(--div)) 100% repeat-x !important; }
+  .console .fader.vol::-webkit-slider-runnable-track{ background:linear-gradient(color-mix(in srgb,var(--c) 70%,#0b141c),color-mix(in srgb,var(--c) 70%,#0b141c)) center/100% 6px no-repeat,linear-gradient(90deg,transparent calc(50% - 1px),var(--c) calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)) 0 0/100% 100% no-repeat,linear-gradient(270deg,#8fa9c2 0 1px,transparent 1px) 0 0/100% 100% no-repeat,linear-gradient(90deg,#8fa9c2 0 1px,transparent 1px) 0 0/calc(100%/4) 100% repeat-x !important; }
 </style>
 </head>
 <body>
