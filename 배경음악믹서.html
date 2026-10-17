@@ -5609,7 +5609,9 @@ function mixTotalDuration(){
       document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; // 믹스창은 다시 평소처럼
       rebind(document, d);
       try{ startTimer(); }catch(e){}
-      w.addEventListener('resize', () => { try{ layoutOne(); }catch(e){} });
+      const fit = () => { try{ if(popW === w) back.style.height = (w.innerHeight + 4) + 'px'; }catch(e){} }; // 창 높이에 맞춰 다시 맞춤 (최대화 직후 아래 하얀 줄 방지)
+      w.addEventListener('resize', () => { try{ fit(); layoutOne(); }catch(e){} [200, 600].forEach(ms => setTimeout(() => { fit(); try{ layoutOne(); }catch(e){} }, ms)); });
+      fit(); [200, 600].forEach(ms => setTimeout(fit, ms));
       w.addEventListener('pagehide', () => { if(popW === w) popIn(); });
       try{ layoutOne(); }catch(e){}
       try{ w.focus(); }catch(e){}
