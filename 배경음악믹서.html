@@ -7030,6 +7030,7 @@ function mixTotalDuration(){
     startTimer();
     let chipEl = null;
     back.querySelector('[data-hide]').addEventListener('click', () => {
+      if(popW){ const w = popW; popIn(); try{ w.close(); }catch(e){} } // 별도 창이면 창을 닫고 믹서 창으로 돌아와 숨김 (빈 창이 남지 않게)
       back.style.display = 'none'; document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1];
       chipEl = document.createElement('button'); chipEl.type = 'button'; chipEl.className = 'lyr-chip'; chipEl.textContent = '🎤 가사창 열기';
       chipEl.addEventListener('click', () => { back.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; chipEl.remove(); chipEl = null; });
