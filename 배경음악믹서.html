@@ -30,7 +30,7 @@
     color: var(--text);
     font-family: -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     line-height: 1.5;
-    padding: 4px 16px 16px;
+    padding: 4px 16px 32px;
     min-height: 100vh;
   }
   .wrap{ max-width: 1180px; margin: 0 auto; }
@@ -5584,7 +5584,7 @@ function mixTotalDuration(){
       if(!popW) return; const w = popW; popW = null;
       try{ localStorage.setItem('bgmSyWin', JSON.stringify({ l: w.screenX, t: w.screenY, w: w.outerWidth, h: w.outerHeight })); }catch(e){}
       try{ rebind(w.document, document); }catch(e){}
-      document.body.appendChild(back); back.style.height = '';
+      document.body.appendChild(back);
       document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
       try{ startTimer(); }catch(e){}
       try{ layoutOne(); }catch(e){}
@@ -5593,11 +5593,9 @@ function mixTotalDuration(){
       if(popW && !popW.closed){ try{ popW.focus(); }catch(e){} return; }
       if(/Android|iPhone|iPad/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches)) return; // 폰은 그대로
       let P = {}; try{ P = JSON.parse(localStorage.getItem('bgmSyWin') || '{}') || {}; }catch(e){}
-      const sc = window.screen || {}; // 항상 화면 전체 크기로 띄움
-      const f = 'popup=yes,width=' + (sc.availWidth || 1400) + ',height=' + (sc.availHeight || 900) + ',left=' + (sc.availLeft || 0) + ',top=' + (sc.availTop || 0);
+      const f = 'popup=yes,width=' + (P.w || 1100) + ',height=' + (P.h || 800) + ',left=' + (P.l != null ? P.l : 60) + ',top=' + (P.t != null ? P.t : 40);
       let w = null; try{ w = window.open('', 'bgmSync', f); }catch(e){ w = null; }
       if(!w) return; // 팝업이 막혀 있으면 지금처럼 이 창에서
-      try{ w.moveTo(sc.availLeft || 0, sc.availTop || 0); w.resizeTo(sc.availWidth || 1400, sc.availHeight || 900); }catch(e){} // 이미 떠 있던 창도 전체 크기로
       const d = w.document;
       if(!d.getElementById('syWinInit')){
         d.title = '시간 맞추기'; const mk = d.createElement('meta'); mk.id = 'syWinInit'; mk.name = 'viewport'; mk.content = 'width=device-width,initial-scale=1'; d.head.appendChild(mk);
@@ -5605,13 +5603,11 @@ function mixTotalDuration(){
         d.body.style.cssText = 'margin:0;overflow:hidden;background:#faf6e8;font-family:' + getComputedStyle(document.body).fontFamily;
       }
       popW = w;
-      d.body.appendChild(back); back.style.height = 'calc(100vh + 4px)'; // 최대화 때 맨 아래 하얀 줄이 보이지 않게 조금 더 키움
+      d.body.appendChild(back);
       document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; // 믹스창은 다시 평소처럼
       rebind(document, d);
       try{ startTimer(); }catch(e){}
-      const fit = () => { try{ if(popW === w) back.style.height = (w.innerHeight + 4) + 'px'; }catch(e){} }; // 창 높이에 맞춰 다시 맞춤 (최대화 직후 아래 하얀 줄 방지)
-      w.addEventListener('resize', () => { try{ fit(); layoutOne(); }catch(e){} [200, 600].forEach(ms => setTimeout(() => { fit(); try{ layoutOne(); }catch(e){} }, ms)); });
-      fit(); [200, 600].forEach(ms => setTimeout(fit, ms));
+      w.addEventListener('resize', () => { try{ layoutOne(); }catch(e){} });
       w.addEventListener('pagehide', () => { if(popW === w) popIn(); });
       try{ layoutOne(); }catch(e){}
       try{ w.focus(); }catch(e){}
