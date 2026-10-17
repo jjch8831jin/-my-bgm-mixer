@@ -1042,6 +1042,35 @@
   #mixTools .mt-q{ display:none; align-items:center; gap:6px; margin-top:10px; }
   #mixTools .mt-q input{ width:12em; }
   @media (max-width:600px){ #mixTools .mt-bar{ flex-wrap:wrap; } #mixTools .mt-bar .dlgrp{ margin-left:0; } #mixTools .mt-seg button{ padding:8px 8px; font-size:12pt; } }
+
+  /* 6번 믹싱하기·재생·정지·받기 색 (눌 수 없을 때도 색 유지) */
+  body section #mixBtn{ background:#d68a1c; border-color:#f0a93a; color:#fff8ec; }
+  body section #mixBtn:hover:not(:disabled){ background:#e29a2e; }
+  body section #playBtn{ background:#2f9e5f; border-color:#52c481; color:#fff; }
+  body section #playBtn:hover:not(:disabled){ background:#38b06c; }
+  body section #mixStopBtn{ background:#d9473a; border-color:#ff8a7c; color:#fff; }
+  body section #mixStopBtn:hover:not(:disabled){ background:#e8574a; }
+  body section #exportBtn{ background:#3f7fd1; border-color:#6aa3ee; color:#fff; }
+  body section #exportBtn:hover:not(:disabled){ background:#5190e2; color:#fff; }
+  body section #exportMp3Btn{ background:#2f9e5f; border-color:#52c481; color:#fff; }
+  body section #exportMp3Btn:hover:not(:disabled){ background:#38b06c; color:#fff; }
+  body section #chooseFolderBtn_mix:not(.on){ background:#d68a1c; border-color:#f0a93a; color:#fff8ec; }
+
+  /* 5번 믹싱 설정: 슬라이더별 색 (이름·숫자·숫자칸 테두리·손잡이 줄) */
+  .console .cg-vol .strip:nth-child(1){ --c:#4da3ff; }
+  .console .cg-vol .strip:nth-child(2){ --c:#f0a93a; }
+  .console .cg-vol .strip:nth-child(3){ --c:#3cc8b4; }
+  .console .cg-vol .strip:nth-child(4){ --c:#b48cf0; }
+  .console .cg-vol .strip:nth-child(5){ --c:#4cd07d; }
+  .console .cg-vol .strip:nth-child(6){ --c:#ff6b5e; }
+  .console .mstrip{ --c:#f2d33c; }
+  .console .strip .sl{ color:var(--c) !important; font-weight:700; }
+  .console .strip .sn{ color:var(--c); font-weight:700; }
+  .console .strip .sn input[type="number"]{ color:var(--c); font-weight:700; border-color:var(--c) !important; box-shadow:0 0 0 1px var(--c) inset; }
+  .console .fader::-webkit-slider-thumb{ background:linear-gradient(90deg,#d9e2ea 0 42%,var(--c) 42% 58%,#d9e2ea 58%) !important; }
+  .console .fader.vol::-webkit-slider-runnable-track{ background:linear-gradient(#0b141c,#0b141c) center/100% 6px no-repeat,linear-gradient(90deg,transparent calc(50% - 1px),var(--c) calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)) 0 0/100% 100% no-repeat,linear-gradient(270deg,#8fa9c2 0 1px,transparent 1px) 0 0/100% 100% no-repeat,linear-gradient(90deg,#8fa9c2 0 1px,transparent 1px) 0 0/calc(100%/4) 100% repeat-x !important; }
+  .console .mstrip .mrow input[type="number"]{ color:var(--c); font-weight:700; border-color:var(--c) !important; box-shadow:0 0 0 1px var(--c) inset; }
+  .console .mstrip .mrow .mi{ color:var(--c); }
 </style>
 </head>
 <body>
