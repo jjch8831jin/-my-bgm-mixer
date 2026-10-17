@@ -5584,7 +5584,7 @@ function mixTotalDuration(){
       if(!popW) return; const w = popW; popW = null;
       try{ localStorage.setItem('bgmSyWin', JSON.stringify({ l: w.screenX, t: w.screenY, w: w.outerWidth, h: w.outerHeight })); }catch(e){}
       try{ rebind(w.document, document); }catch(e){}
-      document.body.appendChild(back);
+      document.body.appendChild(back); back.style.height = '';
       document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
       try{ startTimer(); }catch(e){}
       try{ layoutOne(); }catch(e){}
@@ -5605,7 +5605,7 @@ function mixTotalDuration(){
         d.body.style.cssText = 'margin:0;overflow:hidden;background:#faf6e8;font-family:' + getComputedStyle(document.body).fontFamily;
       }
       popW = w;
-      d.body.appendChild(back);
+      d.body.appendChild(back); back.style.height = 'calc(100vh + 4px)'; // 최대화 때 맨 아래 하얀 줄이 보이지 않게 조금 더 키움
       document.documentElement.style.overflow = prevOv[0]; document.body.style.overflow = prevOv[1]; // 믹스창은 다시 평소처럼
       rebind(document, d);
       try{ startTimer(); }catch(e){}
