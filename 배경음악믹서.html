@@ -25,6 +25,7 @@
   }
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
+  html{ background: var(--bg); min-height:100%; }
   body{
     background: var(--bg);
     color: var(--text);
@@ -5601,7 +5602,7 @@ function mixTotalDuration(){
       if(!d.getElementById('syWinInit')){
         d.title = '시간 맞추기'; const mk = d.createElement('meta'); mk.id = 'syWinInit'; mk.name = 'viewport'; mk.content = 'width=device-width,initial-scale=1'; d.head.appendChild(mk);
         document.querySelectorAll('style, link[rel=stylesheet]').forEach(n => { d.head.appendChild(n.cloneNode(true)); });
-        d.body.style.cssText = 'margin:0;overflow:hidden;background:#faf6e8;font-family:' + getComputedStyle(document.body).fontFamily;
+        d.documentElement.style.cssText = 'background:#faf6e8;height:100%'; d.body.style.cssText = 'margin:0;overflow:hidden;background:#faf6e8;font-family:' + getComputedStyle(document.body).fontFamily;
       }
       popW = w;
       d.body.appendChild(back);
