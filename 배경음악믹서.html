@@ -1479,19 +1479,28 @@ function getCtx(){
 const meterNodes = {};
 let masterGainNode = null;
 function readMaster(forMix){ const v = Number(forMix ? mixVal('masterVol') : document.getElementById('masterVol').value); return (isFinite(v) ? Math.max(0, v) : 100) / 100; }
+let masterLimiterNode = null;
+function isPhoneUA(){ return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); }
+// 마지막에 이걸 거쳐서 getMeter('master')로 보내면, 폰에서는 0dB(빨간 피크)를 못 넘게 눌러 줌 (PC는 그대로 통과)
+function toMasterOut(node){
+  const ctx = node.context;
+  if(isPhoneUA()){
+    if(!masterLimiterNode || masterLimiterNode.context !== ctx){
+      masterLimiterNode = ctx.createDynamicsCompressor();
+      masterLimiterNode.threshold.value = -8; masterLimiterNode.knee.value = 0; masterLimiterNode.ratio.value = 20; masterLimiterNode.attack.value = 0; masterLimiterNode.release.value = 0.1;
+      masterLimiterNode.connect(getMeter('master'));
+    }
+    node.connect(masterLimiterNode);
+  } else {
+    node.connect(getMeter('master'));
+  }
+}
 function getMasterGain(){
   if(masterGainNode) return masterGainNode;
   const ctx = getCtx();
   masterGainNode = ctx.createGain();
   masterGainNode.gain.value = readMaster();
-  // 폰에서는 소리가 0dB(빨간 피크)를 넘지 않게 막판에 리미터를 하나 끼워 둠 (PC는 그대로)
-  if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
-    const lim = ctx.createDynamicsCompressor();
-    lim.threshold.value = -1; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.003; lim.release.value = 0.1;
-    masterGainNode.connect(lim); lim.connect(getMeter('master'));
-  } else {
-    masterGainNode.connect(getMeter('master'));
-  }
+  toMasterOut(masterGainNode);
   return masterGainNode;
 }
 function getMeter(name){
@@ -4627,7 +4636,7 @@ function playPreviewFrom(startPos){
   ctx.resume();
   const source = ctx.createBufferSource();
   source.buffer = mixedBuffer;
-  source.connect(getMeter('master'));
+  toMasterOut(source);
   source.start(0, startPos);
   previewSources = [source];
   previewStartTime = ctx.currentTime - startPos;
