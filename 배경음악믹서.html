@@ -1484,7 +1484,14 @@ function getMasterGain(){
   const ctx = getCtx();
   masterGainNode = ctx.createGain();
   masterGainNode.gain.value = readMaster();
-  masterGainNode.connect(getMeter('master'));
+  // 폰에서는 소리가 0dB(빨간 피크)를 넘지 않게 막판에 리미터를 하나 끼워 둠 (PC는 그대로)
+  if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -1; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.003; lim.release.value = 0.1;
+    masterGainNode.connect(lim); lim.connect(getMeter('master'));
+  } else {
+    masterGainNode.connect(getMeter('master'));
+  }
   return masterGainNode;
 }
 function getMeter(name){
