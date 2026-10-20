@@ -1480,39 +1480,20 @@ const meterNodes = {};
 let masterGainNode = null;
 function readMaster(forMix){ const v = Number(forMix ? mixVal('masterVol') : document.getElementById('masterVol').value); return (isFinite(v) ? Math.max(0, v) : 100) / 100; }
 let masterLimiterNode = null;
-const channelLimiterNodes = {};
 function isPhoneUA(){ return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); }
-// 조용한 소리는 그대로(1배) 두고, threshold를 넘는 소리만 천천히 눌러서 한계(C) 위로 못 올라가게 함
-// (DynamicsCompressorNode는 조용한 소리에도 자동으로 소리를 더 키우는 보정이 붙어 있어서 쓰지 않음)
-// T=0.5(약 -6dB), C=0.55(약 -5.2dB)로 잡아서, 음성·음악·합계 레벨미터의 노란 구간(약 -4dB부터)에도 안 걸리게 함
-function makeLimiterCurve(){
-  const n = 8192, curve = new Float32Array(n), T = 0.5, C = 0.55;
-  for(let i = 0; i < n; i++){
-    const x = (i / (n - 1)) * 2 - 1, ax = Math.abs(x), sg = x < 0 ? -1 : 1;
-    curve[i] = ax <= T ? x : sg * (T + (C - T) * Math.tanh((ax - T) / (C - T)));
-  }
-  return curve;
-}
-function makeLimiter(ctx){
-  const lim = ctx.createWaveShaper(); lim.curve = makeLimiterCurve(); lim.oversample = '4x'; return lim;
-}
-// 마지막에 이걸 거쳐서 getMeter('master')로 보내면, 노란색도 거의 안 뜨게 눌러 줌 (컴·폰 둘 다 똑같이 적용)
+// 마지막에 이걸 거쳐서 getMeter('master')로 보내면, 폰에서는 0dB(빨간 피크)를 못 넘게 눌러 줌 (PC는 그대로 통과)
 function toMasterOut(node){
   const ctx = node.context;
-  if(!masterLimiterNode || masterLimiterNode.context !== ctx){
-    masterLimiterNode = makeLimiter(ctx);
-    masterLimiterNode.connect(getMeter('master'));
+  if(isPhoneUA()){
+    if(!masterLimiterNode || masterLimiterNode.context !== ctx){
+      masterLimiterNode = ctx.createDynamicsCompressor();
+      masterLimiterNode.threshold.value = -8; masterLimiterNode.knee.value = 0; masterLimiterNode.ratio.value = 20; masterLimiterNode.attack.value = 0; masterLimiterNode.release.value = 0.1;
+      masterLimiterNode.connect(getMeter('master'));
+    }
+    node.connect(masterLimiterNode);
+  } else {
+    node.connect(getMeter('master'));
   }
-  node.connect(masterLimiterNode);
-}
-// 음성·음악 각자의 레벨미터도(탭 하나만 틀어도) 노란색이 안 뜨게, 미터에 닿기 전에 같은 방식으로 눌러 줌 (컴·폰 둘 다 똑같이 적용)
-function toChannelMeter(node, kind){
-  const ctx = node.context;
-  if(!channelLimiterNodes[kind] || channelLimiterNodes[kind].context !== ctx){
-    const lim = makeLimiter(ctx); lim.connect(getMeter(kind));
-    channelLimiterNodes[kind] = lim;
-  }
-  node.connect(channelLimiterNodes[kind]);
 }
 function getMasterGain(){
   if(masterGainNode) return masterGainNode;
@@ -3521,7 +3502,7 @@ function makePlayer(kind){
     const gp = api.gainProvider ? api.gainProvider() : null;
     g.gain.value = (gp === null || gp === undefined) ? volNow() : gp;
     source.connect(g);
-    toChannelMeter(g, kind);
+    g.connect(getMeter(kind));
     st.gain = g;
     source.onended = () => {
       if(st.source !== source) return; // 이미 새 재생으로 교체된 경우 무시
